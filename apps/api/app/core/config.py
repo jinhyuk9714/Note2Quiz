@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440  # 24 hours
 
+    # CORS
+    cors_origins: list[str] = ["http://localhost:3000"]
+
     # Upload limits
     max_upload_size_mb: int = 20
     max_pdf_pages: int = 200
