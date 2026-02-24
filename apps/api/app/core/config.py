@@ -1,0 +1,30 @@
+from __future__ import annotations
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
+
+    # App
+    app_name: str = "QuizNote API"
+    debug: bool = False
+
+    # Database
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/quiznote"
+
+    # Anthropic
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-haiku-4-5-20251001"
+
+    # Quiz generation defaults
+    default_chunk_size: int = 800
+    default_chunk_overlap: int = 100
+    max_questions_per_chunk: int = 5
+
+
+settings = Settings()

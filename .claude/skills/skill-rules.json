@@ -1,0 +1,203 @@
+{
+  "version": "1.0",
+  "description": "QuizNote AI 프로젝트용 Skill activation rules (Next.js + FastAPI + AI quiz generation).",
+  "skills": {
+    "nextjs-dev-guidelines": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Next.js(App Router) + TypeScript strict 개발 가이드",
+      "promptTriggers": {
+        "keywords": [
+          "nextjs",
+          "next.js",
+          "app router",
+          "server action",
+          "server actions",
+          "route handler",
+          "layout.tsx",
+          "page.tsx",
+          "react component",
+          "component",
+          "use client",
+          "hydration",
+          "streaming",
+          "suspense",
+          "react",
+          "typescript",
+          "eslint",
+          "tailwind",
+          "shadcn",
+          "zustand",
+          "tanstack",
+          "react query"
+        ],
+        "intentPatterns": [
+          "(create|add|implement|build|fix|refactor).*?(component|page|layout|route|router|server action|api route)",
+          "(next\\.?js|nextjs).*?(best practice|pattern|structure|file|folder)",
+          "(type|typing|ts|typescript).*?(strict|error|fix)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "apps/web/**/*.*",
+          "frontend/**/*.*",
+          "web/**/*.*"
+        ],
+        "pathExclusions": [
+          "**/node_modules/**",
+          "**/.next/**",
+          "**/dist/**"
+        ],
+        "contentPatterns": [
+          "from ['\\\"]next",
+          "use client",
+          "export default function",
+          "next\\/(navigation|link|image)"
+        ]
+      }
+    },
+    "fastapi-dev-guidelines": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "FastAPI + Pydantic + Python strict typing 개발 가이드",
+      "promptTriggers": {
+        "keywords": [
+          "fastapi",
+          "pydantic",
+          "apirouter",
+          "endpoint",
+          "router",
+          "dependency",
+          "depends",
+          "middleware",
+          "uvicorn",
+          "sqlalchemy",
+          "alembic",
+          "async",
+          "background task",
+          "pyright",
+          "mypy",
+          "ruff",
+          "type hint",
+          "typing"
+        ],
+        "intentPatterns": [
+          "(create|add|implement|build|fix|refactor).*?(endpoint|route|router|api)",
+          "(validation|schema|pydantic).*?(model|request|response)",
+          "(type|typing|pyright|mypy).*?(strict|error|fix)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "apps/api/**/*.py",
+          "backend/**/*.py",
+          "api/**/*.py"
+        ],
+        "pathExclusions": [
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/*.pyc"
+        ],
+        "contentPatterns": [
+          "from fastapi import",
+          "APIRouter\\(",
+          "BaseModel"
+        ]
+      }
+    },
+    "quiznote-domain": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "퀴즈/오답노트 도메인 설계 및 생성 규칙(교육/학습 UX)",
+      "promptTriggers": {
+        "keywords": [
+          "퀴즈",
+          "문제",
+          "오답노트",
+          "해설",
+          "정답",
+          "오답",
+          "flashcard",
+          "anki",
+          "spaced repetition",
+          "srs",
+          "객관식",
+          "주관식",
+          "단답형",
+          "서술형",
+          "빈칸",
+          "ox"
+        ],
+        "intentPatterns": [
+          "(generate|create|make).*?(quiz|question|flashcard|오답노트|문제)",
+          "(review|revise|study).*?(schedule|spaced repetition|SRS|복습)",
+          "(grading|score|rubric).*?(short answer|서술형|주관식)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "apps/api/app/**/quiz*.py",
+          "apps/api/app/**/note*.py",
+          "apps/api/app/services/**/*.py"
+        ],
+        "pathExclusions": [
+          "**/tests/**"
+        ],
+        "contentPatterns": [
+          "Quiz",
+          "WrongAnswer",
+          "spaced",
+          "interval"
+        ]
+      }
+    },
+    "ai-cost-aware-generation": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "LLM/RAG 기반 생성 기능을 '저비용'으로 설계하는 패턴",
+      "promptTriggers": {
+        "keywords": [
+          "rag",
+          "embedding",
+          "vector",
+          "chunk",
+          "retrieval",
+          "prompt",
+          "llm",
+          "claude",
+          "token",
+          "cost",
+          "cache",
+          "json schema",
+          "structured output",
+          "function calling"
+        ],
+        "intentPatterns": [
+          "(optimi[sz]e|reduce).*?(cost|token|latency)",
+          "(design|implement).*?(rag|embedding|vector|retrieval)",
+          "(prompt|system prompt|few-shot).*?(design|template)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "apps/api/app/services/**/*.py",
+          "apps/api/app/prompts/**/*.*",
+          "apps/api/app/rag/**/*.*"
+        ],
+        "pathExclusions": [
+          "**/tests/**"
+        ],
+        "contentPatterns": [
+          "embedding",
+          "vector",
+          "prompt",
+          "model="
+        ]
+      }
+    }
+  }
+}
