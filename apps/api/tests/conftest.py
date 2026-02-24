@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import (
 from app.core.database import get_db
 from app.main import app
 from app.models import Base, User  # noqa: F401 — registers all models
+from app.services.auth_service import create_access_token, hash_password
 
 TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
@@ -60,7 +61,7 @@ async def seeded_user(db_session: AsyncSession) -> User:
         id=TEST_USER_ID,
         email="test@example.com",
         display_name="Test User",
-        hashed_password="fakehash",
+        hashed_password=hash_password("testpassword123"),
     )
     db_session.add(user)
     await db_session.commit()
@@ -68,14 +69,23 @@ async def seeded_user(db_session: AsyncSession) -> User:
 
 
 @pytest.fixture
-async def client(db_session: AsyncSession, seeded_user: User) -> AsyncGenerator[AsyncClient, None]:
+def auth_headers(seeded_user: User) -> dict[str, str]:
+    """Return Authorization headers with a valid JWT for the seeded user."""
+    token = create_access_token(str(seeded_user.id))
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+async def client(
+    db_session: AsyncSession, auth_headers: dict[str, str]
+) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
     transport = ASGITransport(app=app)  # type: ignore[arg-type]
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(transport=transport, base_url="http://test", headers=auth_headers) as ac:
         yield ac
 
     app.dependency_overrides.clear()

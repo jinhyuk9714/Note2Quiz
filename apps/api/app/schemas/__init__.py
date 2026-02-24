@@ -8,6 +8,12 @@ from app.schemas.attempt import (
     WrongAnswerNoteListResponse,
     WrongAnswerNoteResponse,
 )
+from app.schemas.auth import (
+    LoginRequest,
+    SignupRequest,
+    TokenResponse,
+    UserResponse,
+)
 from app.schemas.common import ErrorResponse, UUIDResponse
 from app.schemas.dashboard import (
     DashboardStatsResponse,
@@ -38,6 +44,7 @@ __all__ = [
     "DocumentUploadRequest",
     "ErrorResponse",
     "LearningProgressStats",
+    "LoginRequest",
     "QuizGenerateRequest",
     "QuizItemResponse",
     "QuizResponse",
@@ -45,7 +52,10 @@ __all__ = [
     "QuizSubmitResponse",
     "ReviewScheduleDay",
     "ReviewScheduleStats",
+    "SignupRequest",
+    "TokenResponse",
     "UUIDResponse",
+    "UserResponse",
     "WeakConceptItem",
     "WrongAnswerNoteListResponse",
     "WrongAnswerNoteResponse",

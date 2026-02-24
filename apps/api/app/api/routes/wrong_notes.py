@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import DBSession
+from app.core.deps import CurrentUserID, DBSession
 from app.models.attempt import WrongAnswerNote
 from app.schemas.attempt import (
     WrongAnswerNoteListResponse,
@@ -18,19 +18,18 @@ from app.services.wrong_note_service import calculate_next_review
 
 router = APIRouter(prefix="/wrong-notes", tags=["wrong-notes"])
 
-TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
-
 
 @router.get("/", response_model=WrongAnswerNoteListResponse)
 async def list_wrong_notes(
     db: DBSession,
+    user_id: CurrentUserID,
     due_only: bool = Query(default=False, description="복습 시점이 된 노트만 조회"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> WrongAnswerNoteListResponse:
     stmt = (
         select(WrongAnswerNote)
-        .where(WrongAnswerNote.user_id == TEST_USER_ID)
+        .where(WrongAnswerNote.user_id == user_id)
         .where(WrongAnswerNote.is_mastered == False)  # noqa: E712
         .options(selectinload(WrongAnswerNote.quiz_item))
     )
@@ -70,10 +69,11 @@ async def review_wrong_note(
     note_id: uuid.UUID,
     payload: WrongAnswerNoteReviewRequest,
     db: DBSession,
+    user_id: CurrentUserID,
 ) -> WrongAnswerNoteResponse:
     stmt = (
         select(WrongAnswerNote)
-        .where(WrongAnswerNote.id == note_id, WrongAnswerNote.user_id == TEST_USER_ID)
+        .where(WrongAnswerNote.id == note_id, WrongAnswerNote.user_id == user_id)
         .options(selectinload(WrongAnswerNote.quiz_item))
     )
     result = await db.execute(stmt)

@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-haiku-4-5-20251001"
 
+    # Auth / JWT
+    jwt_secret_key: str = "CHANGE-ME-IN-PRODUCTION-use-at-least-32-bytes"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 1440  # 24 hours
+
     # Quiz generation defaults
     default_chunk_size: int = 800
     default_chunk_overlap: int = 100

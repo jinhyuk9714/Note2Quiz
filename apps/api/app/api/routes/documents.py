@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import DBSession
+from app.core.deps import CurrentUserID, DBSession
 from app.models.document import Document
 from app.schemas.document import (
     ChunkResponse,
@@ -18,18 +18,16 @@ from app.services.document_service import create_document_with_chunks
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
-# Temporary: hardcoded test user until auth is implemented
-TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
-
 
 @router.post("/", response_model=DocumentResponse, status_code=201)
 async def upload_document(
     payload: DocumentUploadRequest,
     db: DBSession,
+    user_id: CurrentUserID,
 ) -> DocumentResponse:
     doc = await create_document_with_chunks(
         db=db,
-        owner_id=TEST_USER_ID,
+        owner_id=user_id,
         title=payload.title,
         raw_text=payload.text,
     )
@@ -44,12 +42,8 @@ async def upload_document(
 
 
 @router.get("/", response_model=list[DocumentResponse])
-async def list_documents(db: DBSession) -> list[DocumentResponse]:
-    stmt = (
-        select(Document)
-        .where(Document.owner_id == TEST_USER_ID)
-        .order_by(Document.created_at.desc())
-    )
+async def list_documents(db: DBSession, user_id: CurrentUserID) -> list[DocumentResponse]:
+    stmt = select(Document).where(Document.owner_id == user_id).order_by(Document.created_at.desc())
     result = await db.execute(stmt)
     docs = list(result.scalars().all())
     return [
@@ -69,10 +63,11 @@ async def list_documents(db: DBSession) -> list[DocumentResponse]:
 async def get_document(
     document_id: uuid.UUID,
     db: DBSession,
+    user_id: CurrentUserID,
 ) -> DocumentDetailResponse:
     stmt = (
         select(Document)
-        .where(Document.id == document_id, Document.owner_id == TEST_USER_ID)
+        .where(Document.id == document_id, Document.owner_id == user_id)
         .options(selectinload(Document.chunks))
     )
     result = await db.execute(stmt)

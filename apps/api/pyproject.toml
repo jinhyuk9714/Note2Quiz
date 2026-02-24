@@ -12,6 +12,8 @@ dependencies = [
   "alembic>=1.13",
   "anthropic>=0.40",
   "python-multipart>=0.0.9",
+  "bcrypt>=4.1",
+  "PyJWT>=2.8",
 ]
 
 [project.optional-dependencies]

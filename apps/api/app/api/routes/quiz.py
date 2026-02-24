@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import DBSession
+from app.core.deps import CurrentUserID, DBSession
 from app.models.quiz import Quiz
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
 from app.schemas.quiz import QuizGenerateRequest, QuizItemResponse, QuizResponse
@@ -14,8 +14,6 @@ from app.services.quiz_generation import generate_quiz_from_chunks
 from app.services.wrong_note_service import create_attempt_with_wrong_notes
 
 router = APIRouter(prefix="/quiz", tags=["quiz"])
-
-TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 
 def _quiz_to_response(quiz: Quiz) -> QuizResponse:
@@ -41,7 +39,9 @@ def _quiz_to_response(quiz: Quiz) -> QuizResponse:
 
 
 @router.post("/generate", response_model=QuizResponse, status_code=201)
-async def generate_quiz(payload: QuizGenerateRequest, db: DBSession) -> QuizResponse:
+async def generate_quiz(
+    payload: QuizGenerateRequest, db: DBSession, _user_id: CurrentUserID
+) -> QuizResponse:
     try:
         quiz = await generate_quiz_from_chunks(
             db=db,
@@ -63,7 +63,7 @@ async def generate_quiz(payload: QuizGenerateRequest, db: DBSession) -> QuizResp
 
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz(quiz_id: uuid.UUID, db: DBSession) -> QuizResponse:
+async def get_quiz(quiz_id: uuid.UUID, db: DBSession, _user_id: CurrentUserID) -> QuizResponse:
     stmt = select(Quiz).where(Quiz.id == quiz_id).options(selectinload(Quiz.items))
     result = await db.execute(stmt)
     quiz = result.scalar_one_or_none()
@@ -78,11 +78,12 @@ async def submit_quiz(
     quiz_id: uuid.UUID,
     payload: QuizSubmitRequest,
     db: DBSession,
+    user_id: CurrentUserID,
 ) -> QuizSubmitResponse:
     attempt, wrong_notes = await create_attempt_with_wrong_notes(
         db=db,
         quiz_id=quiz_id,
-        user_id=TEST_USER_ID,
+        user_id=user_id,
         answers=[
             {"quiz_item_id": str(a.quiz_item_id), "user_answer": a.user_answer}
             for a in payload.answers

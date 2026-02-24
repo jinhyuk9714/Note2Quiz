@@ -1,3 +1,26 @@
+// Auth
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  display_name: string;
+}
+
+export interface SignupPayload {
+  email: string;
+  display_name: string;
+  password: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
 // Backend Pydantic 스키마 미러링
 
 export interface Document {

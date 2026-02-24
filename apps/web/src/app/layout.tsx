@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AuthGuard } from "@/components/layout/AuthGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,8 +17,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className="flex h-screen bg-gray-50 text-gray-900 antialiased">
         <Providers>
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <AuthGuard>{children}</AuthGuard>
         </Providers>
       </body>
     </html>

@@ -4,6 +4,7 @@ import { Sidebar } from "../Sidebar";
 
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(),
+  useRouter: vi.fn(() => ({ replace: vi.fn() })),
 }));
 
 vi.mock("next/link", () => ({
@@ -20,6 +21,13 @@ vi.mock("next/link", () => ({
       {children}
     </a>
   ),
+}));
+
+vi.mock("@/lib/auth-context", () => ({
+  useAuth: vi.fn(() => ({
+    user: { id: "1", email: "test@example.com", display_name: "Test User" },
+    logout: vi.fn(),
+  })),
 }));
 
 import { usePathname } from "next/navigation";
@@ -45,5 +53,13 @@ describe("Sidebar", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     render(<Sidebar />);
     expect(screen.getByText("QuizNote")).toBeInTheDocument();
+  });
+
+  it("renders user info and logout button", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    render(<Sidebar />);
+    expect(screen.getByText("Test User")).toBeInTheDocument();
+    expect(screen.getByText("test@example.com")).toBeInTheDocument();
+    expect(screen.getByText("로그아웃")).toBeInTheDocument();
   });
 });
