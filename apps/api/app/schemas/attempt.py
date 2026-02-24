@@ -45,6 +45,10 @@ class WrongAnswerNoteResponse(BaseModel):
     created_at: datetime
 
 
+class WrongAnswerNoteReviewRequest(BaseModel):
+    is_correct: bool
+
+
 class WrongAnswerNoteListResponse(BaseModel):
     notes: list[WrongAnswerNoteResponse]
     total: int

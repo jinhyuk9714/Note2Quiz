@@ -3,13 +3,18 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import DBSession
 from app.models.attempt import WrongAnswerNote
-from app.schemas.attempt import WrongAnswerNoteListResponse, WrongAnswerNoteResponse
+from app.schemas.attempt import (
+    WrongAnswerNoteListResponse,
+    WrongAnswerNoteResponse,
+    WrongAnswerNoteReviewRequest,
+)
+from app.services.wrong_note_service import calculate_next_review
 
 router = APIRouter(prefix="/wrong-notes", tags=["wrong-notes"])
 
@@ -57,4 +62,49 @@ async def list_wrong_notes(
             for n in notes
         ],
         total=len(notes),
+    )
+
+
+@router.post("/{note_id}/review", response_model=WrongAnswerNoteResponse)
+async def review_wrong_note(
+    note_id: uuid.UUID,
+    payload: WrongAnswerNoteReviewRequest,
+    db: DBSession,
+) -> WrongAnswerNoteResponse:
+    stmt = (
+        select(WrongAnswerNote)
+        .where(WrongAnswerNote.id == note_id, WrongAnswerNote.user_id == TEST_USER_ID)
+        .options(selectinload(WrongAnswerNote.quiz_item))
+    )
+    result = await db.execute(stmt)
+    note = result.scalar_one_or_none()
+    if not note:
+        raise HTTPException(status_code=404, detail="Wrong note not found")
+
+    note.review_count += 1
+
+    if payload.is_correct:
+        note.consecutive_correct += 1
+        note.next_review_at = calculate_next_review(note.consecutive_correct)
+        if note.consecutive_correct >= 5:
+            note.is_mastered = True
+    else:
+        note.consecutive_correct = 0
+        note.next_review_at = calculate_next_review(0)
+
+    await db.commit()
+    await db.refresh(note)
+
+    return WrongAnswerNoteResponse(
+        id=note.id,
+        quiz_item_id=note.quiz_item_id,
+        question=note.quiz_item.question if note.quiz_item else "",
+        user_answer=note.user_answer,
+        correct_answer=note.correct_answer,
+        wrong_reason=note.wrong_reason,
+        concept_tags=note.concept_tags,
+        next_review_at=note.next_review_at,
+        consecutive_correct=note.consecutive_correct,
+        is_mastered=note.is_mastered,
+        created_at=note.created_at,
     )
