@@ -18,29 +18,49 @@ def normalize_text(raw: str) -> str:
     return text.strip()
 
 
+def _split_sentences(text: str) -> list[str]:
+    """Split text into sentences, handling both Korean and English.
+
+    Phase 1: split on newlines (primary boundary in Korean PDFs).
+    Phase 2: within each paragraph, split on sentence-ending punctuation.
+    """
+    paragraphs = re.split(r"\n+", text)
+    sentences: list[str] = []
+    for para in paragraphs:
+        para = para.strip()
+        if not para:
+            continue
+        parts = re.split(r"(?<=[.!?。])\s*", para)
+        for part in parts:
+            stripped = part.strip()
+            if stripped:
+                sentences.append(stripped)
+    return sentences
+
+
 def split_into_chunks(text: str, chunk_size: int, overlap: int) -> list[str]:
-    sentences = re.split(r"(?<=[.!?。])\s+", text)
+    """Split text into chunks by character count (not word count)."""
+    sentences = _split_sentences(text)
     chunks: list[str] = []
     current: list[str] = []
     current_len = 0
 
     for sentence in sentences:
-        word_count = len(sentence.split())
-        if current_len + word_count > chunk_size and current:
+        char_count = len(sentence)
+        if current_len + char_count > chunk_size and current:
             chunks.append(" ".join(current))
-            # Keep overlap
             overlap_sentences: list[str] = []
             overlap_len = 0
             for s in reversed(current):
-                wc = len(s.split())
-                if overlap_len + wc > overlap:
+                cc = len(s)
+                if overlap_len + cc > overlap:
                     break
                 overlap_sentences.insert(0, s)
-                overlap_len += wc
+                overlap_len += cc
             current = overlap_sentences
             current_len = overlap_len
         current.append(sentence)
-        current_len += word_count
+        current_len += char_count
 
     if current:
         chunks.append(" ".join(current))
@@ -82,7 +102,7 @@ async def create_document_with_chunks(
             index=i,
             content=text,
             content_hash=compute_hash(text),
-            token_count=len(text.split()),
+            token_count=len(text),  # character count
         )
         db.add(chunk)
 

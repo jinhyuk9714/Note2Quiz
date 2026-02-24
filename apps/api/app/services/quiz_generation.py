@@ -67,7 +67,7 @@ async def generate_quiz_from_chunks(
             )
             response = await client.messages.create(
                 model=settings.anthropic_model,
-                max_tokens=2000,
+                max_tokens=4096,
                 messages=[{"role": "user", "content": prompt}],
             )
 

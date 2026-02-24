@@ -40,4 +40,6 @@ difficulty: 1 = easy, 2 = medium, 3 = hard.
 concept_tags: 1-3 key concept keywords from the material.
 explanation: 1-2 sentences explaining why the answer is correct.
 
+**Language**: Generate ALL content (question, correct_answer, explanation, options, concept_tags) in the SAME language as the study material. If the study material is in Korean, all output text must be in Korean.
+
 Return ONLY the JSON array, no other text."""

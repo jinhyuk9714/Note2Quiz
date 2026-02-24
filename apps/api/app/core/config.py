@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     max_pdf_pages: int = 200
 
     # Quiz generation defaults
-    default_chunk_size: int = 800
-    default_chunk_overlap: int = 100
+    default_chunk_size: int = 1500  # characters
+    default_chunk_overlap: int = 200  # characters
     max_questions_per_chunk: int = 5
 
 
