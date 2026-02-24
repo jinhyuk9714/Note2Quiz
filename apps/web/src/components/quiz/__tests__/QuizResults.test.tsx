@@ -1,0 +1,74 @@
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QuizResults } from "../QuizResults";
+import type { SubmitResult, QuizItem } from "@/types/api";
+
+const items: QuizItem[] = [
+  {
+    id: "q1",
+    quiz_type: "mcq",
+    question: "Q1?",
+    correct_answer: "A",
+    explanation: "",
+    options: { A: "a", B: "b", C: "c", D: "d" },
+    concept_tags: [],
+    difficulty: 1,
+  },
+  {
+    id: "q2",
+    quiz_type: "mcq",
+    question: "Q2?",
+    correct_answer: "B",
+    explanation: "",
+    options: { A: "a", B: "b", C: "c", D: "d" },
+    concept_tags: [],
+    difficulty: 1,
+  },
+];
+
+const result: SubmitResult = {
+  attempt_id: "a1",
+  score: 1,
+  total: 2,
+  results: [
+    {
+      quiz_item_id: "q1",
+      user_answer: "A",
+      correct_answer: "A",
+      is_correct: true,
+      explanation: "",
+    },
+    {
+      quiz_item_id: "q2",
+      user_answer: "C",
+      correct_answer: "B",
+      is_correct: false,
+      explanation: "",
+    },
+  ],
+  wrong_notes_created: 1,
+};
+
+describe("QuizResults", () => {
+  it("displays score and percentage", () => {
+    render(<QuizResults result={result} items={items} />);
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
+    expect(screen.getByText("50% 정답")).toBeInTheDocument();
+  });
+
+  it("shows wrong notes created count", () => {
+    render(<QuizResults result={result} items={items} />);
+    expect(screen.getByText("1개 오답노트 생성됨")).toBeInTheDocument();
+  });
+
+  it("hides wrong notes message when all correct", () => {
+    const perfectResult: SubmitResult = {
+      ...result,
+      score: 2,
+      results: result.results.map((r) => ({ ...r, is_correct: true })),
+      wrong_notes_created: 0,
+    };
+    render(<QuizResults result={perfectResult} items={items} />);
+    expect(screen.queryByText(/오답노트 생성됨/)).not.toBeInTheDocument();
+  });
+});

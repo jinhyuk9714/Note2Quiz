@@ -1,0 +1,74 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderWithProviders, screen } from "@/test/test-utils";
+import userEvent from "@testing-library/user-event";
+import { WrongNoteCard } from "../WrongNoteCard";
+import type { WrongNote } from "@/types/api";
+
+vi.mock("@/lib/api", () => ({
+  reviewWrongNote: vi.fn(),
+}));
+
+import { reviewWrongNote } from "@/lib/api";
+
+const note: WrongNote = {
+  id: "note-1",
+  quiz_item_id: "qi-1",
+  question: "What is the capital?",
+  user_answer: "Busan",
+  correct_answer: "Seoul",
+  wrong_reason: "Seoul is the capital of South Korea.",
+  concept_tags: ["geography", "korea"],
+  next_review_at: "2025-06-15T00:00:00Z",
+  consecutive_correct: 2,
+  is_mastered: false,
+  created_at: "2025-06-01T00:00:00Z",
+};
+
+describe("WrongNoteCard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders question, answers, and reason", () => {
+    renderWithProviders(<WrongNoteCard note={note} />);
+    expect(screen.getByText("What is the capital?")).toBeInTheDocument();
+    expect(screen.getByText("Busan")).toBeInTheDocument();
+    expect(screen.getByText("Seoul")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Seoul is the capital/),
+    ).toBeInTheDocument();
+  });
+
+  it("renders concept tags", () => {
+    renderWithProviders(<WrongNoteCard note={note} />);
+    expect(screen.getByText("geography")).toBeInTheDocument();
+    expect(screen.getByText("korea")).toBeInTheDocument();
+  });
+
+  it("shows consecutive correct count", () => {
+    renderWithProviders(<WrongNoteCard note={note} />);
+    expect(screen.getByText(/연속 정답: 2회/)).toBeInTheDocument();
+  });
+
+  it('calls reviewWrongNote(true) when "정답" clicked', async () => {
+    vi.mocked(reviewWrongNote).mockResolvedValueOnce({
+      ...note,
+      consecutive_correct: 3,
+    });
+    renderWithProviders(<WrongNoteCard note={note} />);
+
+    await userEvent.click(screen.getByText("정답"));
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", true);
+  });
+
+  it('calls reviewWrongNote(false) when "오답" clicked', async () => {
+    vi.mocked(reviewWrongNote).mockResolvedValueOnce({
+      ...note,
+      consecutive_correct: 0,
+    });
+    renderWithProviders(<WrongNoteCard note={note} />);
+
+    await userEvent.click(screen.getByText("오답"));
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", false);
+  });
+});
