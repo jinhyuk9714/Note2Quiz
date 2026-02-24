@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -122,3 +122,19 @@ async def get_document(
             for c in sorted(doc.chunks, key=lambda c: c.index)
         ],
     )
+
+
+@router.delete("/{document_id}", status_code=204)
+async def delete_document(
+    document_id: uuid.UUID,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> Response:
+    stmt = select(Document).where(Document.id == document_id, Document.owner_id == user_id)
+    result = await db.execute(stmt)
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    await db.delete(doc)
+    await db.commit()
+    return Response(status_code=204)

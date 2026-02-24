@@ -30,11 +30,13 @@ class Quiz(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     title: Mapped[str] = mapped_column(String(500))
     item_count: Mapped[int] = mapped_column(Integer)
 
-    document: Mapped[Document] = relationship()
+    document: Mapped[Document] = relationship(back_populates="quizzes")
     items: Mapped[list[QuizItem]] = relationship(
         back_populates="quiz", cascade="all, delete-orphan"
     )
-    attempts: Mapped[list[QuizAttempt]] = relationship(back_populates="quiz")
+    attempts: Mapped[list[QuizAttempt]] = relationship(
+        back_populates="quiz", cascade="all, delete-orphan"
+    )
 
 
 class QuizItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):

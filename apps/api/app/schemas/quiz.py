@@ -24,6 +24,14 @@ class QuizItemResponse(BaseModel):
     difficulty: int
 
 
+class QuizListItemResponse(BaseModel):
+    id: uuid.UUID
+    title: str
+    item_count: int
+    document_id: uuid.UUID
+    created_at: datetime
+
+
 class QuizResponse(BaseModel):
     id: uuid.UUID
     title: str

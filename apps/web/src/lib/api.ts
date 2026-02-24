@@ -7,6 +7,7 @@ import type {
   GenerateQuizPayload,
   LoginPayload,
   Quiz,
+  QuizListItem,
   SignupPayload,
   SubmitResult,
   TokenResponse,
@@ -118,6 +119,27 @@ async function apiFormFetch<T>(
   return res.json() as Promise<T>;
 }
 
+async function apiDelete(path: string): Promise<void> {
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${BASE}${path}`, { method: "DELETE", headers });
+  if (!res.ok) {
+    if (res.status === 401 && !path.startsWith("/api/auth/")) {
+      clearToken();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (body as { detail?: string }).detail ?? `HTTP ${res.status}`,
+    );
+  }
+}
+
 // Documents
 export function listDocuments() {
   return apiFetch<Document[]>("/api/documents/");
@@ -141,7 +163,14 @@ export function uploadDocumentFile(title: string, file: File) {
   return apiFormFetch<Document>("/api/documents/", formData);
 }
 
+export function deleteDocument(id: string): Promise<void> {
+  return apiDelete(`/api/documents/${id}`);
+}
+
 // Quiz
+export function listQuizzes() {
+  return apiFetch<QuizListItem[]>("/api/quiz/");
+}
 export function generateQuiz(payload: GenerateQuizPayload) {
   return apiFetch<Quiz>("/api/quiz/generate", {
     method: "POST",
@@ -158,6 +187,10 @@ export function submitQuiz(quizId: string, answers: AnswerItem[]) {
     method: "POST",
     body: JSON.stringify({ answers }),
   });
+}
+
+export function deleteQuiz(id: string): Promise<void> {
+  return apiDelete(`/api/quiz/${id}`);
 }
 
 // Wrong Notes

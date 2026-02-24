@@ -10,6 +10,7 @@ from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models.chunk import Chunk
+    from app.models.quiz import Quiz
     from app.models.user import User
 
 
@@ -24,5 +25,8 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     owner: Mapped[User] = relationship(back_populates="documents")
     chunks: Mapped[list[Chunk]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
+    )
+    quizzes: Mapped[list[Quiz]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )

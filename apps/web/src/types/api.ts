@@ -62,6 +62,14 @@ export interface Quiz {
   items: QuizItem[];
 }
 
+export interface QuizListItem {
+  id: string;
+  title: string;
+  item_count: number;
+  document_id: string;
+  created_at: string;
+}
+
 export interface GenerateQuizPayload {
   document_id: string;
   chunk_ids?: string[] | null;

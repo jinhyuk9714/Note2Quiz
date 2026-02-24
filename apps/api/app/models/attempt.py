@@ -18,7 +18,9 @@ if TYPE_CHECKING:
 class QuizAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "quiz_attempts"
 
-    quiz_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("quizzes.id"), index=True)
+    quiz_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("quizzes.id", ondelete="CASCADE"), index=True
+    )
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     score: Mapped[int] = mapped_column(Integer)
     total: Mapped[int] = mapped_column(Integer)
@@ -38,7 +40,9 @@ class WrongAnswerNote(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("quiz_attempts.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
-    quiz_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("quiz_items.id"), index=True)
+    quiz_item_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("quiz_items.id", ondelete="CASCADE"), index=True
+    )
 
     user_answer: Mapped[str] = mapped_column(Text)
     correct_answer: Mapped[str] = mapped_column(Text)

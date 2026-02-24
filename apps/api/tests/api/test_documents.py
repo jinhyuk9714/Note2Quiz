@@ -126,3 +126,37 @@ class TestGetDocument:
         fake_id = str(uuid.uuid4())
         resp = await client.get(f"/api/documents/{fake_id}")
         assert resp.status_code == 404
+
+
+class TestDeleteDocument:
+    async def test_delete_existing_returns_204(self, client: AsyncClient) -> None:
+        create_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "ToDelete",
+                "text": "Long enough text for the deletion test here.",
+            },
+        )
+        doc_id = create_resp.json()["id"]
+
+        resp = await client.delete(f"/api/documents/{doc_id}")
+        assert resp.status_code == 204
+
+    async def test_delete_nonexistent_returns_404(self, client: AsyncClient) -> None:
+        resp = await client.delete(f"/api/documents/{uuid.uuid4()}")
+        assert resp.status_code == 404
+
+    async def test_delete_then_get_returns_404(self, client: AsyncClient) -> None:
+        create_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "CascadeTest",
+                "text": "Long enough text for cascade test here really.",
+            },
+        )
+        doc_id = create_resp.json()["id"]
+
+        await client.delete(f"/api/documents/{doc_id}")
+
+        get_resp = await client.get(f"/api/documents/{doc_id}")
+        assert get_resp.status_code == 404

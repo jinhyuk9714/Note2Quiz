@@ -2,14 +2,20 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentUserID, DBSession
+from app.models.document import Document
 from app.models.quiz import Quiz, QuizItem
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
-from app.schemas.quiz import QuizGenerateRequest, QuizItemResponse, QuizResponse
+from app.schemas.quiz import (
+    QuizGenerateRequest,
+    QuizItemResponse,
+    QuizListItemResponse,
+    QuizResponse,
+)
 from app.services.quiz_generation import generate_quiz_from_chunks
 from app.services.wrong_note_service import create_attempt_with_wrong_notes
 
@@ -60,6 +66,44 @@ async def generate_quiz(
     quiz = result.scalar_one()
 
     return _quiz_to_response(quiz)
+
+
+@router.get("/", response_model=list[QuizListItemResponse])
+async def list_quizzes(db: DBSession, user_id: CurrentUserID) -> list[QuizListItemResponse]:
+    stmt = (
+        select(Quiz)
+        .join(Quiz.document)
+        .where(Document.owner_id == user_id)
+        .order_by(Quiz.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    quizzes = list(result.scalars().all())
+    return [
+        QuizListItemResponse(
+            id=q.id,
+            title=q.title,
+            item_count=q.item_count,
+            document_id=q.document_id,
+            created_at=q.created_at,
+        )
+        for q in quizzes
+    ]
+
+
+@router.delete("/{quiz_id}", status_code=204)
+async def delete_quiz(
+    quiz_id: uuid.UUID,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> Response:
+    stmt = select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    result = await db.execute(stmt)
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    await db.delete(quiz)
+    await db.commit()
+    return Response(status_code=204)
 
 
 @router.get("/{quiz_id}", response_model=QuizResponse)

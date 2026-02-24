@@ -37,6 +37,31 @@ def _mock_anthropic() -> tuple[MagicMock, AsyncMock]:
     return mock_cls, mock_client
 
 
+async def _make_quiz(client: AsyncClient) -> dict[str, Any]:
+    """Create a document + quiz using mocked Anthropic, return quiz dict."""
+    mock_cls, _ = _mock_anthropic()
+    doc_resp = await client.post(
+        "/api/documents/",
+        data={
+            "title": "QuizSource",
+            "text": "Long enough material for quiz generation testing purposes.",
+        },
+    )
+    doc_id = doc_resp.json()["id"]
+    with (
+        patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+        patch(
+            "app.services.quiz_generation.isinstance",
+            side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+        ),
+    ):
+        quiz_resp = await client.post(
+            "/api/quiz/generate",
+            json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+        )
+    return quiz_resp.json()
+
+
 class TestGenerateQuiz:
     async def test_generate_quiz_success(self, client: AsyncClient) -> None:
         mock_cls, _ = _mock_anthropic()
@@ -147,3 +172,48 @@ class TestSubmitQuiz:
         result = resp.json()
         assert result["score"] == 0
         assert result["wrong_notes_created"] == 1
+
+
+class TestListQuizzes:
+    async def test_empty_list(self, client: AsyncClient) -> None:
+        resp = await client.get("/api/quiz/")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    async def test_list_after_create(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.get("/api/quiz/")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["id"] == quiz["id"]
+        assert "items" not in data[0]
+        assert "document_id" in data[0]
+
+
+class TestDeleteQuiz:
+    async def test_delete_existing_returns_204(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        quiz_id = quiz["id"]
+
+        resp = await client.delete(f"/api/quiz/{quiz_id}")
+        assert resp.status_code == 204
+
+        get_resp = await client.get(f"/api/quiz/{quiz_id}")
+        assert get_resp.status_code == 404
+
+    async def test_delete_nonexistent_returns_404(self, client: AsyncClient) -> None:
+        resp = await client.delete(f"/api/quiz/{uuid.uuid4()}")
+        assert resp.status_code == 404
+
+    async def test_delete_document_cascades_to_quiz(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        quiz_id = quiz["id"]
+
+        list_resp = await client.get("/api/quiz/")
+        doc_id = list_resp.json()[0]["document_id"]
+
+        await client.delete(f"/api/documents/{doc_id}")
+
+        get_resp = await client.get(f"/api/quiz/{quiz_id}")
+        assert get_resp.status_code == 404
