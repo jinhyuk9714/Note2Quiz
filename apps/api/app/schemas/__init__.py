@@ -26,7 +26,6 @@ from app.schemas.document import (
     ChunkResponse,
     DocumentDetailResponse,
     DocumentResponse,
-    DocumentUploadRequest,
 )
 from app.schemas.quiz import (
     QuizGenerateRequest,
@@ -41,7 +40,6 @@ __all__ = [
     "DashboardStatsResponse",
     "DocumentDetailResponse",
     "DocumentResponse",
-    "DocumentUploadRequest",
     "ErrorResponse",
     "LearningProgressStats",
     "LoginRequest",

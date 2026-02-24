@@ -86,6 +86,38 @@ export function getMe(): Promise<AuthUser> {
   return apiFetch<AuthUser>("/api/auth/me");
 }
 
+// Multipart form fetch (for file uploads — no Content-Type header; browser sets boundary)
+async function apiFormFetch<T>(
+  path: string,
+  formData: FormData,
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    if (res.status === 401 && !path.startsWith("/api/auth/")) {
+      clearToken();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (body as { detail?: string }).detail ?? `HTTP ${res.status}`,
+    );
+  }
+  return res.json() as Promise<T>;
+}
+
 // Documents
 export function listDocuments() {
   return apiFetch<Document[]>("/api/documents/");
@@ -96,10 +128,17 @@ export function getDocument(id: string) {
 }
 
 export function uploadDocument(title: string, text: string) {
-  return apiFetch<Document>("/api/documents/", {
-    method: "POST",
-    body: JSON.stringify({ title, text }),
-  });
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("text", text);
+  return apiFormFetch<Document>("/api/documents/", formData);
+}
+
+export function uploadDocumentFile(title: string, file: File) {
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("file", file);
+  return apiFormFetch<Document>("/api/documents/", formData);
 }
 
 // Quiz

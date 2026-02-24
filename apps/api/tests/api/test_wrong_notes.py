@@ -59,7 +59,7 @@ class TestReviewWrongNote:
         # Create doc → quiz → submit wrong answer → get wrong note
         doc_resp = await client.post(
             "/api/documents/",
-            json={
+            data={
                 "title": "Review Test",
                 "text": "Enough text material for creating a quiz for review testing.",
             },

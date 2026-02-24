@@ -53,7 +53,7 @@ class TestDashboardStats:
 
         doc_resp = await client.post(
             "/api/documents/",
-            json={
+            data={
                 "title": "Dashboard Test",
                 "text": "Enough text material for creating a quiz for dashboard testing.",
             },
@@ -114,7 +114,7 @@ class TestDashboardStats:
 
         doc_resp = await client.post(
             "/api/documents/",
-            json={
+            data={
                 "title": "Accuracy Test",
                 "text": "Enough text material for creating a quiz for accuracy testing.",
             },

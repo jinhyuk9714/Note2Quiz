@@ -5,6 +5,7 @@ import { DocumentUploadForm } from "../DocumentUploadForm";
 
 vi.mock("@/lib/api", () => ({
   uploadDocument: vi.fn(),
+  uploadDocumentFile: vi.fn(),
 }));
 
 import { uploadDocument } from "@/lib/api";
@@ -14,11 +15,17 @@ describe("DocumentUploadForm", () => {
     vi.clearAllMocks();
   });
 
-  it("renders form elements", () => {
+  it("renders form elements with mode tabs", () => {
     renderWithProviders(<DocumentUploadForm />);
     expect(screen.getByLabelText("제목")).toBeInTheDocument();
-    expect(screen.getByLabelText("텍스트")).toBeInTheDocument();
+    expect(screen.getByText("텍스트 붙여넣기")).toBeInTheDocument();
+    expect(screen.getByText("PDF 업로드")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "업로드" })).toBeInTheDocument();
+  });
+
+  it("defaults to text mode with textarea visible", () => {
+    renderWithProviders(<DocumentUploadForm />);
+    expect(screen.getByLabelText("텍스트")).toBeInTheDocument();
   });
 
   it("disables submit when title is empty", () => {
@@ -72,5 +79,21 @@ describe("DocumentUploadForm", () => {
     await waitFor(() => {
       expect(screen.getByText(/업로드 완료/)).toBeInTheDocument();
     });
+  });
+
+  it("switches to PDF mode and hides textarea", async () => {
+    renderWithProviders(<DocumentUploadForm />);
+    await userEvent.click(screen.getByText("PDF 업로드"));
+    expect(
+      screen.getByText(/PDF 파일을 드래그하거나 선택하세요/),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("텍스트")).not.toBeInTheDocument();
+  });
+
+  it("disables submit in PDF mode without file", async () => {
+    renderWithProviders(<DocumentUploadForm />);
+    await userEvent.type(screen.getByLabelText("제목"), "PDF Title");
+    await userEvent.click(screen.getByText("PDF 업로드"));
+    expect(screen.getByRole("button", { name: "업로드" })).toBeDisabled();
   });
 });

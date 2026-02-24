@@ -3,12 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
-
-
-class DocumentUploadRequest(BaseModel):
-    title: str = Field(min_length=1, max_length=500)
-    text: str = Field(min_length=10, description="원문 텍스트 (또는 PDF 추출 텍스트)")
+from pydantic import BaseModel
 
 
 class ChunkResponse(BaseModel):

@@ -43,7 +43,7 @@ class TestGenerateQuiz:
 
         doc_resp = await client.post(
             "/api/documents/",
-            json={
+            data={
                 "title": "Quiz Source",
                 "text": "This is long enough material for quiz generation testing purposes.",
             },
@@ -95,7 +95,7 @@ class TestSubmitQuiz:
 
         doc_resp = await client.post(
             "/api/documents/",
-            json={
+            data={
                 "title": "Submit Test",
                 "text": "Enough text material for creating a quiz for submission testing.",
             },
