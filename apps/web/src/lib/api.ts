@@ -1,5 +1,6 @@
 import type {
   AnswerItem,
+  DashboardStats,
   Document,
   DocumentDetail,
   GenerateQuizPayload,
@@ -72,4 +73,9 @@ export function reviewWrongNote(noteId: string, isCorrect: boolean) {
     method: "POST",
     body: JSON.stringify({ is_correct: isCorrect }),
   });
+}
+
+// Dashboard
+export function getDashboardStats() {
+  return apiFetch<DashboardStats>("/api/dashboard/stats");
 }

@@ -85,3 +85,36 @@ export interface WrongNoteListResponse {
   notes: WrongNote[];
   total: number;
 }
+
+// Dashboard
+export interface LearningProgressStats {
+  total_quizzes_taken: number;
+  total_questions_answered: number;
+  total_correct: number;
+  accuracy_rate: number;
+  documents_studied: number;
+}
+
+export interface WeakConceptItem {
+  tag: string;
+  wrong_count: number;
+  mastered_count: number;
+  total_count: number;
+}
+
+export interface ReviewScheduleDay {
+  date: string;
+  count: number;
+}
+
+export interface ReviewScheduleStats {
+  overdue_count: number;
+  today_count: number;
+  upcoming: ReviewScheduleDay[];
+}
+
+export interface DashboardStats {
+  learning_progress: LearningProgressStats;
+  weak_concepts: WeakConceptItem[];
+  review_schedule: ReviewScheduleStats;
+}

@@ -2,24 +2,24 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { listDocuments, listWrongNotes } from "@/lib/api";
+
+import { getDashboardStats } from "@/lib/api";
+import { LearningProgressCard } from "@/components/dashboard/LearningProgressCard";
+import { WeakConceptsCard } from "@/components/dashboard/WeakConceptsCard";
+import { ReviewScheduleCard } from "@/components/dashboard/ReviewScheduleCard";
 
 export default function DashboardPage() {
-  const { data: documents } = useQuery({
-    queryKey: ["documents"],
-    queryFn: listDocuments,
+  const {
+    data: stats,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: getDashboardStats,
   });
-
-  const { data: dueNotes } = useQuery({
-    queryKey: ["wrong-notes", true],
-    queryFn: () => listWrongNotes(true),
-  });
-
-  const docCount = documents?.length ?? 0;
-  const dueCount = dueNotes?.total ?? 0;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold">QuizNote AI</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -27,17 +27,26 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-5">
-          <p className="text-sm text-gray-500">업로드 문서</p>
-          <p className="mt-1 text-3xl font-bold">{docCount}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-5">
-          <p className="text-sm text-gray-500">복습 예정</p>
-          <p className="mt-1 text-3xl font-bold text-amber-600">{dueCount}</p>
-        </div>
-      </div>
+      {isLoading && (
+        <p className="text-sm text-gray-400">대시보드를 불러오는 중...</p>
+      )}
+
+      {isError && (
+        <p className="text-sm text-red-500">
+          통계를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+        </p>
+      )}
+
+      {stats && (
+        <>
+          <LearningProgressCard stats={stats.learning_progress} />
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <WeakConceptsCard concepts={stats.weak_concepts} />
+            <ReviewScheduleCard schedule={stats.review_schedule} />
+          </div>
+        </>
+      )}
 
       {/* Quick actions */}
       <div className="space-y-3">
@@ -63,17 +72,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
-
-      {dueCount > 0 && (
-        <Link
-          href="/wrong-notes"
-          className="block rounded-lg border border-amber-200 bg-amber-50 p-4 text-center transition-colors hover:bg-amber-100"
-        >
-          <p className="text-sm font-medium text-amber-700">
-            복습할 오답노트가 {dueCount}개 있어요!
-          </p>
-        </Link>
-      )}
     </div>
   );
 }
