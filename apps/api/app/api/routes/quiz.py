@@ -5,8 +5,11 @@ import uuid
 from fastapi import APIRouter, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from starlette.requests import Request
 
+from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
+from app.core.rate_limit import limiter
 from app.models.document import Document
 from app.models.quiz import Quiz, QuizItem
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
@@ -45,9 +48,19 @@ def _quiz_to_response(quiz: Quiz) -> QuizResponse:
 
 
 @router.post("/generate", response_model=QuizResponse, status_code=201)
+@limiter.limit(settings.rate_limit_quiz_gen)  # pyright: ignore[reportUntypedFunctionDecorator,reportUnknownMemberType]
 async def generate_quiz(
-    payload: QuizGenerateRequest, db: DBSession, _user_id: CurrentUserID
+    request: Request, payload: QuizGenerateRequest, db: DBSession, user_id: CurrentUserID
 ) -> QuizResponse:
+    # Verify user owns the document
+    doc_stmt = select(Document).where(
+        Document.id == payload.document_id,
+        Document.owner_id == user_id,
+    )
+    doc_result = await db.execute(doc_stmt)
+    if not doc_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Document not found")
+
     try:
         quiz = await generate_quiz_from_chunks(
             db=db,
@@ -107,8 +120,13 @@ async def delete_quiz(
 
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz(quiz_id: uuid.UUID, db: DBSession, _user_id: CurrentUserID) -> QuizResponse:
-    stmt = select(Quiz).where(Quiz.id == quiz_id).options(selectinload(Quiz.items))
+async def get_quiz(quiz_id: uuid.UUID, db: DBSession, user_id: CurrentUserID) -> QuizResponse:
+    stmt = (
+        select(Quiz)
+        .join(Quiz.document)
+        .where(Quiz.id == quiz_id, Document.owner_id == user_id)
+        .options(selectinload(Quiz.items))
+    )
     result = await db.execute(stmt)
     quiz = result.scalar_one_or_none()
     if not quiz:
@@ -124,6 +142,14 @@ async def submit_quiz(
     db: DBSession,
     user_id: CurrentUserID,
 ) -> QuizSubmitResponse:
+    # Verify user owns the quiz (via document ownership)
+    ownership_stmt = (
+        select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    )
+    ownership_result = await db.execute(ownership_stmt)
+    if not ownership_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
     attempt, wrong_notes = await create_attempt_with_wrong_notes(
         db=db,
         quiz_id=quiz_id,

@@ -217,3 +217,84 @@ class TestDeleteQuiz:
 
         get_resp = await client.get(f"/api/quiz/{quiz_id}")
         assert get_resp.status_code == 404
+
+
+class TestQuizOwnership:
+    """Test that quiz endpoints enforce document ownership."""
+
+    async def test_get_quiz_of_another_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        resp = await second_client.get(f"/api/quiz/{quiz['id']}")
+        assert resp.status_code == 404
+
+    async def test_generate_quiz_from_another_users_doc_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={"title": "Private Doc", "text": "Enough text for document processing testing."},
+        )
+        doc_id = doc_resp.json()["id"]
+
+        resp = await second_client.post(
+            "/api/quiz/generate",
+            json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+        )
+        assert resp.status_code == 404
+
+    async def test_submit_quiz_of_another_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+
+        resp = await second_client.post(
+            f"/api/quiz/{quiz['id']}/submit",
+            json={"answers": [{"quiz_item_id": item_id, "user_answer": "A"}]},
+        )
+        assert resp.status_code == 404
+
+    async def test_delete_quiz_of_another_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        resp = await second_client.delete(f"/api/quiz/{quiz['id']}")
+        assert resp.status_code == 404
+
+    async def test_list_quizzes_only_returns_own(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        await _make_quiz(client)
+        resp = await second_client.get("/api/quiz/")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+
+class TestQuizInputValidation:
+    async def test_invalid_quiz_type_returns_422(self, client: AsyncClient) -> None:
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Validation Test",
+                "text": "Enough text for document processing testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        resp = await client.post(
+            "/api/quiz/generate",
+            json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["banana"]},
+        )
+        assert resp.status_code == 422
+
+    async def test_user_answer_too_long_returns_422(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+
+        resp = await client.post(
+            f"/api/quiz/{quiz['id']}/submit",
+            json={"answers": [{"quiz_item_id": item_id, "user_answer": "A" * 1001}]},
+        )
+        assert resp.status_code == 422

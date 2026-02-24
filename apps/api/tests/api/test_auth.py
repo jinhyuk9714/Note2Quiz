@@ -104,3 +104,19 @@ class TestGetMe:
             headers={"Authorization": "Bearer invalid-token"},
         )
         assert resp.status_code == 401
+
+
+class TestLoginValidation:
+    async def test_login_empty_password_returns_422(self, anon_client: AsyncClient) -> None:
+        resp = await anon_client.post(
+            "/api/auth/login",
+            json={"email": "a@b.com", "password": ""},
+        )
+        assert resp.status_code == 422
+
+    async def test_login_oversized_email_returns_422(self, anon_client: AsyncClient) -> None:
+        resp = await anon_client.post(
+            "/api/auth/login",
+            json={"email": "a" * 300 + "@example.com", "password": "test1234"},
+        )
+        assert resp.status_code == 422

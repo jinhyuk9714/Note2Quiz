@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 class AnswerItem(BaseModel):
     quiz_item_id: uuid.UUID
-    user_answer: str
+    user_answer: str = Field(max_length=1000)
 
 
 class QuizSubmitRequest(BaseModel):

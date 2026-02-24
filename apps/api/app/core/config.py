@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 20
     max_pdf_pages: int = 200
 
+    # Rate limiting
+    rate_limit_auth: str = "5/minute"
+    rate_limit_quiz_gen: str = "10/minute"
+
     # Quiz generation defaults
     default_chunk_size: int = 1500  # characters
     default_chunk_overlap: int = 200  # characters

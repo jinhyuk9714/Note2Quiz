@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
+from starlette.requests import Request
 
+from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
+from app.core.rate_limit import limiter
 from app.models.user import User
 from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserResponse
 from app.services.auth_service import create_access_token, hash_password, verify_password
@@ -12,7 +15,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=201)
-async def signup(payload: SignupRequest, db: DBSession) -> TokenResponse:
+@limiter.limit(settings.rate_limit_auth)  # pyright: ignore[reportUntypedFunctionDecorator,reportUnknownMemberType]
+async def signup(request: Request, payload: SignupRequest, db: DBSession) -> TokenResponse:
     stmt = select(User).where(User.email == payload.email)
     result = await db.execute(stmt)
     if result.scalar_one_or_none():
@@ -31,7 +35,8 @@ async def signup(payload: SignupRequest, db: DBSession) -> TokenResponse:
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, db: DBSession) -> TokenResponse:
+@limiter.limit(settings.rate_limit_auth)  # pyright: ignore[reportUntypedFunctionDecorator,reportUnknownMemberType]
+async def login(request: Request, payload: LoginRequest, db: DBSession) -> TokenResponse:
     stmt = select(User).where(User.email == payload.email)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
