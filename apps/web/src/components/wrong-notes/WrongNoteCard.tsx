@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, RefreshCw, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, AlertCircle } from "lucide-react";
 import { reviewWrongNote } from "@/lib/api";
 import type { WrongNote } from "@/types/api";
 import { cn, formatDate, getRelativeTime } from "@/lib/utils";
+import { MasteryProgress } from "./MasteryProgress";
 
 interface WrongNoteCardProps {
   note: WrongNote;
@@ -23,7 +24,12 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
   });
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+    <div className={cn(
+      "overflow-hidden rounded-[2rem] border bg-white p-6 shadow-sm transition-all hover:shadow-md",
+      note.is_mastered
+        ? "border-l-4 border-l-emerald-400 border-slate-200"
+        : "border-slate-200",
+    )}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-500 ring-1 ring-inset ring-red-100">
@@ -80,10 +86,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
 
       <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
         <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-          <div className="flex items-center gap-1.5">
-            <RefreshCw className="h-3.5 w-3.5" />
-            Streak: {note.consecutive_correct}
-          </div>
+          <MasteryProgress consecutiveCorrect={note.consecutive_correct} isMastered={note.is_mastered} />
           <div className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
             {formatDate(note.created_at)}

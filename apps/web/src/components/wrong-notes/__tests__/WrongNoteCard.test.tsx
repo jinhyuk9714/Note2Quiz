@@ -45,9 +45,23 @@ describe("WrongNoteCard", () => {
     expect(screen.getByText("korea")).toBeInTheDocument();
   });
 
-  it("shows consecutive correct count", () => {
-    renderWithProviders(<WrongNoteCard note={note} />);
-    expect(screen.getByText(/Streak: 2/)).toBeInTheDocument();
+  it("renders mastery progress dots", () => {
+    const { container } = renderWithProviders(<WrongNoteCard note={note} />);
+    const dots = container.querySelectorAll(".rounded-full");
+    const masteryDots = Array.from(dots).filter(
+      (d) =>
+        d.classList.contains("bg-indigo-500") ||
+        d.classList.contains("bg-slate-200") ||
+        d.classList.contains("bg-emerald-500"),
+    );
+    expect(masteryDots.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("shows mastered styling when is_mastered is true", () => {
+    renderWithProviders(
+      <WrongNoteCard note={{ ...note, is_mastered: true, consecutive_correct: 5 }} />,
+    );
+    expect(screen.getByText("Mastered")).toBeInTheDocument();
   });
 
   it('calls reviewWrongNote(true) when "알고 있어요" clicked', async () => {

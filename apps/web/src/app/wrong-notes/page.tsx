@@ -1,20 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, Sparkles } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, Sparkles, PlayCircle } from "lucide-react";
 import { listWrongNotes } from "@/lib/api";
 import { WrongNoteCard } from "@/components/wrong-notes/WrongNoteCard";
+import { ReviewSession } from "@/components/wrong-notes/ReviewSession";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function WrongNotesPage() {
+  const queryClient = useQueryClient();
   const [dueOnly, setDueOnly] = useState(false);
+  const [reviewMode, setReviewMode] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["wrong-notes", dueOnly],
     queryFn: () => listWrongNotes(dueOnly),
   });
+
+  const dueNotes = data?.notes ?? [];
+
+  function handleExitReview() {
+    setReviewMode(false);
+    void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 pb-12">
@@ -64,14 +74,27 @@ export default function WrongNotesPage() {
               {dueOnly ? "복습 대기 중인 문항" : "내 오답 보관함"}
             </h2>
           </div>
-          {data && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
-              총 {data.notes.length}개
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {dueOnly && dueNotes.length > 0 && !reviewMode && (
+              <button
+                onClick={() => setReviewMode(true)}
+                className="flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95"
+              >
+                <PlayCircle className="h-4 w-4" />
+                복습 시작 ({dueNotes.length}개)
+              </button>
+            )}
+            {data && (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+                총 {data.notes.length}개
+              </span>
+            )}
+          </div>
         </div>
 
-        {isLoading ? (
+        {reviewMode && dueNotes.length > 0 ? (
+          <ReviewSession notes={dueNotes} onExit={handleExitReview} />
+        ) : isLoading ? (
           <div className="grid grid-cols-1 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-64 animate-pulse rounded-[2rem] bg-slate-100" />
