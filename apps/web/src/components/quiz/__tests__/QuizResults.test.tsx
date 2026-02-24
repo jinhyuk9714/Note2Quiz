@@ -52,13 +52,13 @@ const result: SubmitResult = {
 describe("QuizResults", () => {
   it("displays score and percentage", () => {
     render(<QuizResults result={result} items={items} />);
-    expect(screen.getByText("1 / 2")).toBeInTheDocument();
-    expect(screen.getByText("50% 정답")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText(/50% Accuracy/)).toBeInTheDocument();
   });
 
   it("shows wrong notes created count", () => {
     render(<QuizResults result={result} items={items} />);
-    expect(screen.getByText("1개 오답노트 생성됨")).toBeInTheDocument();
+    expect(screen.getByText(/1개의 오답노트가 생성되었습니다/)).toBeInTheDocument();
   });
 
   it("hides wrong notes message when all correct", () => {
@@ -69,6 +69,6 @@ describe("QuizResults", () => {
       wrong_notes_created: 0,
     };
     render(<QuizResults result={perfectResult} items={items} />);
-    expect(screen.queryByText(/오답노트 생성됨/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/오답노트가 생성/)).not.toBeInTheDocument();
   });
 });

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, Sparkles } from "lucide-react";
 import { listWrongNotes } from "@/lib/api";
 import { WrongNoteCard } from "@/components/wrong-notes/WrongNoteCard";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function WrongNotesPage() {
   const [dueOnly, setDueOnly] = useState(false);
@@ -15,60 +17,99 @@ export default function WrongNotesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">오답노트</h1>
+    <div className="mx-auto max-w-4xl space-y-10 pb-12">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            오답노트
+          </h1>
+          <p className="text-slate-500 font-medium">
+            틀린 문제를 다시 복습하고 개념을 완벽히 이해하세요.
+          </p>
+        </div>
 
-        <div className="flex rounded-md border border-gray-200 text-sm">
+        <div className="flex p-1.5 gap-1.5 rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-200/50 shadow-sm transition-all duration-200">
           <button
             onClick={() => setDueOnly(false)}
             className={cn(
-              "px-3 py-1.5 transition-colors",
+              "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
               !dueOnly
-                ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "text-gray-500 hover:bg-gray-50",
+                ? "bg-white text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-200"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50/50",
             )}
           >
-            전체
+            <Filter className="h-3.5 w-3.5" />
+            All
           </button>
           <button
             onClick={() => setDueOnly(true)}
             className={cn(
-              "px-3 py-1.5 transition-colors",
+              "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
               dueOnly
-                ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "text-gray-500 hover:bg-gray-50",
+                ? "bg-white text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-200"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50/50",
             )}
           >
-            복습 예정
+            <CalendarCheck className="h-3.5 w-3.5" />
+            Due Now
           </button>
         </div>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-500">로딩 중...</p>}
-
-      {error && (
-        <p className="text-sm text-red-600">
-          {error instanceof Error ? error.message : "오류가 발생했습니다"}
-        </p>
-      )}
-
-      {data && data.notes.length === 0 && (
-        <p className="py-10 text-center text-sm text-gray-400">
-          {dueOnly
-            ? "복습 예정인 오답노트가 없습니다"
-            : "아직 오답노트가 없습니다. 퀴즈를 풀어보세요!"}
-        </p>
-      )}
-
-      {data && data.notes.length > 0 && (
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500">{data.total}개</p>
-          {data.notes.map((note) => (
-            <WrongNoteCard key={note.id} note={note} />
-          ))}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <LayoutGrid className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-xl font-bold tracking-tight text-slate-800">
+              {dueOnly ? "복습 대기 중인 문항" : "내 오답 보관함"}
+            </h2>
+          </div>
+          {data && (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+              총 {data.notes.length}개
+            </span>
+          )}
         </div>
-      )}
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-64 animate-pulse rounded-[2rem] bg-slate-100" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="rounded-[2.5rem] border border-red-100 bg-red-50 p-8 text-center text-sm font-bold text-red-600">
+            {error instanceof Error ? error.message : "오류가 발생했습니다"}
+          </div>
+        ) : data && data.notes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-20 text-center backdrop-blur-sm">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-slate-300">
+              <BookOpenCheck className="h-10 w-10" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">
+              {dueOnly ? "복습할 문제가 없습니다" : "오답노트가 텅 비어있어요"}
+            </h3>
+            <p className="mt-2 text-sm font-medium text-slate-500 max-w-xs mx-auto leading-relaxed">
+              {dueOnly
+                ? "모든 복습을 마쳤습니다! 새로운 퀴즈에 도전하여 실력을 쌓아보세요."
+                : "퀴즈를 풀고 틀린 문제가 생기면 AI가 자동으로 오답노트에 추가해드립니다."}
+            </p>
+            <Link 
+              href="/quiz/generate"
+              className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95"
+            >
+              <Sparkles className="h-4 w-4" />
+              새로운 퀴즈 시작하기
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {data?.notes.map((note) => (
+              <WrongNoteCard key={note.id} note={note} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

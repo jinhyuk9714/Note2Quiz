@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { X } from "lucide-react";
+import { X, Brain, LogOut } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -29,7 +29,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
       <div
         onClick={onClose}
         className={cn(
-          "fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden",
+          "fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity md:hidden",
           isOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0",
@@ -40,29 +40,32 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
       {/* Slide-out panel */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white shadow-xl transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ease-out md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-gray-200 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-slate-100 px-6">
           <Link
             href="/"
             onClick={onClose}
-            className="text-lg font-bold text-indigo-600"
+            className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-800"
           >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm ring-1 ring-black/5">
+              <Brain className="h-5 w-5" />
+            </div>
             QuizNote
           </Link>
           <button
             onClick={onClose}
             aria-label="메뉴 닫기"
-            className="rounded-md p-2 text-gray-600 hover:bg-gray-100"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 
-        <nav className="mt-4 flex flex-1 flex-col gap-1 px-2">
-          {NAV_ITEMS.map(({ href, label }) => {
+        <nav className="mt-6 flex flex-1 flex-col gap-1.5 px-3">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const isActive =
               href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
@@ -71,12 +74,18 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                 href={href}
                 onClick={onClose}
                 className={cn(
-                  "rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                  "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200",
                   isActive
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                    ? "bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-100"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                 )}
               >
+                <Icon
+                  className={cn(
+                    "h-5 w-5 transition-colors",
+                    isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
+                  )}
+                />
                 {label}
               </Link>
             );
@@ -84,15 +93,23 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         </nav>
 
         {user && (
-          <div className="border-t border-gray-200 p-3">
-            <p className="truncate text-sm font-medium text-gray-700">
-              {user.display_name}
-            </p>
-            <p className="truncate text-xs text-gray-400">{user.email}</p>
+          <div className="m-4 mt-auto rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-700 font-bold shadow-sm ring-1 ring-black/5">
+                {user.display_name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <p className="truncate text-sm font-bold text-slate-700">
+                  {user.display_name}
+                </p>
+                <p className="truncate text-xs text-slate-500">{user.email}</p>
+              </div>
+            </div>
             <button
               onClick={handleLogout}
-              className="mt-2 w-full rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-600 transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-100"
             >
+              <LogOut size={14} />
               로그아웃
             </button>
           </div>

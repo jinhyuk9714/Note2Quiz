@@ -34,23 +34,22 @@ describe("QuizHistoryCard", () => {
     expect(screen.getByText(/5문제/)).toBeInTheDocument();
   });
 
-  it("shows view and delete buttons", () => {
+  it("shows delete button", () => {
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
-    expect(screen.getByText("보기")).toBeInTheDocument();
-    expect(screen.getByText("삭제")).toBeInTheDocument();
+    expect(screen.getByTitle("삭제")).toBeInTheDocument();
   });
 
   it("calls deleteQuiz after confirm", async () => {
     vi.mocked(deleteQuiz).mockResolvedValueOnce(undefined);
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
-    await userEvent.click(screen.getByText("삭제"));
+    await userEvent.click(screen.getByTitle("삭제"));
     expect(deleteQuiz).toHaveBeenCalledWith("quiz-1");
   });
 
   it("does not call deleteQuiz when confirm cancelled", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(false);
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
-    await userEvent.click(screen.getByText("삭제"));
+    await userEvent.click(screen.getByTitle("삭제"));
     expect(deleteQuiz).not.toHaveBeenCalled();
   });
 });

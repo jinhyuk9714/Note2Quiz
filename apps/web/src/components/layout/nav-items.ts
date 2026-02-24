@@ -1,7 +1,15 @@
+import {
+  LayoutDashboard,
+  Files,
+  PenTool,
+  History,
+  BookOpenCheck,
+} from "lucide-react";
+
 export const NAV_ITEMS = [
-  { href: "/", label: "대시보드" },
-  { href: "/documents", label: "문서 관리" },
-  { href: "/quiz/generate", label: "퀴즈 생성" },
-  { href: "/quiz/history", label: "퀴즈 기록" },
-  { href: "/wrong-notes", label: "오답노트" },
+  { href: "/", label: "대시보드", icon: LayoutDashboard },
+  { href: "/documents", label: "문서 관리", icon: Files },
+  { href: "/quiz/generate", label: "퀴즈 생성", icon: PenTool },
+  { href: "/quiz/history", label: "퀴즈 기록", icon: History },
+  { href: "/wrong-notes", label: "오답노트", icon: BookOpenCheck },
 ] as const;

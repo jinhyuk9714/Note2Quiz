@@ -47,28 +47,28 @@ describe("WrongNoteCard", () => {
 
   it("shows consecutive correct count", () => {
     renderWithProviders(<WrongNoteCard note={note} />);
-    expect(screen.getByText(/연속 정답: 2회/)).toBeInTheDocument();
+    expect(screen.getByText(/Streak: 2/)).toBeInTheDocument();
   });
 
-  it('calls reviewWrongNote(true) when "정답" clicked', async () => {
+  it('calls reviewWrongNote(true) when "알고 있어요" clicked', async () => {
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...note,
       consecutive_correct: 3,
     });
     renderWithProviders(<WrongNoteCard note={note} />);
 
-    await userEvent.click(screen.getByText("정답"));
+    await userEvent.click(screen.getByText("알고 있어요"));
     expect(reviewWrongNote).toHaveBeenCalledWith("note-1", true);
   });
 
-  it('calls reviewWrongNote(false) when "오답" clicked', async () => {
+  it('calls reviewWrongNote(false) when "아직 헷갈려요" clicked', async () => {
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...note,
       consecutive_correct: 0,
     });
     renderWithProviders(<WrongNoteCard note={note} />);
 
-    await userEvent.click(screen.getByText("오답"));
+    await userEvent.click(screen.getByText("아직 헷갈려요"));
     expect(reviewWrongNote).toHaveBeenCalledWith("note-1", false);
   });
 });

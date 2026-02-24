@@ -49,20 +49,20 @@ describe("DocumentCard", () => {
 
   it("shows delete button", () => {
     renderWithProviders(<DocumentCard document={mockDocument} />);
-    expect(screen.getByText("삭제")).toBeInTheDocument();
+    expect(screen.getByTitle("삭제")).toBeInTheDocument();
   });
 
   it("calls deleteDocument after confirm", async () => {
     vi.mocked(deleteDocument).mockResolvedValueOnce(undefined);
     renderWithProviders(<DocumentCard document={mockDocument} />);
-    await userEvent.click(screen.getByText("삭제"));
+    await userEvent.click(screen.getByTitle("삭제"));
     expect(deleteDocument).toHaveBeenCalledWith("abc-123");
   });
 
   it("does not call deleteDocument when confirm is cancelled", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(false);
     renderWithProviders(<DocumentCard document={mockDocument} />);
-    await userEvent.click(screen.getByText("삭제"));
+    await userEvent.click(screen.getByTitle("삭제"));
     expect(deleteDocument).not.toHaveBeenCalled();
   });
 });

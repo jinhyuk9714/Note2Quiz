@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className="flex h-screen bg-gray-50 text-gray-900 antialiased">
+      <body className="flex h-screen bg-slate-50 text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900">
         <Providers>
           <AuthGuard>{children}</AuthGuard>
         </Providers>

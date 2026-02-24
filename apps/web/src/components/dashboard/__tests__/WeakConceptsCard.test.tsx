@@ -21,7 +21,7 @@ describe("WeakConceptsCard", () => {
   it("shows empty state when no concepts", () => {
     render(<WeakConceptsCard concepts={[]} />);
     expect(
-      screen.getByText("아직 오답 데이터가 없습니다"),
+      screen.getByText(/아직 충분한 오답 데이터가 없습니다/),
     ).toBeInTheDocument();
   });
 });

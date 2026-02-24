@@ -32,9 +32,9 @@ describe("QuizConfigForm", () => {
       <QuizConfigForm onSubmit={vi.fn()} isPending={false} />,
     );
     await waitFor(() => {
-      expect(screen.getByLabelText("문서 선택")).toBeInTheDocument();
+      expect(screen.getByLabelText("학습 문서 선택")).toBeInTheDocument();
     });
-    const select = screen.getByLabelText("문서 선택") as HTMLSelectElement;
+    const select = screen.getByLabelText("학습 문서 선택") as HTMLSelectElement;
     expect(select.tagName).toBe("SELECT");
   });
 
@@ -57,7 +57,7 @@ describe("QuizConfigForm", () => {
       />,
     );
     await waitFor(() => {
-      const select = screen.getByLabelText("문서 선택") as HTMLSelectElement;
+      const select = screen.getByLabelText("학습 문서 선택") as HTMLSelectElement;
       expect(select.value).toBe("abc-123");
     });
   });
@@ -67,13 +67,13 @@ describe("QuizConfigForm", () => {
       <QuizConfigForm onSubmit={vi.fn()} isPending={false} />,
     );
     await waitFor(() => {
-      expect(screen.getByLabelText("문서 선택")).toBeInTheDocument();
+      expect(screen.getByLabelText("학습 문서 선택")).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "퀴즈 생성" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /퀴즈 생성/ })).toBeDisabled();
   });
 
-  it('shows "생성 중..." when pending', async () => {
-    renderWithProviders(
+  it("disables submit button when pending", async () => {
+    const { container } = renderWithProviders(
       <QuizConfigForm
         defaultDocumentId="abc-123"
         onSubmit={vi.fn()}
@@ -81,9 +81,8 @@ describe("QuizConfigForm", () => {
       />,
     );
     await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "생성 중..." }),
-      ).toBeDisabled();
+      const submitBtn = container.querySelector('button[type="submit"]');
+      expect(submitBtn).toBeDisabled();
     });
   });
 
@@ -93,11 +92,11 @@ describe("QuizConfigForm", () => {
       <QuizConfigForm onSubmit={onSubmit} isPending={false} />,
     );
     await waitFor(() => {
-      expect(screen.getByLabelText("문서 선택")).toBeInTheDocument();
+      expect(screen.getByLabelText("학습 문서 선택")).toBeInTheDocument();
     });
-    await userEvent.selectOptions(screen.getByLabelText("문서 선택"), "def-456");
+    await userEvent.selectOptions(screen.getByLabelText("학습 문서 선택"), "def-456");
     await userEvent.click(
-      screen.getByRole("button", { name: "퀴즈 생성" }),
+      screen.getByRole("button", { name: /퀴즈 생성/ }),
     );
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({

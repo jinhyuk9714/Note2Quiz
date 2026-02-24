@@ -60,6 +60,6 @@ describe("Sidebar", () => {
     render(<Sidebar />);
     expect(screen.getByText("Test User")).toBeInTheDocument();
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
-    expect(screen.getByText("로그아웃")).toBeInTheDocument();
+    expect(screen.getByTitle("로그아웃")).toBeInTheDocument();
   });
 });
