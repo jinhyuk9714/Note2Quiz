@@ -1,57 +1,108 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 import userEvent from "@testing-library/user-event";
 import { QuizConfigForm } from "../QuizConfigForm";
 
+const MOCK_DOCUMENTS = [
+  {
+    id: "abc-123",
+    title: "Test Document",
+    source_type: "text",
+    char_count: 1000,
+    chunk_count: 5,
+    created_at: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "def-456",
+    title: "Another Doc",
+    source_type: "pdf",
+    char_count: 2500,
+    chunk_count: 10,
+    created_at: "2025-01-02T00:00:00Z",
+  },
+];
+
+vi.mock("@/lib/api", () => ({
+  listDocuments: vi.fn(() => Promise.resolve(MOCK_DOCUMENTS)),
+}));
+
 describe("QuizConfigForm", () => {
-  it("pre-fills document ID from prop", () => {
-    render(
+  it("renders document select dropdown", async () => {
+    renderWithProviders(
+      <QuizConfigForm onSubmit={vi.fn()} isPending={false} />,
+    );
+    await waitFor(() => {
+      expect(screen.getByLabelText("문서 선택")).toBeInTheDocument();
+    });
+    const select = screen.getByLabelText("문서 선택") as HTMLSelectElement;
+    expect(select.tagName).toBe("SELECT");
+  });
+
+  it("shows documents in dropdown options", async () => {
+    renderWithProviders(
+      <QuizConfigForm onSubmit={vi.fn()} isPending={false} />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/Test Document/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Another Doc/)).toBeInTheDocument();
+  });
+
+  it("pre-selects document from prop", async () => {
+    renderWithProviders(
       <QuizConfigForm
         defaultDocumentId="abc-123"
         onSubmit={vi.fn()}
         isPending={false}
       />,
     );
-    const input = screen.getByLabelText("문서 ID") as HTMLInputElement;
-    expect(input.value).toBe("abc-123");
+    await waitFor(() => {
+      const select = screen.getByLabelText("문서 선택") as HTMLSelectElement;
+      expect(select.value).toBe("abc-123");
+    });
   });
 
-  it("disables submit when no document ID", () => {
-    render(
+  it("disables submit when no document selected", async () => {
+    renderWithProviders(
       <QuizConfigForm onSubmit={vi.fn()} isPending={false} />,
     );
+    await waitFor(() => {
+      expect(screen.getByLabelText("문서 선택")).toBeInTheDocument();
+    });
     expect(screen.getByRole("button", { name: "퀴즈 생성" })).toBeDisabled();
   });
 
-  it('shows "생성 중..." when pending', () => {
-    render(
+  it('shows "생성 중..." when pending', async () => {
+    renderWithProviders(
       <QuizConfigForm
-        defaultDocumentId="x"
+        defaultDocumentId="abc-123"
         onSubmit={vi.fn()}
         isPending={true}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: "생성 중..." }),
-    ).toBeDisabled();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "생성 중..." }),
+      ).toBeDisabled();
+    });
   });
 
-  it("calls onSubmit with config", async () => {
+  it("calls onSubmit with selected document", async () => {
     const onSubmit = vi.fn();
-    render(
-      <QuizConfigForm
-        defaultDocumentId="doc-1"
-        onSubmit={onSubmit}
-        isPending={false}
-      />,
+    renderWithProviders(
+      <QuizConfigForm onSubmit={onSubmit} isPending={false} />,
     );
+    await waitFor(() => {
+      expect(screen.getByLabelText("문서 선택")).toBeInTheDocument();
+    });
+    await userEvent.selectOptions(screen.getByLabelText("문서 선택"), "def-456");
     await userEvent.click(
       screen.getByRole("button", { name: "퀴즈 생성" }),
     );
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
-        documentId: "doc-1",
-        quizTypes: expect.arrayContaining(["mcq", "short_answer"]),
+        documentId: "def-456",
+        quizTypes: expect.arrayContaining(["mcq", "short_answer"]) as string[],
       }),
     );
   });

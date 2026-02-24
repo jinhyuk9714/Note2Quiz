@@ -4,13 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-
-const NAV_ITEMS = [
-  { href: "/", label: "대시보드" },
-  { href: "/documents", label: "문서 관리" },
-  { href: "/quiz/generate", label: "퀴즈 생성" },
-  { href: "/wrong-notes", label: "오답노트" },
-] as const;
+import { NAV_ITEMS } from "./nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentUserID, DBSession
-from app.models.quiz import Quiz
+from app.models.quiz import Quiz, QuizItem
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
 from app.schemas.quiz import QuizGenerateRequest, QuizItemResponse, QuizResponse
 from app.services.quiz_generation import generate_quiz_from_chunks
@@ -90,18 +90,23 @@ async def submit_quiz(
         ],
     )
 
-    # Build results from graded answers
-    wrong_map: dict[uuid.UUID, str] = {n.quiz_item_id: n.correct_answer for n in wrong_notes}
+    # Load quiz items to get correct_answer + explanation for all results
+    item_ids = [uuid.UUID(str(g["quiz_item_id"])) for g in attempt.answers]
+    item_stmt = select(QuizItem).where(QuizItem.id.in_(item_ids))
+    item_result = await db.execute(item_stmt)
+    items_map: dict[uuid.UUID, QuizItem] = {item.id: item for item in item_result.scalars().all()}
+
     results: list[AnswerResult] = []
     for g in attempt.answers:
         qi_id = uuid.UUID(str(g["quiz_item_id"]))
+        item = items_map.get(qi_id)
         results.append(
             AnswerResult(
                 quiz_item_id=qi_id,
                 user_answer=str(g["user_answer"]),
-                correct_answer=wrong_map.get(qi_id, str(g["user_answer"])),
+                correct_answer=item.correct_answer if item else str(g["user_answer"]),
                 is_correct=bool(g["is_correct"]),
-                explanation="",
+                explanation=item.explanation if item else "",
             )
         )
 

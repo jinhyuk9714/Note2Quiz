@@ -56,6 +56,12 @@ export function QuizResults({ result, items }: QuizResultsProps) {
                     </span>
                   </p>
                 )}
+                {(r.explanation || item?.explanation) && (
+                  <p className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500">
+                    <span className="font-medium">해설: </span>
+                    {r.explanation || item?.explanation}
+                  </p>
+                )}
               </div>
             </div>
           );
