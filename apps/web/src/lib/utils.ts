@@ -1,0 +1,35 @@
+const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat("ko-KR", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+export function formatDate(iso: string): string {
+  return dateFormatter.format(new Date(iso));
+}
+
+export function formatDateTime(iso: string): string {
+  return dateTimeFormatter.format(new Date(iso));
+}
+
+export function getRelativeTime(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now();
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+  if (days < 0) return "복습 기한 지남";
+  if (days === 0) return "오늘 복습!";
+  if (days === 1) return "내일 복습";
+  return `${days}일 후 복습`;
+}
+
+export function cn(...classes: (string | false | undefined | null)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
