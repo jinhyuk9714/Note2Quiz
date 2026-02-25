@@ -17,7 +17,7 @@ from app.schemas.attempt import (
     WrongAnswerNoteResponse,
     WrongAnswerNoteReviewRequest,
 )
-from app.services.wrong_note_service import calculate_next_review
+from app.services.wrong_note_service import apply_sm2_review
 
 router = APIRouter(prefix="/wrong-notes", tags=["wrong-notes"])
 
@@ -84,6 +84,8 @@ async def list_wrong_notes(
                 next_review_at=n.next_review_at,
                 consecutive_correct=n.consecutive_correct,
                 is_mastered=n.is_mastered,
+                ease_factor=n.ease_factor,
+                interval_days=n.interval_days,
                 created_at=n.created_at,
             )
             for n in notes
@@ -111,16 +113,7 @@ async def review_wrong_note(
     if not note:
         raise HTTPException(status_code=404, detail="Wrong note not found")
 
-    note.review_count += 1
-
-    if payload.is_correct:
-        note.consecutive_correct += 1
-        note.next_review_at = calculate_next_review(note.consecutive_correct)
-        if note.consecutive_correct >= 5:
-            note.is_mastered = True
-    else:
-        note.consecutive_correct = 0
-        note.next_review_at = calculate_next_review(0)
+    apply_sm2_review(note, payload.quality)
 
     await db.commit()
     await db.refresh(note)
@@ -136,6 +129,8 @@ async def review_wrong_note(
         next_review_at=note.next_review_at,
         consecutive_correct=note.consecutive_correct,
         is_mastered=note.is_mastered,
+        ease_factor=note.ease_factor,
+        interval_days=note.interval_days,
         created_at=note.created_at,
     )
 

@@ -154,6 +154,8 @@ export interface WrongNote {
   next_review_at: string | null;
   consecutive_correct: number;
   is_mastered: boolean;
+  ease_factor: number;
+  interval_days: number;
   created_at: string;
 }
 

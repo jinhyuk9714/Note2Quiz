@@ -22,6 +22,8 @@ const notes: WrongNote[] = [
     next_review_at: "2025-06-01T00:00:00Z",
     consecutive_correct: 1,
     is_mastered: false,
+    ease_factor: 2.5,
+    interval_days: 1,
     created_at: "2025-05-01T00:00:00Z",
   },
   {
@@ -35,6 +37,8 @@ const notes: WrongNote[] = [
     next_review_at: "2025-06-01T00:00:00Z",
     consecutive_correct: 0,
     is_mastered: false,
+    ease_factor: 2.5,
+    interval_days: 1,
     created_at: "2025-05-01T00:00:00Z",
   },
 ];
@@ -69,8 +73,9 @@ describe("ReviewSession", () => {
 
   it("does not show review buttons before flip", () => {
     renderWithProviders(<ReviewSession notes={notes} onExit={onExit} />);
-    expect(screen.queryByText("알고 있어요")).not.toBeInTheDocument();
-    expect(screen.queryByText("아직 헷갈려요")).not.toBeInTheDocument();
+    expect(screen.queryByText("모르겠어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("어려웠어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("쉬웠어요")).not.toBeInTheDocument();
   });
 
   it("reveals answers and review buttons after clicking 정답 보기", async () => {
@@ -81,11 +86,12 @@ describe("ReviewSession", () => {
 
     expect(screen.getByText("Seoul")).toBeInTheDocument();
     expect(screen.getByText("Busan")).toBeInTheDocument();
-    expect(screen.getByText("알고 있어요")).toBeInTheDocument();
-    expect(screen.getByText("아직 헷갈려요")).toBeInTheDocument();
+    expect(screen.getByText("모르겠어요")).toBeInTheDocument();
+    expect(screen.getByText("어려웠어요")).toBeInTheDocument();
+    expect(screen.getByText("쉬웠어요")).toBeInTheDocument();
   });
 
-  it("calls API and advances to next card on correct review", async () => {
+  it("calls API and advances to next card on easy review", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...notes[0],
@@ -96,9 +102,9 @@ describe("ReviewSession", () => {
     renderWithProviders(<ReviewSession notes={notes} onExit={onExit} />);
 
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("알고 있어요"));
+    await user.click(screen.getByText("쉬웠어요"));
 
-    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", true);
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", 5);
 
     vi.advanceTimersByTime(350);
 
@@ -108,7 +114,7 @@ describe("ReviewSession", () => {
     expect(screen.getByText("2 / 2")).toBeInTheDocument();
   });
 
-  it("calls API with false on incorrect review", async () => {
+  it("calls API with quality 1 on again review", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...notes[0],
@@ -119,9 +125,25 @@ describe("ReviewSession", () => {
     renderWithProviders(<ReviewSession notes={notes} onExit={onExit} />);
 
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("아직 헷갈려요"));
+    await user.click(screen.getByText("모르겠어요"));
 
-    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", false);
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", 1);
+  });
+
+  it("calls API with quality 3 on hard review", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.mocked(reviewWrongNote).mockResolvedValueOnce({
+      ...notes[0],
+      consecutive_correct: 2,
+      is_mastered: false,
+    });
+
+    renderWithProviders(<ReviewSession notes={notes} onExit={onExit} />);
+
+    await user.click(screen.getByText("정답 보기"));
+    await user.click(screen.getByText("어려웠어요"));
+
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", 3);
   });
 
   it("shows summary after all cards are reviewed", async () => {
@@ -132,17 +154,17 @@ describe("ReviewSession", () => {
 
     renderWithProviders(<ReviewSession notes={notes} onExit={onExit} />);
 
-    // Review first card (correct)
+    // Review first card (easy)
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("알고 있어요"));
+    await user.click(screen.getByText("쉬웠어요"));
     vi.advanceTimersByTime(350);
 
-    // Review second card (incorrect)
+    // Review second card (again)
     await waitFor(() => {
       expect(screen.getByText("정답 보기")).toBeInTheDocument();
     });
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("아직 헷갈려요"));
+    await user.click(screen.getByText("모르겠어요"));
     vi.advanceTimersByTime(350);
 
     // Summary should appear
@@ -162,14 +184,14 @@ describe("ReviewSession", () => {
 
     // Review both cards
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("알고 있어요"));
+    await user.click(screen.getByText("쉬웠어요"));
     vi.advanceTimersByTime(350);
 
     await waitFor(() => {
       expect(screen.getByText("정답 보기")).toBeInTheDocument();
     });
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("알고 있어요"));
+    await user.click(screen.getByText("쉬웠어요"));
     vi.advanceTimersByTime(350);
 
     await waitFor(() => {
@@ -190,7 +212,7 @@ describe("ReviewSession", () => {
 
     // Review first (mastered)
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("알고 있어요"));
+    await user.click(screen.getByText("쉬웠어요"));
     vi.advanceTimersByTime(350);
 
     // Review second
@@ -198,7 +220,7 @@ describe("ReviewSession", () => {
       expect(screen.getByText("정답 보기")).toBeInTheDocument();
     });
     await user.click(screen.getByText("정답 보기"));
-    await user.click(screen.getByText("알고 있어요"));
+    await user.click(screen.getByText("쉬웠어요"));
     vi.advanceTimersByTime(350);
 
     await waitFor(() => {

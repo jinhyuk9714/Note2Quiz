@@ -82,7 +82,7 @@ class TestMasteredFilter:
         for _ in range(5):
             await client.post(
                 f"/api/wrong-notes/{note_id}/review",
-                json={"is_correct": True},
+                json={"quality": 5},
             )
         return note_id
 
@@ -109,7 +109,7 @@ class TestReviewWrongNote:
     async def test_review_nonexistent_returns_404(self, client: AsyncClient) -> None:
         resp = await client.post(
             f"/api/wrong-notes/{uuid.uuid4()}/review",
-            json={"is_correct": True},
+            json={"quality": 5},
         )
         assert resp.status_code == 404
 
@@ -161,7 +161,7 @@ class TestReviewWrongNote:
         # Review as correct
         resp = await client.post(
             f"/api/wrong-notes/{note_id}/review",
-            json={"is_correct": True},
+            json={"quality": 5},
         )
         assert resp.status_code == 200
         assert resp.json()["consecutive_correct"] == 1

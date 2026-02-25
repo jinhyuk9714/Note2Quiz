@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -45,11 +46,13 @@ class WrongAnswerNoteResponse(BaseModel):
     next_review_at: datetime | None
     consecutive_correct: int
     is_mastered: bool
+    ease_factor: float
+    interval_days: int
     created_at: datetime
 
 
 class WrongAnswerNoteReviewRequest(BaseModel):
-    is_correct: bool
+    quality: Literal[1, 3, 5]
 
 
 class WrongAnswerNoteListResponse(BaseModel):

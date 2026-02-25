@@ -59,4 +59,25 @@ describe("MasteryProgress", () => {
     render(<MasteryProgress consecutiveCorrect={3} isMastered={false} />);
     expect(screen.queryByText("Mastered")).not.toBeInTheDocument();
   });
+
+  it("shows EF label when easeFactor is provided and not mastered", () => {
+    render(
+      <MasteryProgress consecutiveCorrect={2} isMastered={false} easeFactor={2.3} />,
+    );
+    expect(screen.getByText("EF 2.3")).toBeInTheDocument();
+  });
+
+  it("does not show EF label when mastered", () => {
+    render(
+      <MasteryProgress consecutiveCorrect={5} isMastered={true} easeFactor={2.5} />,
+    );
+    expect(screen.queryByText(/EF/)).not.toBeInTheDocument();
+  });
+
+  it("does not show EF label when easeFactor is not provided", () => {
+    render(
+      <MasteryProgress consecutiveCorrect={2} isMastered={false} />,
+    );
+    expect(screen.queryByText(/EF/)).not.toBeInTheDocument();
+  });
 });

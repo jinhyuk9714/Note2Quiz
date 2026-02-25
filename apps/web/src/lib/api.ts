@@ -385,10 +385,10 @@ export function listWrongNotes(
   return apiFetch<WrongNoteListResponse>(`/api/wrong-notes/${qs}`);
 }
 
-export function reviewWrongNote(noteId: string, isCorrect: boolean) {
+export function reviewWrongNote(noteId: string, quality: 1 | 3 | 5) {
   return apiFetch<WrongNote>(`/api/wrong-notes/${noteId}/review`, {
     method: "POST",
-    body: JSON.stringify({ is_correct: isCorrect }),
+    body: JSON.stringify({ quality }),
   });
 }
 

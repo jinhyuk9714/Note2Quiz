@@ -20,7 +20,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
     note.next_review_at && new Date(note.next_review_at) <= new Date();
 
   const mutation = useMutation({
-    mutationFn: (isCorrect: boolean) => reviewWrongNote(note.id, isCorrect),
+    mutationFn: (quality: 1 | 3 | 5) => reviewWrongNote(note.id, quality),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
     },
@@ -119,7 +119,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
 
       <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
         <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-          <MasteryProgress consecutiveCorrect={note.consecutive_correct} isMastered={note.is_mastered} />
+          <MasteryProgress consecutiveCorrect={note.consecutive_correct} isMastered={note.is_mastered} easeFactor={note.ease_factor} />
           <div className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
             {formatDate(note.created_at)}
@@ -134,34 +134,30 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           숙달 완료
         </div>
       ) : (
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex gap-2">
           <button
-            onClick={() => mutation.mutate(true)}
+            onClick={() => mutation.mutate(1)}
             disabled={mutation.isPending}
-            className="group flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-white border border-slate-200 py-3 text-xs font-bold text-slate-700 transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-50 active:scale-95"
           >
-            {mutation.isPending ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
-                알고 있어요
-              </>
-            )}
+            <XCircle className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
+            모르겠어요
           </button>
           <button
-            onClick={() => mutation.mutate(false)}
+            onClick={() => mutation.mutate(3)}
             disabled={mutation.isPending}
-            className="group flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-50 active:scale-95"
+            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-white border border-slate-200 py-3 text-xs font-bold text-slate-700 transition-all hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600 disabled:opacity-50 active:scale-95"
           >
-            {mutation.isPending ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-red-600" />
-            ) : (
-              <>
-                <XCircle className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
-                아직 헷갈려요
-              </>
-            )}
+            <AlertCircle className="h-4 w-4 text-amber-400 group-hover:scale-110 transition-transform" />
+            어려웠어요
+          </button>
+          <button
+            onClick={() => mutation.mutate(5)}
+            disabled={mutation.isPending}
+            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-white border border-slate-200 py-3 text-xs font-bold text-slate-700 transition-all hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+          >
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+            쉬웠어요
           </button>
         </div>
       )}

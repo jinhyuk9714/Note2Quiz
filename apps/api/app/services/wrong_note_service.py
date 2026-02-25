@@ -10,14 +10,62 @@ from app.models.attempt import QuizAttempt, WrongAnswerNote
 from app.models.quiz import QuizItem, QuizType
 from app.services.semantic_grading import grade_answers_semantically
 
-SRS_INTERVALS: dict[int, int] = {0: 1, 1: 1, 2: 3, 3: 7, 4: 14, 5: 30}
-
 _SEMANTIC_TYPES = {QuizType.SHORT_ANSWER, QuizType.FILL_BLANK}
 
+# SM-2 constants
+SM2_INITIAL_EASE: float = 2.5
+SM2_MIN_EASE: float = 1.3
+SM2_MASTERY_REPETITIONS: int = 5
+SM2_MASTERY_EASE_THRESHOLD: float = 2.0
 
-def calculate_next_review(consecutive_correct: int) -> datetime:
-    days = SRS_INTERVALS.get(consecutive_correct, 30)
-    return datetime.now(UTC) + timedelta(days=days)
+
+def compute_sm2(
+    ease_factor: float,
+    consecutive_correct: int,
+    interval_days: int,
+    quality: int,
+) -> tuple[float, int, int]:
+    """Apply SM-2 algorithm.
+
+    Returns (new_ease_factor, new_consecutive_correct, new_interval_days).
+    """
+    new_ef = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+    new_ef = max(SM2_MIN_EASE, new_ef)
+
+    if quality >= 3:
+        new_reps = consecutive_correct + 1
+        if new_reps == 1:
+            new_interval = 1
+        elif new_reps == 2:
+            new_interval = 6
+        else:
+            new_interval = round(interval_days * new_ef)
+    else:
+        new_reps = 0
+        new_interval = 1
+
+    return new_ef, new_reps, new_interval
+
+
+def apply_sm2_review(note: WrongAnswerNote, quality: int) -> None:
+    """Mutate note in-place with SM-2 state after a review."""
+    new_ef, new_reps, new_interval = compute_sm2(
+        ease_factor=note.ease_factor,
+        consecutive_correct=note.consecutive_correct,
+        interval_days=note.interval_days,
+        quality=quality,
+    )
+    note.ease_factor = new_ef
+    note.consecutive_correct = new_reps
+    note.interval_days = new_interval
+    note.next_review_at = datetime.now(UTC) + timedelta(days=new_interval)
+    note.review_count += 1
+    note.is_mastered = new_reps >= SM2_MASTERY_REPETITIONS and new_ef >= SM2_MASTERY_EASE_THRESHOLD
+
+
+def _initial_review_datetime() -> datetime:
+    """Next review for a brand-new or reset wrong note: 1 day."""
+    return datetime.now(UTC) + timedelta(days=1)
 
 
 async def create_attempt_with_wrong_notes(
@@ -158,7 +206,9 @@ async def create_attempt_with_wrong_notes(
             existing.wrong_reason = wrong_reason
             existing.concept_tags = item.concept_tags
             existing.consecutive_correct = 0
-            existing.next_review_at = calculate_next_review(0)
+            existing.interval_days = 1
+            existing.ease_factor = SM2_INITIAL_EASE
+            existing.next_review_at = _initial_review_datetime()
             existing.is_mastered = False
             updated_count += 1
         else:
@@ -170,7 +220,7 @@ async def create_attempt_with_wrong_notes(
                 correct_answer=item.correct_answer,
                 wrong_reason=wrong_reason,
                 concept_tags=item.concept_tags,
-                next_review_at=calculate_next_review(0),
+                next_review_at=_initial_review_datetime(),
             )
             db.add(note)
             new_notes.append(note)

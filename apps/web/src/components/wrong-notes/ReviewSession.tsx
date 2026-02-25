@@ -26,7 +26,7 @@ interface ReviewSessionProps {
 
 interface ReviewResult {
   noteId: string;
-  isCorrect: boolean;
+  quality: 1 | 3 | 5;
   isNowMastered: boolean;
 }
 
@@ -42,22 +42,22 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
   const currentNote = notes[currentIndex] as WrongNote | undefined;
 
   const mutation = useMutation({
-    mutationFn: ({ noteId, isCorrect }: { noteId: string; isCorrect: boolean }) =>
-      reviewWrongNote(noteId, isCorrect),
+    mutationFn: ({ noteId, quality }: { noteId: string; quality: 1 | 3 | 5 }) =>
+      reviewWrongNote(noteId, quality),
   });
 
-  function handleReview(isCorrect: boolean) {
+  function handleReview(quality: 1 | 3 | 5) {
     if (!currentNote || mutation.isPending) return;
 
     mutation.mutate(
-      { noteId: currentNote.id, isCorrect },
+      { noteId: currentNote.id, quality },
       {
         onSuccess: (updatedNote) => {
           setResults((prev) => [
             ...prev,
             {
               noteId: currentNote.id,
-              isCorrect,
+              quality,
               isNowMastered: updatedNote.is_mastered,
             },
           ]);
@@ -80,7 +80,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
   }
 
   if (phase === "summary") {
-    const correctCount = results.filter((r) => r.isCorrect).length;
+    const correctCount = results.filter((r) => r.quality >= 3).length;
     const incorrectCount = results.length - correctCount;
     const newlyMastered = results.filter((r) => r.isNowMastered).length;
 
@@ -182,6 +182,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
             <MasteryProgress
               consecutiveCorrect={currentNote.consecutive_correct}
               isMastered={currentNote.is_mastered}
+              easeFactor={currentNote.ease_factor}
             />
             <div className="flex flex-wrap gap-1.5">
               {currentNote.concept_tags.map((tag) => (
@@ -252,34 +253,30 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
               정답 보기
             </button>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
-                onClick={() => handleReview(true)}
+                onClick={() => handleReview(1)}
                 disabled={mutation.isPending}
-                className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 active:scale-95"
               >
-                {mutation.isPending ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-600" />
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 transition-transform group-hover:scale-110" />
-                    알고 있어요
-                  </>
-                )}
+                <XCircle className="h-4 w-4 text-red-400 transition-transform group-hover:scale-110" />
+                <span className="text-xs">모르겠어요</span>
               </button>
               <button
-                onClick={() => handleReview(false)}
+                onClick={() => handleReview(3)}
                 disabled={mutation.isPending}
-                className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 active:scale-95"
+                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 transition-all hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 active:scale-95"
               >
-                {mutation.isPending ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-red-600" />
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4 text-red-400 transition-transform group-hover:scale-110" />
-                    아직 헷갈려요
-                  </>
-                )}
+                <AlertCircle className="h-4 w-4 text-amber-400 transition-transform group-hover:scale-110" />
+                <span className="text-xs">어려웠어요</span>
+              </button>
+              <button
+                onClick={() => handleReview(5)}
+                disabled={mutation.isPending}
+                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+              >
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 transition-transform group-hover:scale-110" />
+                <span className="text-xs">쉬웠어요</span>
               </button>
             </div>
           )}

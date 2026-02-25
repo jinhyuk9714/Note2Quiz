@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -60,6 +60,8 @@ class WrongAnswerNote(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     consecutive_correct: Mapped[int] = mapped_column(Integer, default=0)
     next_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_mastered: Mapped[bool] = mapped_column(Boolean, default=False)
+    ease_factor: Mapped[float] = mapped_column(Float, default=2.5, server_default="2.5")
+    interval_days: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
     attempt: Mapped[QuizAttempt] = relationship(back_populates="wrong_answer_notes")
     user: Mapped[User] = relationship(back_populates="wrong_answer_notes")

@@ -28,6 +28,8 @@ const note: WrongNote = {
   next_review_at: "2025-06-15T00:00:00Z",
   consecutive_correct: 2,
   is_mastered: false,
+  ease_factor: 2.5,
+  interval_days: 3,
   created_at: "2025-06-01T00:00:00Z",
 };
 
@@ -76,37 +78,50 @@ describe("WrongNoteCard", () => {
       <WrongNoteCard note={{ ...note, is_mastered: true, consecutive_correct: 5 }} />,
     );
     expect(screen.getByText("숙달 완료")).toBeInTheDocument();
-    expect(screen.queryByText("알고 있어요")).not.toBeInTheDocument();
-    expect(screen.queryByText("아직 헷갈려요")).not.toBeInTheDocument();
+    expect(screen.queryByText("모르겠어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("어려웠어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("쉬웠어요")).not.toBeInTheDocument();
   });
 
   it("shows review buttons when not mastered", () => {
     renderWithProviders(<WrongNoteCard note={note} />);
-    expect(screen.getByText("알고 있어요")).toBeInTheDocument();
-    expect(screen.getByText("아직 헷갈려요")).toBeInTheDocument();
+    expect(screen.getByText("모르겠어요")).toBeInTheDocument();
+    expect(screen.getByText("어려웠어요")).toBeInTheDocument();
+    expect(screen.getByText("쉬웠어요")).toBeInTheDocument();
     expect(screen.queryByText("숙달 완료")).not.toBeInTheDocument();
   });
 
-  it('calls reviewWrongNote(true) when "알고 있어요" clicked', async () => {
+  it('calls reviewWrongNote(5) when "쉬웠어요" clicked', async () => {
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...note,
       consecutive_correct: 3,
     });
     renderWithProviders(<WrongNoteCard note={note} />);
 
-    await userEvent.click(screen.getByText("알고 있어요"));
-    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", true);
+    await userEvent.click(screen.getByText("쉬웠어요"));
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", 5);
   });
 
-  it('calls reviewWrongNote(false) when "아직 헷갈려요" clicked', async () => {
+  it('calls reviewWrongNote(1) when "모르겠어요" clicked', async () => {
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...note,
       consecutive_correct: 0,
     });
     renderWithProviders(<WrongNoteCard note={note} />);
 
-    await userEvent.click(screen.getByText("아직 헷갈려요"));
-    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", false);
+    await userEvent.click(screen.getByText("모르겠어요"));
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", 1);
+  });
+
+  it('calls reviewWrongNote(3) when "어려웠어요" clicked', async () => {
+    vi.mocked(reviewWrongNote).mockResolvedValueOnce({
+      ...note,
+      consecutive_correct: 3,
+    });
+    renderWithProviders(<WrongNoteCard note={note} />);
+
+    await userEvent.click(screen.getByText("어려웠어요"));
+    expect(reviewWrongNote).toHaveBeenCalledWith("note-1", 3);
   });
 
   it("renders concept tags as clickable links to wrong-notes filter", () => {
