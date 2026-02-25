@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { FileText, Trash2, Zap, Calendar, Hash, Sparkles, ChevronRight } from "lucide-react";
 import type { Document } from "@/types/api";
 import { formatDate } from "@/lib/utils";
 import { deleteDocument } from "@/lib/api";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 interface DocumentCardProps {
   document: Document;
@@ -15,23 +17,19 @@ interface DocumentCardProps {
 export function DocumentCard({ document, onSelect }: DocumentCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => deleteDocument(document.id),
     onSuccess: () => {
+      setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (
-      !window.confirm(
-        `"${document.title}" 문서를 삭제하시겠습니까?\n연결된 퀴즈도 함께 삭제됩니다.`,
-      )
-    )
-      return;
-    mutation.mutate();
+    setConfirmOpen(true);
   }
 
   return (
@@ -103,6 +101,15 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
           <ChevronRight className="h-5 w-5" />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onConfirm={() => mutation.mutate()}
+        onCancel={() => setConfirmOpen(false)}
+        title="문서 삭제"
+        description={`"${document.title}" 문서를 삭제하시겠습니까? 연결된 퀴즈도 함께 삭제됩니다.`}
+        loading={mutation.isPending}
+      />
     </div>
   );
 }

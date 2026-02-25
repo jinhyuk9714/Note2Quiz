@@ -29,7 +29,6 @@ describe("DocumentCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPush.mockClear();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   it("renders title and metadata", () => {
@@ -59,17 +58,24 @@ describe("DocumentCard", () => {
     expect(screen.getByTitle("삭제")).toBeInTheDocument();
   });
 
-  it("calls deleteDocument after confirm", async () => {
+  it("calls deleteDocument after confirm dialog", async () => {
     vi.mocked(deleteDocument).mockResolvedValueOnce(undefined);
     renderWithProviders(<DocumentCard document={mockDocument} />);
     await userEvent.click(screen.getByTitle("삭제"));
+    // ConfirmDialog is now shown
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toBeInTheDocument();
+    const confirmBtn = dialog.querySelector("button:last-child") as HTMLButtonElement;
+    await userEvent.click(confirmBtn);
     expect(deleteDocument).toHaveBeenCalledWith("abc-123");
   });
 
-  it("does not call deleteDocument when confirm is cancelled", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("does not call deleteDocument when confirm dialog is cancelled", async () => {
     renderWithProviders(<DocumentCard document={mockDocument} />);
     await userEvent.click(screen.getByTitle("삭제"));
+    const dialog = screen.getByRole("alertdialog");
+    const cancelBtn = dialog.querySelector("button:first-child") as HTMLButtonElement;
+    await userEvent.click(cancelBtn);
     expect(deleteDocument).not.toHaveBeenCalled();
   });
 

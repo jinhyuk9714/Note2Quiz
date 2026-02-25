@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { History, Trash2, ChevronRight, Calendar, Layers, AlertCircle, Trophy, RotateCcw, FileText } from "lucide-react";
 import { deleteQuiz } from "@/lib/api";
 import type { QuizListItem } from "@/types/api";
 import { formatDate } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 interface QuizHistoryCardProps {
   quiz: QuizListItem;
@@ -14,18 +16,19 @@ interface QuizHistoryCardProps {
 export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => deleteQuiz(quiz.id),
     onSuccess: () => {
+      setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },
   });
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!window.confirm(`"${quiz.title}" 퀴즈를 삭제하시겠습니까?`)) return;
-    mutation.mutate();
+    setConfirmOpen(true);
   }
 
   return (
@@ -95,6 +98,15 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
           <ChevronRight className="h-5 w-5" />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onConfirm={() => mutation.mutate()}
+        onCancel={() => setConfirmOpen(false)}
+        title="퀴즈 삭제"
+        description={`"${quiz.title}" 퀴즈를 삭제하시겠습니까?`}
+        loading={mutation.isPending}
+      />
     </div>
   );
 }

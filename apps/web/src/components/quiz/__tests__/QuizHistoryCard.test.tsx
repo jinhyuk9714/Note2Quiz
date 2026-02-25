@@ -29,7 +29,6 @@ const quiz: QuizListItem = {
 describe("QuizHistoryCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   it("renders title and item count", () => {
@@ -43,17 +42,23 @@ describe("QuizHistoryCard", () => {
     expect(screen.getByTitle("삭제")).toBeInTheDocument();
   });
 
-  it("calls deleteQuiz after confirm", async () => {
+  it("calls deleteQuiz after confirm dialog", async () => {
     vi.mocked(deleteQuiz).mockResolvedValueOnce(undefined);
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
     await userEvent.click(screen.getByTitle("삭제"));
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toBeInTheDocument();
+    const confirmBtn = dialog.querySelector("button:last-child") as HTMLButtonElement;
+    await userEvent.click(confirmBtn);
     expect(deleteQuiz).toHaveBeenCalledWith("quiz-1");
   });
 
-  it("does not call deleteQuiz when confirm cancelled", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("does not call deleteQuiz when confirm dialog cancelled", async () => {
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
     await userEvent.click(screen.getByTitle("삭제"));
+    const dialog = screen.getByRole("alertdialog");
+    const cancelBtn = dialog.querySelector("button:first-child") as HTMLButtonElement;
+    await userEvent.click(cancelBtn);
     expect(deleteQuiz).not.toHaveBeenCalled();
   });
 

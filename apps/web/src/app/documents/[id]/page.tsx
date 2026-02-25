@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,6 +17,7 @@ import {
 import { getDocument, listQuizzes, deleteDocument } from "@/lib/api";
 import { QuizHistoryCard } from "@/components/quiz/QuizHistoryCard";
 import { ChunkViewer } from "@/components/documents/ChunkViewer";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 
@@ -23,6 +25,7 @@ export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const {
     data: doc,
@@ -42,20 +45,11 @@ export default function DocumentDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => deleteDocument(id),
     onSuccess: () => {
+      setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
       router.push("/documents");
     },
   });
-
-  function handleDelete() {
-    if (
-      !window.confirm(
-        `"${doc?.title}" 문서를 삭제하시겠습니까?\n연결된 퀴즈도 함께 삭제됩니다.`,
-      )
-    )
-      return;
-    deleteMutation.mutate();
-  }
 
   if (isLoading) {
     return (
@@ -139,7 +133,7 @@ export default function DocumentDetailPage() {
             퀴즈 생성
           </Link>
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmOpen(true)}
             disabled={deleteMutation.isPending}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
             title="삭제"
@@ -199,6 +193,15 @@ export default function DocumentDetailPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setConfirmOpen(false)}
+        title="문서 삭제"
+        description={`"${doc.title}" 문서를 삭제하시겠습니까? 연결된 퀴즈도 함께 삭제됩니다.`}
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }

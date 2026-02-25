@@ -34,7 +34,6 @@ const note: WrongNote = {
 describe("WrongNoteCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   it("renders question, answers, and reason", () => {
@@ -123,17 +122,23 @@ describe("WrongNoteCard", () => {
     expect(screen.getByTitle("삭제")).toBeInTheDocument();
   });
 
-  it("calls deleteWrongNote after confirm", async () => {
+  it("calls deleteWrongNote after confirm dialog", async () => {
     vi.mocked(deleteWrongNote).mockResolvedValueOnce(undefined);
     renderWithProviders(<WrongNoteCard note={note} />);
     await userEvent.click(screen.getByTitle("삭제"));
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toBeInTheDocument();
+    const confirmBtn = dialog.querySelector("button:last-child") as HTMLButtonElement;
+    await userEvent.click(confirmBtn);
     expect(deleteWrongNote).toHaveBeenCalledWith("note-1");
   });
 
-  it("does not call deleteWrongNote when confirm is cancelled", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("does not call deleteWrongNote when confirm dialog cancelled", async () => {
     renderWithProviders(<WrongNoteCard note={note} />);
     await userEvent.click(screen.getByTitle("삭제"));
+    const dialog = screen.getByRole("alertdialog");
+    const cancelBtn = dialog.querySelector("button:first-child") as HTMLButtonElement;
+    await userEvent.click(cancelBtn);
     expect(deleteWrongNote).not.toHaveBeenCalled();
   });
 });

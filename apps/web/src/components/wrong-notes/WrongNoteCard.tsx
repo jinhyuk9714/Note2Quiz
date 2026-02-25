@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, AlertCircle, Trash2 } from "lucide-react";
@@ -7,6 +8,7 @@ import { reviewWrongNote, deleteWrongNote } from "@/lib/api";
 import type { WrongNote } from "@/types/api";
 import { cn, formatDate, getRelativeTime } from "@/lib/utils";
 import { MasteryProgress } from "./MasteryProgress";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 interface WrongNoteCardProps {
   note: WrongNote;
@@ -24,17 +26,19 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
     },
   });
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const deleteMutation = useMutation({
     mutationFn: () => deleteWrongNote(note.id),
     onSuccess: () => {
+      setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
     },
   });
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!window.confirm("이 오답노트를 삭제하시겠습니까?")) return;
-    deleteMutation.mutate();
+    setConfirmOpen(true);
   }
 
   return (
@@ -168,6 +172,15 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           {mutation.error?.message ?? deleteMutation.error?.message}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setConfirmOpen(false)}
+        title="오답노트 삭제"
+        description="이 오답노트를 삭제하시겠습니까?"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
