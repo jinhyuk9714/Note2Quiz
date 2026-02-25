@@ -43,6 +43,9 @@ class QuizListItemResponse(BaseModel):
     item_count: int
     document_id: uuid.UUID
     created_at: datetime
+    attempt_count: int = 0
+    latest_score: int | None = None
+    latest_total: int | None = None
 
 
 class QuizResponse(BaseModel):
@@ -51,3 +54,11 @@ class QuizResponse(BaseModel):
     item_count: int
     created_at: datetime
     items: list[QuizItemResponse]
+
+
+class QuizAttemptSummaryResponse(BaseModel):
+    attempt_id: uuid.UUID
+    attempt_number: int
+    score: int
+    total: int
+    created_at: datetime

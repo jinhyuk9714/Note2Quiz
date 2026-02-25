@@ -20,6 +20,9 @@ const quiz: QuizListItem = {
   item_count: 5,
   document_id: "doc-1",
   created_at: "2025-06-01T10:00:00Z",
+  attempt_count: 0,
+  latest_score: null,
+  latest_total: null,
 };
 
 describe("QuizHistoryCard", () => {
@@ -51,5 +54,22 @@ describe("QuizHistoryCard", () => {
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
     await userEvent.click(screen.getByTitle("삭제"));
     expect(deleteQuiz).not.toHaveBeenCalled();
+  });
+
+  it("shows score and attempt count when attempts exist", () => {
+    const quizWithAttempts: QuizListItem = {
+      ...quiz,
+      attempt_count: 3,
+      latest_score: 4,
+      latest_total: 5,
+    };
+    renderWithProviders(<QuizHistoryCard quiz={quizWithAttempts} />);
+    expect(screen.getByText("4/5")).toBeInTheDocument();
+    expect(screen.getByText("3회 풀이")).toBeInTheDocument();
+  });
+
+  it("does not show score when no attempts", () => {
+    renderWithProviders(<QuizHistoryCard quiz={quiz} />);
+    expect(screen.queryByText(/회 풀이/)).not.toBeInTheDocument();
   });
 });

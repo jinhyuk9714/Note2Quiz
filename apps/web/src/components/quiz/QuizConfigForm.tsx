@@ -35,10 +35,11 @@ export function QuizConfigForm({
     "short_answer",
   ]);
 
-  const { data: documents, isLoading: docsLoading } = useQuery({
+  const { data: docsData, isLoading: docsLoading } = useQuery({
     queryKey: ["documents"],
-    queryFn: listDocuments,
+    queryFn: () => listDocuments({ limit: 100 }),
   });
+  const documents = docsData?.items;
 
   const toggleType = (type: string) => {
     setQuizTypes((prev) =>

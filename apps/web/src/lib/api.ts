@@ -1,11 +1,14 @@
 import type {
   AnswerItem,
+  AttemptSummary,
   AuthUser,
   DashboardStats,
   Document,
   DocumentDetail,
   GenerateQuizPayload,
+  ListParams,
   LoginPayload,
+  PaginatedResponse,
   Quiz,
   QuizListItem,
   SignupPayload,
@@ -140,9 +143,27 @@ async function apiDelete(path: string): Promise<void> {
   }
 }
 
+function buildQuery(params: Record<string, string | number | boolean | undefined | null>): string {
+  const entries = Object.entries(params).filter(
+    ([, v]) => v !== undefined && v !== null && v !== "",
+  );
+  if (entries.length === 0) return "";
+  return "?" + new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
+}
+
 // Documents
-export function listDocuments() {
-  return apiFetch<Document[]>("/api/documents/");
+export function listDocuments(
+  params?: ListParams & { source_type?: string },
+) {
+  const qs = buildQuery({
+    limit: params?.limit,
+    offset: params?.offset,
+    search: params?.search,
+    source_type: params?.source_type,
+    sort_by: params?.sort_by,
+    order: params?.order,
+  });
+  return apiFetch<PaginatedResponse<Document>>(`/api/documents/${qs}`);
 }
 
 export function getDocument(id: string) {
@@ -168,8 +189,18 @@ export function deleteDocument(id: string): Promise<void> {
 }
 
 // Quiz
-export function listQuizzes() {
-  return apiFetch<QuizListItem[]>("/api/quiz/");
+export function listQuizzes(
+  params?: ListParams & { document_id?: string },
+) {
+  const qs = buildQuery({
+    limit: params?.limit,
+    offset: params?.offset,
+    search: params?.search,
+    document_id: params?.document_id,
+    sort_by: params?.sort_by,
+    order: params?.order,
+  });
+  return apiFetch<PaginatedResponse<QuizListItem>>(`/api/quiz/${qs}`);
 }
 export function generateQuiz(payload: GenerateQuizPayload) {
   return apiFetch<Quiz>("/api/quiz/generate", {
@@ -193,11 +224,21 @@ export function deleteQuiz(id: string): Promise<void> {
   return apiDelete(`/api/quiz/${id}`);
 }
 
+export function listQuizAttempts(quizId: string) {
+  return apiFetch<AttemptSummary[]>(`/api/quiz/${quizId}/attempts`);
+}
+
 // Wrong Notes
-export function listWrongNotes(dueOnly = false, limit = 50, offset = 0) {
-  return apiFetch<WrongNoteListResponse>(
-    `/api/wrong-notes/?due_only=${dueOnly}&limit=${limit}&offset=${offset}`,
-  );
+export function listWrongNotes(
+  params?: { due_only?: boolean; limit?: number; offset?: number; search?: string },
+) {
+  const qs = buildQuery({
+    due_only: params?.due_only,
+    limit: params?.limit ?? 50,
+    offset: params?.offset ?? 0,
+    search: params?.search,
+  });
+  return apiFetch<WrongNoteListResponse>(`/api/wrong-notes/${qs}`);
 }
 
 export function reviewWrongNote(noteId: string, isCorrect: boolean) {

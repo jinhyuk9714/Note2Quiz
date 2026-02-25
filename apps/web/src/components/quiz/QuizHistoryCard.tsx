@@ -2,11 +2,10 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { History, Trash2, ChevronRight, Calendar, Layers, AlertCircle } from "lucide-react";
+import { History, Trash2, ChevronRight, Calendar, Layers, AlertCircle, Trophy, RotateCcw } from "lucide-react";
 import { deleteQuiz } from "@/lib/api";
 import type { QuizListItem } from "@/types/api";
 import { formatDate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
 interface QuizHistoryCardProps {
   quiz: QuizListItem;
@@ -51,6 +50,18 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(quiz.created_at)}
             </div>
+            {quiz.attempt_count > 0 && (
+              <>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-500">
+                  <Trophy className="h-3.5 w-3.5" />
+                  {quiz.latest_score}/{quiz.latest_total}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {quiz.attempt_count}회 풀이
+                </div>
+              </>
+            )}
           </div>
           {mutation.isError && (
             <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-red-500">

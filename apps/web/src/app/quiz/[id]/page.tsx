@@ -2,20 +2,21 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle } from "lucide-react";
-import { getQuiz, submitQuiz } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History } from "lucide-react";
+import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { QuizItem } from "@/components/quiz/QuizItem";
 import { QuizResults } from "@/components/quiz/QuizResults";
 import type { SubmitResult } from "@/types/api";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 type Phase = "taking" | "submitting" | "results";
 
 export default function QuizPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [phase, setPhase] = useState<Phase>("taking");
   const [result, setResult] = useState<SubmitResult | null>(null);
@@ -23,6 +24,12 @@ export default function QuizPage() {
   const { data: quiz, isLoading, error } = useQuery({
     queryKey: ["quiz", id],
     queryFn: () => getQuiz(id),
+  });
+
+  const { data: attempts } = useQuery({
+    queryKey: ["quiz-attempts", id],
+    queryFn: () => listQuizAttempts(id),
+    enabled: phase === "results",
   });
 
   const mutation = useMutation({
@@ -39,9 +46,18 @@ export default function QuizPage() {
       setResult(data);
       setPhase("results");
       window.scrollTo({ top: 0, behavior: "smooth" });
+      void queryClient.invalidateQueries({ queryKey: ["quiz-attempts", id] });
+      void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },
     onError: () => setPhase("taking"),
   });
+
+  function handleRetake() {
+    setAnswers({});
+    setResult(null);
+    setPhase("taking");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   if (isLoading) {
     return (
@@ -64,7 +80,7 @@ export default function QuizPage() {
         <p className="mt-2 text-sm font-medium text-slate-500">
           {error instanceof Error ? error.message : "존재하지 않거나 삭제된 퀴즈입니다."}
         </p>
-        <Link 
+        <Link
           href="/quiz/history"
           className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200"
         >
@@ -83,7 +99,7 @@ export default function QuizPage() {
     <div className="mx-auto max-w-4xl space-y-10 pb-20">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <Link 
+          <Link
             href="/quiz/history"
             className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-indigo-600"
           >
@@ -104,7 +120,7 @@ export default function QuizPage() {
               <span className="text-slate-400">{totalCount}</span>
             </div>
             <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/50">
-              <div 
+              <div
                 className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
@@ -116,7 +132,39 @@ export default function QuizPage() {
       {phase === "results" && result ? (
         <div className="space-y-10 animate-in fade-in duration-700">
           <QuizResults result={result} items={quiz.items} />
-          
+
+          {attempts && attempts.length > 1 && (
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
+                <History className="h-5 w-5 text-indigo-600" />
+                풀이 기록
+              </h3>
+              <div className="space-y-2">
+                {attempts.map((a) => (
+                  <div
+                    key={a.attempt_id}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl px-4 py-3",
+                      a.attempt_id === result.attempt_id
+                        ? "bg-indigo-50 ring-1 ring-inset ring-indigo-200"
+                        : "bg-slate-50",
+                    )}
+                  >
+                    <span className="text-sm font-bold text-slate-600">
+                      {a.attempt_number}회차
+                    </span>
+                    <span className="text-sm font-bold text-slate-800">
+                      {a.score}/{a.total}
+                    </span>
+                    <span className="text-xs font-medium text-slate-400">
+                      {formatDate(a.created_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => router.push("/wrong-notes")}
@@ -124,6 +172,13 @@ export default function QuizPage() {
             >
               <BookOpenCheck className="h-4 w-4 text-indigo-500" />
               오답노트로 복습하기
+            </button>
+            <button
+              onClick={handleRetake}
+              className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-amber-500 py-5 text-sm font-bold text-white shadow-lg shadow-amber-200 transition-all hover:bg-amber-600 active:scale-[0.98]"
+            >
+              <RotateCcw className="h-4 w-4" />
+              다시 풀기
             </button>
             <button
               onClick={() => router.push("/quiz/generate")}
@@ -156,8 +211,8 @@ export default function QuizPage() {
             disabled={!allAnswered || phase === "submitting"}
             className={cn(
               "group sticky bottom-6 z-20 w-full flex items-center justify-center gap-3 rounded-[2rem] py-6 text-lg font-black text-white shadow-2xl transition-all active:scale-[0.98]",
-              allAnswered 
-                ? "bg-indigo-600 shadow-indigo-500/30 hover:bg-indigo-700" 
+              allAnswered
+                ? "bg-indigo-600 shadow-indigo-500/30 hover:bg-indigo-700"
                 : "bg-slate-300 cursor-not-allowed opacity-80"
             )}
           >

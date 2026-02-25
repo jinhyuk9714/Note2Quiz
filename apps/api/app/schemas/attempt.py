@@ -25,6 +25,7 @@ class AnswerResult(BaseModel):
 
 class QuizSubmitResponse(BaseModel):
     attempt_id: uuid.UUID
+    attempt_number: int
     score: int
     total: int
     results: list[AnswerResult]
@@ -52,3 +53,5 @@ class WrongAnswerNoteReviewRequest(BaseModel):
 class WrongAnswerNoteListResponse(BaseModel):
     notes: list[WrongAnswerNoteResponse]
     total: int
+    limit: int = 50
+    offset: int = 0

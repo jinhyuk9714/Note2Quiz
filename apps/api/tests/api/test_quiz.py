@@ -178,17 +178,19 @@ class TestListQuizzes:
     async def test_empty_list(self, client: AsyncClient) -> None:
         resp = await client.get("/api/quiz/")
         assert resp.status_code == 200
-        assert resp.json() == []
+        data = resp.json()
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_list_after_create(self, client: AsyncClient) -> None:
         quiz = await _make_quiz(client)
         resp = await client.get("/api/quiz/")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 1
-        assert data[0]["id"] == quiz["id"]
-        assert "items" not in data[0]
-        assert "document_id" in data[0]
+        assert len(data["items"]) == 1
+        assert data["items"][0]["id"] == quiz["id"]
+        assert "items" not in data["items"][0]
+        assert "document_id" in data["items"][0]
 
 
 class TestDeleteQuiz:
@@ -211,7 +213,7 @@ class TestDeleteQuiz:
         quiz_id = quiz["id"]
 
         list_resp = await client.get("/api/quiz/")
-        doc_id = list_resp.json()[0]["document_id"]
+        doc_id = list_resp.json()["items"][0]["document_id"]
 
         await client.delete(f"/api/documents/{doc_id}")
 
@@ -269,7 +271,7 @@ class TestQuizOwnership:
         await _make_quiz(client)
         resp = await second_client.get("/api/quiz/")
         assert resp.status_code == 200
-        assert resp.json() == []
+        assert resp.json()["items"] == []
 
 
 class TestQuizInputValidation:
@@ -298,3 +300,133 @@ class TestQuizInputValidation:
             json={"answers": [{"quiz_item_id": item_id, "user_answer": "A" * 1001}]},
         )
         assert resp.status_code == 422
+
+
+class TestQuizRetake:
+    """Test retake / attempt_number functionality."""
+
+    async def test_submit_multiple_times_increments_attempt_number(
+        self, client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        quiz_id = quiz["id"]
+        item = quiz["items"][0]
+        answers = {"answers": [{"quiz_item_id": item["id"], "user_answer": "A"}]}
+
+        resp1 = await client.post(f"/api/quiz/{quiz_id}/submit", json=answers)
+        assert resp1.status_code == 201
+        assert resp1.json()["attempt_number"] == 1
+
+        resp2 = await client.post(f"/api/quiz/{quiz_id}/submit", json=answers)
+        assert resp2.status_code == 201
+        assert resp2.json()["attempt_number"] == 2
+
+        resp3 = await client.post(f"/api/quiz/{quiz_id}/submit", json=answers)
+        assert resp3.status_code == 201
+        assert resp3.json()["attempt_number"] == 3
+
+
+class TestQuizAttempts:
+    """Test GET /quiz/{id}/attempts endpoint."""
+
+    async def test_list_attempts_returns_history(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        quiz_id = quiz["id"]
+        item = quiz["items"][0]
+        answers = {"answers": [{"quiz_item_id": item["id"], "user_answer": "A"}]}
+
+        await client.post(f"/api/quiz/{quiz_id}/submit", json=answers)
+        await client.post(f"/api/quiz/{quiz_id}/submit", json=answers)
+
+        resp = await client.get(f"/api/quiz/{quiz_id}/attempts")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        # Most recent first
+        assert data[0]["attempt_number"] == 2
+        assert data[1]["attempt_number"] == 1
+
+    async def test_list_attempts_empty(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.get(f"/api/quiz/{quiz['id']}/attempts")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    async def test_list_attempts_nonexistent_quiz_returns_404(self, client: AsyncClient) -> None:
+        resp = await client.get(f"/api/quiz/{uuid.uuid4()}/attempts")
+        assert resp.status_code == 404
+
+    async def test_list_attempts_other_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        resp = await second_client.get(f"/api/quiz/{quiz['id']}/attempts")
+        assert resp.status_code == 404
+
+
+class TestQuizListWithScores:
+    """Test that quiz list includes attempt info."""
+
+    async def test_list_includes_attempt_info(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        item = quiz["items"][0]
+        await client.post(
+            f"/api/quiz/{quiz['id']}/submit",
+            json={"answers": [{"quiz_item_id": item["id"], "user_answer": item["correct_answer"]}]},
+        )
+
+        resp = await client.get("/api/quiz/")
+        assert resp.status_code == 200
+        data = resp.json()["items"]
+        assert data[0]["attempt_count"] == 1
+        assert data[0]["latest_score"] == 1
+        assert data[0]["latest_total"] == 1
+
+    async def test_list_no_attempts_shows_zero(self, client: AsyncClient) -> None:
+        await _make_quiz(client)
+        resp = await client.get("/api/quiz/")
+        data = resp.json()["items"]
+        assert data[0]["attempt_count"] == 0
+        assert data[0]["latest_score"] is None
+        assert data[0]["latest_total"] is None
+
+
+class TestQuizSearchAndPagination:
+    """Test search, filter, sort and pagination on quiz list."""
+
+    async def test_search_by_title(self, client: AsyncClient) -> None:
+        # _make_quiz creates quizzes with title "Quiz from document"
+        await _make_quiz(client)
+        await _make_quiz(client)
+
+        resp = await client.get("/api/quiz/?search=Quiz")
+        data = resp.json()
+        assert data["total"] == 2
+
+        resp2 = await client.get("/api/quiz/?search=nonexistent")
+        assert resp2.json()["total"] == 0
+
+    async def test_pagination(self, client: AsyncClient) -> None:
+        for _ in range(3):
+            await _make_quiz(client)
+
+        resp = await client.get("/api/quiz/?limit=2&offset=0")
+        data = resp.json()
+        assert data["total"] == 3
+        assert len(data["items"]) == 2
+        assert data["limit"] == 2
+
+        resp2 = await client.get("/api/quiz/?limit=2&offset=2")
+        assert len(resp2.json()["items"]) == 1
+
+    async def test_filter_by_document_id(self, client: AsyncClient) -> None:
+        await _make_quiz(client)
+
+        list_resp = await client.get("/api/quiz/")
+        actual_doc_id = list_resp.json()["items"][0]["document_id"]
+
+        resp = await client.get(f"/api/quiz/?document_id={actual_doc_id}")
+        assert resp.json()["total"] >= 1
+
+        resp2 = await client.get(f"/api/quiz/?document_id={uuid.uuid4()}")
+        assert resp2.json()["total"] == 0

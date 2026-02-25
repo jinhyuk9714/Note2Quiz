@@ -1,19 +1,55 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Files, LayoutGrid, Info } from "lucide-react";
 import { listDocuments } from "@/lib/api";
 import { DocumentUploadForm } from "@/components/documents/DocumentUploadForm";
 import { DocumentCard } from "@/components/documents/DocumentCard";
+import { SearchInput } from "@/components/common/SearchInput";
+import { SortSelect } from "@/components/common/SortSelect";
+import { Pagination } from "@/components/common/Pagination";
+
+const SORT_OPTIONS = [
+  { value: "created_at", label: "최신순" },
+  { value: "title", label: "제목순" },
+  { value: "char_count", label: "문서 크기순" },
+];
+
+const PAGE_SIZE = 20;
 
 export default function DocumentsPage() {
   const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [offset, setOffset] = useState(0);
 
-  const { data: documents, isLoading } = useQuery({
-    queryKey: ["documents"],
-    queryFn: listDocuments,
+  const { data, isLoading } = useQuery({
+    queryKey: ["documents", { search, sort_by: sortBy, offset }],
+    queryFn: () =>
+      listDocuments({
+        search: search || undefined,
+        sort_by: sortBy,
+        order: sortBy === "title" ? "asc" : "desc",
+        limit: PAGE_SIZE,
+        offset,
+      }),
   });
+
+  const documents = data?.items;
+  const total = data?.total ?? 0;
+
+  // Reset pagination on search/sort change
+  function handleSearchChange(v: string) {
+    setSearch(v);
+    setOffset(0);
+  }
+
+  function handleSortChange(v: string) {
+    setSortBy(v);
+    setOffset(0);
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 pb-12">
@@ -29,16 +65,28 @@ export default function DocumentsPage() {
       <DocumentUploadForm />
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between px-1">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-5 w-5 text-indigo-600" />
             <h2 className="text-xl font-bold tracking-tight text-slate-800">내 학습 문서</h2>
+            {data && (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+                {total}개
+              </span>
+            )}
           </div>
-          {documents && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
-              총 {documents.length}개
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <SearchInput
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="문서 검색..."
+            />
+            <SortSelect
+              options={SORT_OPTIONS}
+              value={sortBy}
+              onChange={handleSortChange}
+            />
+          </div>
         </div>
 
         {isLoading ? (
@@ -48,14 +96,29 @@ export default function DocumentsPage() {
             ))}
           </div>
         ) : documents && documents.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {documents.map((doc) => (
-              <DocumentCard
-                key={doc.id}
-                document={doc}
-                onSelect={(id) => router.push(`/quiz/generate?document_id=${id}`)}
-              />
-            ))}
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {documents.map((doc) => (
+                <DocumentCard
+                  key={doc.id}
+                  document={doc}
+                  onSelect={(id) => router.push(`/quiz/generate?document_id=${id}`)}
+                />
+              ))}
+            </div>
+            <Pagination
+              total={total}
+              limit={PAGE_SIZE}
+              offset={offset}
+              onChange={setOffset}
+            />
+          </>
+        ) : search ? (
+          <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-16 text-center backdrop-blur-sm">
+            <h3 className="text-lg font-bold text-slate-800">&ldquo;{search}&rdquo; 검색 결과가 없습니다</h3>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              다른 검색어로 다시 시도해보세요.
+            </p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-16 text-center backdrop-blur-sm">
@@ -73,7 +136,7 @@ export default function DocumentsPage() {
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500" />
           <div className="text-xs font-medium leading-relaxed text-indigo-700/80">
             <p className="font-bold text-indigo-800 mb-1">문서 분석 안내</p>
-            업로드된 문서는 AI가 내용의 핵심을 파악하기 위해 여러 개의 청크(Chunk)로 나뉩니다. 
+            업로드된 문서는 AI가 내용의 핵심을 파악하기 위해 여러 개의 청크(Chunk)로 나뉩니다.
             너무 짧은 문서보다는 최소 200자 이상의 본문이 포함된 자료가 퀴즈 생성 품질에 더 좋습니다.
           </div>
         </div>

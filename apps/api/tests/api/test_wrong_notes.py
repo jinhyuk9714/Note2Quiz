@@ -106,3 +106,57 @@ class TestReviewWrongNote:
         assert resp.status_code == 200
         assert resp.json()["consecutive_correct"] == 1
         assert resp.json()["is_mastered"] is False
+
+
+class TestWrongNotesSearchAndPagination:
+    async def _create_wrong_note(self, client: AsyncClient) -> None:
+        mock_cls = _mock_anthropic()
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "WN Test",
+                "text": "Enough text material for creating a quiz for wrong note testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            quiz_resp = await client.post(
+                "/api/quiz/generate",
+                json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+            )
+        quiz_data = quiz_resp.json()
+        await client.post(
+            f"/api/quiz/{quiz_data['id']}/submit",
+            json={
+                "answers": [{"quiz_item_id": quiz_data["items"][0]["id"], "user_answer": "WRONG"}]
+            },
+        )
+
+    async def test_total_is_correct_with_pagination(self, client: AsyncClient) -> None:
+        # Create 3 wrong notes
+        for _ in range(3):
+            await self._create_wrong_note(client)
+
+        # Request with small limit
+        resp = await client.get("/api/wrong-notes/?limit=2&offset=0")
+        data = resp.json()
+        assert data["total"] == 3  # Total should be 3, not len(page)
+        assert len(data["notes"]) == 2
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+
+    async def test_search_by_question(self, client: AsyncClient) -> None:
+        await self._create_wrong_note(client)
+
+        # Mock question is "Sample Q?"
+        resp = await client.get("/api/wrong-notes/?search=Sample")
+        assert resp.json()["total"] == 1
+
+        resp2 = await client.get("/api/wrong-notes/?search=nonexistent")
+        assert resp2.json()["total"] == 0

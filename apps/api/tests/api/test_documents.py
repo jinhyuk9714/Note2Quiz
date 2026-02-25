@@ -91,7 +91,9 @@ class TestListDocuments:
     async def test_empty_list(self, client: AsyncClient) -> None:
         resp = await client.get("/api/documents/")
         assert resp.status_code == 200
-        assert resp.json() == []
+        data = resp.json()
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_list_after_upload(self, client: AsyncClient) -> None:
         await client.post(
@@ -100,9 +102,68 @@ class TestListDocuments:
         )
         resp = await client.get("/api/documents/")
         assert resp.status_code == 200
-        docs = resp.json()
-        assert len(docs) == 1
-        assert docs[0]["title"] == "Doc1"
+        data = resp.json()
+        assert len(data["items"]) == 1
+        assert data["items"][0]["title"] == "Doc1"
+        assert data["total"] == 1
+
+
+class TestDocumentSearchAndPagination:
+    async def _upload(self, client: AsyncClient, title: str) -> dict[str, str]:
+        resp = await client.post(
+            "/api/documents/",
+            data={"title": title, "text": "Long enough text for testing purpose here."},
+        )
+        return resp.json()  # type: ignore[no-any-return]
+
+    async def test_search_by_title(self, client: AsyncClient) -> None:
+        await self._upload(client, "Operating Systems Lecture 1")
+        await self._upload(client, "Data Structures Lecture 2")
+        await self._upload(client, "Operating Systems Lecture 3")
+
+        resp = await client.get("/api/documents/?search=Operating")
+        data = resp.json()
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
+
+    async def test_filter_by_source_type(self, client: AsyncClient) -> None:
+        await self._upload(client, "Text Doc")
+        # All test uploads are "text" source_type
+        resp = await client.get("/api/documents/?source_type=pdf")
+        assert resp.json()["total"] == 0
+
+        resp = await client.get("/api/documents/?source_type=text")
+        assert resp.json()["total"] == 1
+
+    async def test_pagination(self, client: AsyncClient) -> None:
+        for i in range(5):
+            await self._upload(client, f"Doc {i}")
+
+        resp = await client.get("/api/documents/?limit=2&offset=0")
+        data = resp.json()
+        assert data["total"] == 5
+        assert len(data["items"]) == 2
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+
+        resp2 = await client.get("/api/documents/?limit=2&offset=4")
+        data2 = resp2.json()
+        assert len(data2["items"]) == 1
+
+    async def test_sort_by_title_asc(self, client: AsyncClient) -> None:
+        await self._upload(client, "Charlie")
+        await self._upload(client, "Alpha")
+        await self._upload(client, "Bravo")
+
+        resp = await client.get("/api/documents/?sort_by=title&order=asc")
+        titles = [d["title"] for d in resp.json()["items"]]
+        assert titles == ["Alpha", "Bravo", "Charlie"]
+
+    async def test_search_case_insensitive(self, client: AsyncClient) -> None:
+        await self._upload(client, "Machine Learning Notes")
+
+        resp = await client.get("/api/documents/?search=machine")
+        assert resp.json()["total"] == 1
 
 
 class TestGetDocument:

@@ -23,7 +23,9 @@ const MOCK_DOCUMENTS = [
 ];
 
 vi.mock("@/lib/api", () => ({
-  listDocuments: vi.fn(() => Promise.resolve(MOCK_DOCUMENTS)),
+  listDocuments: vi.fn(() =>
+    Promise.resolve({ items: MOCK_DOCUMENTS, total: 2, limit: 100, offset: 0 }),
+  ),
 }));
 
 describe("QuizConfigForm", () => {

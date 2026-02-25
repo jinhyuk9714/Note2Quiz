@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Response
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Query, Response
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from starlette.requests import Request
 
 from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
 from app.core.rate_limit import limiter
+from app.models.attempt import QuizAttempt
 from app.models.document import Document
 from app.models.quiz import Quiz, QuizItem
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
+from app.schemas.common import PaginatedResponse
 from app.schemas.quiz import (
+    QuizAttemptSummaryResponse,
     QuizGenerateRequest,
     QuizItemResponse,
     QuizListItemResponse,
@@ -81,26 +85,85 @@ async def generate_quiz(
     return _quiz_to_response(quiz)
 
 
-@router.get("/", response_model=list[QuizListItemResponse])
-async def list_quizzes(db: DBSession, user_id: CurrentUserID) -> list[QuizListItemResponse]:
-    stmt = (
-        select(Quiz)
-        .join(Quiz.document)
-        .where(Document.owner_id == user_id)
-        .order_by(Quiz.created_at.desc())
-    )
-    result = await db.execute(stmt)
+@router.get("/", response_model=PaginatedResponse[QuizListItemResponse])
+async def list_quizzes(
+    db: DBSession,
+    user_id: CurrentUserID,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=200),
+    document_id: uuid.UUID | None = None,
+    sort_by: Literal["created_at", "title"] = Query(default="created_at"),
+    order: Literal["asc", "desc"] = Query(default="desc"),
+) -> PaginatedResponse[QuizListItemResponse]:
+    base = select(Quiz).join(Quiz.document).where(Document.owner_id == user_id)
+
+    if search:
+        base = base.where(Quiz.title.ilike(f"%{search}%"))
+    if document_id:
+        base = base.where(Quiz.document_id == document_id)
+
+    # Total count
+    count_stmt = select(func.count()).select_from(base.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    # Sorting + pagination
+    sort_col = Quiz.created_at if sort_by == "created_at" else Quiz.title
+    base = base.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
+    base = base.offset(offset).limit(limit)
+
+    result = await db.execute(base)
     quizzes = list(result.scalars().all())
-    return [
-        QuizListItemResponse(
-            id=q.id,
-            title=q.title,
-            item_count=q.item_count,
-            document_id=q.document_id,
-            created_at=q.created_at,
+
+    if not quizzes:
+        return PaginatedResponse[QuizListItemResponse](
+            items=[], total=int(total), limit=limit, offset=offset
         )
-        for q in quizzes
-    ]
+
+    quiz_ids = [q.id for q in quizzes]
+
+    # Attempt count per quiz
+    stats_stmt = (
+        select(
+            QuizAttempt.quiz_id,
+            func.count(QuizAttempt.id).label("attempt_count"),
+        )
+        .where(QuizAttempt.quiz_id.in_(quiz_ids), QuizAttempt.user_id == user_id)
+        .group_by(QuizAttempt.quiz_id)
+    )
+    stats_result = await db.execute(stats_stmt)
+    stats_map: dict[uuid.UUID, int] = {row.quiz_id: row.attempt_count for row in stats_result.all()}  # type: ignore[attr-defined]
+
+    # Latest attempt per quiz (most recent first)
+    latest_stmt = (
+        select(QuizAttempt)
+        .where(QuizAttempt.quiz_id.in_(quiz_ids), QuizAttempt.user_id == user_id)
+        .order_by(QuizAttempt.created_at.desc())
+    )
+    latest_result = await db.execute(latest_stmt)
+    latest_map: dict[uuid.UUID, QuizAttempt] = {}
+    for attempt in latest_result.scalars().all():
+        if attempt.quiz_id not in latest_map:
+            latest_map[attempt.quiz_id] = attempt
+
+    return PaginatedResponse[QuizListItemResponse](
+        items=[
+            QuizListItemResponse(
+                id=q.id,
+                title=q.title,
+                item_count=q.item_count,
+                document_id=q.document_id,
+                created_at=q.created_at,
+                attempt_count=stats_map.get(q.id, 0),
+                latest_score=latest_map[q.id].score if q.id in latest_map else None,
+                latest_total=latest_map[q.id].total if q.id in latest_map else None,
+            )
+            for q in quizzes
+        ],
+        total=int(total),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.delete("/{quiz_id}", status_code=204)
@@ -133,6 +196,38 @@ async def get_quiz(quiz_id: uuid.UUID, db: DBSession, user_id: CurrentUserID) ->
         raise HTTPException(status_code=404, detail="Quiz not found")
 
     return _quiz_to_response(quiz)
+
+
+@router.get("/{quiz_id}/attempts", response_model=list[QuizAttemptSummaryResponse])
+async def list_quiz_attempts(
+    quiz_id: uuid.UUID, db: DBSession, user_id: CurrentUserID
+) -> list[QuizAttemptSummaryResponse]:
+    # Verify ownership
+    ownership_stmt = (
+        select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    )
+    ownership_result = await db.execute(ownership_stmt)
+    if not ownership_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    stmt = (
+        select(QuizAttempt)
+        .where(QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user_id)
+        .order_by(QuizAttempt.attempt_number.desc())
+    )
+    result = await db.execute(stmt)
+    attempts = list(result.scalars().all())
+
+    return [
+        QuizAttemptSummaryResponse(
+            attempt_id=a.id,
+            attempt_number=a.attempt_number,
+            score=a.score,
+            total=a.total,
+            created_at=a.created_at,
+        )
+        for a in attempts
+    ]
 
 
 @router.post("/{quiz_id}/submit", response_model=QuizSubmitResponse, status_code=201)
@@ -182,6 +277,7 @@ async def submit_quiz(
 
     return QuizSubmitResponse(
         attempt_id=attempt.id,
+        attempt_number=attempt.attempt_number,
         score=attempt.score,
         total=attempt.total,
         results=results,

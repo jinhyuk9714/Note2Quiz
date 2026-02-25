@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
-from sqlalchemy import select
+from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
 from app.models.document import Document
+from app.schemas.common import PaginatedResponse
 from app.schemas.document import (
     ChunkResponse,
     DocumentDetailResponse,
@@ -20,6 +22,12 @@ from app.services.pdf_service import PDFExtractionError, extract_text_from_pdf
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 _MAX_UPLOAD_BYTES = settings.max_upload_size_mb * 1024 * 1024
+
+_SORT_COLUMNS = {
+    "created_at": Document.created_at,
+    "title": Document.title,
+    "char_count": Document.char_count,
+}
 
 
 @router.post("/", response_model=DocumentResponse, status_code=201)
@@ -71,22 +79,52 @@ async def upload_document(
     )
 
 
-@router.get("/", response_model=list[DocumentResponse])
-async def list_documents(db: DBSession, user_id: CurrentUserID) -> list[DocumentResponse]:
-    stmt = select(Document).where(Document.owner_id == user_id).order_by(Document.created_at.desc())
-    result = await db.execute(stmt)
+@router.get("/", response_model=PaginatedResponse[DocumentResponse])
+async def list_documents(
+    db: DBSession,
+    user_id: CurrentUserID,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=200),
+    source_type: Literal["text", "pdf"] | None = Query(default=None),
+    sort_by: Literal["created_at", "title", "char_count"] = Query(default="created_at"),
+    order: Literal["asc", "desc"] = Query(default="desc"),
+) -> PaginatedResponse[DocumentResponse]:
+    base = select(Document).where(Document.owner_id == user_id)
+
+    if search:
+        base = base.where(Document.title.ilike(f"%{search}%"))
+    if source_type:
+        base = base.where(Document.source_type == source_type)
+
+    # Total count
+    count_stmt = select(func.count()).select_from(base.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    # Sorting + pagination
+    col = _SORT_COLUMNS[sort_by]
+    base = base.order_by(col.asc() if order == "asc" else col.desc())
+    base = base.offset(offset).limit(limit)
+
+    result = await db.execute(base)
     docs = list(result.scalars().all())
-    return [
-        DocumentResponse(
-            id=d.id,
-            title=d.title,
-            source_type=d.source_type,
-            char_count=d.char_count,
-            chunk_count=d.chunk_count,
-            created_at=d.created_at,
-        )
-        for d in docs
-    ]
+
+    return PaginatedResponse[DocumentResponse](
+        items=[
+            DocumentResponse(
+                id=d.id,
+                title=d.title,
+                source_type=d.source_type,
+                char_count=d.char_count,
+                chunk_count=d.chunk_count,
+                created_at=d.created_at,
+            )
+            for d in docs
+        ],
+        total=int(total),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{document_id}", response_model=DocumentDetailResponse)

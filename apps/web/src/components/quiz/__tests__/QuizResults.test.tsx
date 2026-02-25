@@ -28,6 +28,7 @@ const items: QuizItem[] = [
 
 const result: SubmitResult = {
   attempt_id: "a1",
+  attempt_number: 1,
   score: 1,
   total: 2,
   results: [
@@ -59,6 +60,17 @@ describe("QuizResults", () => {
   it("shows wrong notes created count", () => {
     render(<QuizResults result={result} items={items} />);
     expect(screen.getByText(/1개의 오답노트가 생성되었습니다/)).toBeInTheDocument();
+  });
+
+  it("shows attempt number when > 1", () => {
+    const retakeResult: SubmitResult = { ...result, attempt_number: 3 };
+    render(<QuizResults result={retakeResult} items={items} />);
+    expect(screen.getByText(/Attempt #3/)).toBeInTheDocument();
+  });
+
+  it("does not show attempt number for first attempt", () => {
+    render(<QuizResults result={result} items={items} />);
+    expect(screen.queryByText(/Attempt #/)).not.toBeInTheDocument();
   });
 
   it("hides wrong notes message when all correct", () => {

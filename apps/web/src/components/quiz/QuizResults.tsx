@@ -18,7 +18,9 @@ export function QuizResults({ result, items }: QuizResultsProps) {
           <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-400 backdrop-blur-md ring-1 ring-white/10">
             <Trophy className="h-8 w-8" />
           </div>
-          <h2 className="text-sm font-black uppercase tracking-[0.3em] text-indigo-400">Quiz Completed</h2>
+          <h2 className="text-sm font-black uppercase tracking-[0.3em] text-indigo-400">
+            Quiz Completed{result.attempt_number > 1 && ` — Attempt #${result.attempt_number}`}
+          </h2>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-7xl font-black tracking-tighter text-white">{result.score}</span>
             <span className="text-2xl font-bold text-slate-500">/ {result.total}</span>

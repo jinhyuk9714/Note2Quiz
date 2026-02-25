@@ -68,6 +68,9 @@ export interface QuizListItem {
   item_count: number;
   document_id: string;
   created_at: string;
+  attempt_count: number;
+  latest_score: number | null;
+  latest_total: number | null;
 }
 
 export interface GenerateQuizPayload {
@@ -92,10 +95,19 @@ export interface AnswerResult {
 
 export interface SubmitResult {
   attempt_id: string;
+  attempt_number: number;
   score: number;
   total: number;
   results: AnswerResult[];
   wrong_notes_created: number;
+}
+
+export interface AttemptSummary {
+  attempt_id: string;
+  attempt_number: number;
+  score: number;
+  total: number;
+  created_at: string;
 }
 
 export interface WrongNote {
@@ -115,6 +127,23 @@ export interface WrongNote {
 export interface WrongNoteListResponse {
   notes: WrongNote[];
   total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ListParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  sort_by?: string;
+  order?: "asc" | "desc";
 }
 
 // Dashboard

@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentUserID, DBSession
 from app.models.attempt import WrongAnswerNote
+from app.models.quiz import QuizItem
 from app.schemas.attempt import (
     WrongAnswerNoteListResponse,
     WrongAnswerNoteResponse,
@@ -26,21 +28,36 @@ async def list_wrong_notes(
     due_only: bool = Query(default=False, description="복습 시점이 된 노트만 조회"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=200),
+    sort_by: Literal["next_review_at", "created_at"] = Query(default="next_review_at"),
+    order: Literal["asc", "desc"] = Query(default="asc"),
 ) -> WrongAnswerNoteListResponse:
-    stmt = (
+    base = (
         select(WrongAnswerNote)
         .where(WrongAnswerNote.user_id == user_id)
         .where(WrongAnswerNote.is_mastered == False)  # noqa: E712
-        .options(selectinload(WrongAnswerNote.quiz_item))
     )
 
     if due_only:
-        stmt = stmt.where(WrongAnswerNote.next_review_at <= datetime.now(UTC))
+        base = base.where(WrongAnswerNote.next_review_at <= datetime.now(UTC))
+    if search:
+        base = base.join(WrongAnswerNote.quiz_item).where(QuizItem.question.ilike(f"%{search}%"))
 
-    stmt = stmt.order_by(WrongAnswerNote.next_review_at.asc())
-    stmt = stmt.offset(offset).limit(limit)
+    # Total count (before pagination)
+    count_stmt = select(func.count()).select_from(base.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
 
-    result = await db.execute(stmt)
+    # Sorting + pagination
+    sort_col = (
+        WrongAnswerNote.next_review_at
+        if sort_by == "next_review_at"
+        else WrongAnswerNote.created_at
+    )
+    base = base.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
+    base = base.offset(offset).limit(limit)
+    base = base.options(selectinload(WrongAnswerNote.quiz_item))
+
+    result = await db.execute(base)
     notes = list(result.scalars().all())
 
     return WrongAnswerNoteListResponse(
@@ -60,7 +77,9 @@ async def list_wrong_notes(
             )
             for n in notes
         ],
-        total=len(notes),
+        total=int(total),
+        limit=limit,
+        offset=offset,
     )
 
 

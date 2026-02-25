@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attempt import QuizAttempt, WrongAnswerNote
@@ -48,10 +48,18 @@ async def create_attempt_with_wrong_notes(
             }
         )
 
+    # Compute attempt_number
+    count_stmt = select(func.count(QuizAttempt.id)).where(
+        QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user_id
+    )
+    existing_count = (await db.execute(count_stmt)).scalar_one()
+    attempt_number = int(existing_count) + 1
+
     # Create attempt
     attempt = QuizAttempt(
         quiz_id=quiz_id,
         user_id=user_id,
+        attempt_number=attempt_number,
         score=score,
         total=len(graded),
         answers=graded,  # type: ignore[arg-type]
