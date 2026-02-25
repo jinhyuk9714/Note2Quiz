@@ -261,6 +261,10 @@ export function reviewWrongNote(noteId: string, isCorrect: boolean) {
   });
 }
 
+export function deleteWrongNote(noteId: string): Promise<void> {
+  return apiDelete(`/api/wrong-notes/${noteId}`);
+}
+
 // Dashboard
 export function getDashboardStats() {
   return apiFetch<DashboardStats>("/api/dashboard/stats");

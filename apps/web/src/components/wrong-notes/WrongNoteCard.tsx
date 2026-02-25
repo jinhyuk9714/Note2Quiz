@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, AlertCircle } from "lucide-react";
-import { reviewWrongNote } from "@/lib/api";
+import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, AlertCircle, Trash2 } from "lucide-react";
+import { reviewWrongNote, deleteWrongNote } from "@/lib/api";
 import type { WrongNote } from "@/types/api";
 import { cn, formatDate, getRelativeTime } from "@/lib/utils";
 import { MasteryProgress } from "./MasteryProgress";
@@ -23,6 +23,19 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
       void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteWrongNote(note.id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
+    },
+  });
+
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!window.confirm("이 오답노트를 삭제하시겠습니까?")) return;
+    deleteMutation.mutate();
+  }
 
   return (
     <div className={cn(
@@ -49,18 +62,32 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
             ))}
           </div>
         </div>
-        {note.next_review_at && (
-          <span
-            className={cn(
-              "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ring-1 ring-inset",
-              isOverdue
-                ? "bg-amber-50 text-amber-600 ring-amber-200/50 shadow-sm shadow-amber-100"
-                : "bg-slate-50 text-slate-400 ring-slate-200/50",
-            )}
+        <div className="flex items-center gap-2">
+          {note.next_review_at && (
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ring-1 ring-inset",
+                isOverdue
+                  ? "bg-amber-50 text-amber-600 ring-amber-200/50 shadow-sm shadow-amber-100"
+                  : "bg-slate-50 text-slate-400 ring-slate-200/50",
+              )}
+            >
+              {isOverdue ? "Review Due" : getRelativeTime(note.next_review_at)}
+            </span>
+          )}
+          <button
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            title="삭제"
           >
-            {isOverdue ? "Review Due" : getRelativeTime(note.next_review_at)}
-          </span>
-        )}
+            {deleteMutation.isPending ? (
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
       </div>
 
       <p className="text-[15px] font-bold leading-relaxed text-slate-800">{note.question}</p>
@@ -135,10 +162,10 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
         </div>
       )}
 
-      {mutation.isError && (
+      {(mutation.isError || deleteMutation.isError) && (
         <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-red-500 animate-in shake duration-300">
           <AlertCircle className="h-3.5 w-3.5" />
-          {mutation.error.message}
+          {mutation.error?.message ?? deleteMutation.error?.message}
         </div>
       )}
     </div>

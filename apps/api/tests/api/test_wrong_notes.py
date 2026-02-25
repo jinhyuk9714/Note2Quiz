@@ -276,3 +276,54 @@ class TestConceptTagFilter:
         # is_mastered not set (defaults to false) + concept_tag should return 1
         resp2 = await client.get("/api/wrong-notes/?concept_tag=test")
         assert resp2.json()["total"] == 1
+
+
+class TestDeleteWrongNote:
+    async def _create_wrong_note(self, client: AsyncClient) -> str:
+        """Create a wrong note and return its ID."""
+        mock_cls = _mock_anthropic()
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Delete Test",
+                "text": "Enough text material for creating a quiz for delete testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            quiz_resp = await client.post(
+                "/api/quiz/generate",
+                json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+            )
+        quiz_data = quiz_resp.json()
+        await client.post(
+            f"/api/quiz/{quiz_data['id']}/submit",
+            json={
+                "answers": [{"quiz_item_id": quiz_data["items"][0]["id"], "user_answer": "WRONG"}]
+            },
+        )
+        notes_resp = await client.get("/api/wrong-notes/")
+        return notes_resp.json()["notes"][0]["id"]
+
+    async def test_delete_returns_204(self, client: AsyncClient) -> None:
+        note_id = await self._create_wrong_note(client)
+        resp = await client.delete(f"/api/wrong-notes/{note_id}")
+        assert resp.status_code == 204
+
+    async def test_delete_nonexistent_returns_404(self, client: AsyncClient) -> None:
+        resp = await client.delete(f"/api/wrong-notes/{uuid.uuid4()}")
+        assert resp.status_code == 404
+
+    async def test_delete_then_list_excludes(self, client: AsyncClient) -> None:
+        note_id = await self._create_wrong_note(client)
+
+        await client.delete(f"/api/wrong-notes/{note_id}")
+
+        resp = await client.get("/api/wrong-notes/")
+        assert resp.json()["total"] == 0

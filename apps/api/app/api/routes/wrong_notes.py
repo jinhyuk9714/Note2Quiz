@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import String, cast, func, select
 from sqlalchemy.orm import selectinload
+from starlette.responses import Response
 
 from app.core.deps import CurrentUserID, DBSession
 from app.models.attempt import WrongAnswerNote
@@ -137,3 +138,22 @@ async def review_wrong_note(
         is_mastered=note.is_mastered,
         created_at=note.created_at,
     )
+
+
+@router.delete("/{note_id}", status_code=204)
+async def delete_wrong_note(
+    note_id: uuid.UUID,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> Response:
+    stmt = select(WrongAnswerNote).where(
+        WrongAnswerNote.id == note_id,
+        WrongAnswerNote.user_id == user_id,
+    )
+    result = await db.execute(stmt)
+    note = result.scalar_one_or_none()
+    if not note:
+        raise HTTPException(status_code=404, detail="Wrong note not found")
+    await db.delete(note)
+    await db.commit()
+    return Response(status_code=204)
