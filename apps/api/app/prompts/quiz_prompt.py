@@ -7,39 +7,75 @@ def build_quiz_generation_prompt(
     quiz_types: list[str],
 ) -> str:
     types_str = ", ".join(quiz_types)
+
+    # 유형별 개수 분배 지시
+    per_type = n_questions // len(quiz_types)
+    remainder = n_questions % len(quiz_types)
+    distribution = f"Distribute EVENLY: approximately {per_type} questions per type"
+    if remainder:
+        distribution += f" (assign the extra {remainder} to any type)"
+
     return f"""You are an expert educational quiz generator for university students.
 
 Given the following study material, generate exactly {n_questions} quiz questions.
 
 **Allowed question types**: {types_str}
-- "mcq": Multiple choice with 4 options (A, B, C, D)
-- "short_answer": Short answer (1-2 sentences)
-- "true_false": True/False statement
-- "fill_blank": Fill in the blank
+{distribution}
+
+**IMPORTANT**: You MUST use ALL of the allowed question types listed above. Do NOT generate only one type.
+
+Type-specific rules:
+- "mcq": Multiple choice — include "options" with keys A, B, C, D. "correct_answer" is one of "A","B","C","D".
+- "short_answer": Short answer — omit "options". "correct_answer" is a 1-2 sentence answer.
+- "true_false": True/False — omit "options". "question" is a declarative statement. "correct_answer" is "O" (true) or "X" (false).
+- "fill_blank": Fill in the blank — omit "options". "question" contains "___" for the blank. "correct_answer" is the word/phrase for the blank.
 
 **Study Material**:
 {chunk_text}
 
-**Output**: Return ONLY a JSON array. Each element must have this structure:
+**Output**: Return ONLY a JSON array. Examples of each type:
 ```json
 [
   {{
     "quiz_type": "mcq",
-    "question": "What is ...?",
+    "question": "다음 중 올바른 것은?",
     "correct_answer": "A",
-    "explanation": "Because ...",
+    "explanation": "A가 정답인 이유...",
     "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
-    "concept_tags": ["concept1", "concept2"],
+    "concept_tags": ["개념1"],
+    "difficulty": 2
+  }},
+  {{
+    "quiz_type": "true_false",
+    "question": "OO는 XX이다.",
+    "correct_answer": "O",
+    "explanation": "이 설명이 맞는 이유...",
+    "concept_tags": ["개념2"],
     "difficulty": 1
+  }},
+  {{
+    "quiz_type": "fill_blank",
+    "question": "OO에서 사용하는 주요 기법은 ___이다.",
+    "correct_answer": "YY",
+    "explanation": "YY가 정답인 이유...",
+    "concept_tags": ["개념3"],
+    "difficulty": 2
+  }},
+  {{
+    "quiz_type": "short_answer",
+    "question": "OO의 장점을 설명하시오.",
+    "correct_answer": "OO의 장점은 ...",
+    "explanation": "핵심 포인트는...",
+    "concept_tags": ["개념4"],
+    "difficulty": 3
   }}
 ]
 ```
 
-For non-MCQ types, omit the "options" field.
 difficulty: 1 = easy, 2 = medium, 3 = hard.
 concept_tags: 1-3 key concept keywords from the material.
 explanation: 1-2 sentences explaining why the answer is correct.
 
-**Language**: Generate ALL content (question, correct_answer, explanation, options, concept_tags) in the SAME language as the study material. If the study material is in Korean, all output text must be in Korean.
+**Language**: Generate ALL content (question, correct_answer, explanation, options, concept_tags) in the SAME language as the study material.
 
 Return ONLY the JSON array, no other text."""

@@ -107,8 +107,10 @@ async def generate_quiz_from_chunks(
 
     # Add newly generated items
     remaining = n_questions - len(all_items)
-    for item_data in new_items_data[:remaining]:
+    for idx, item_data in enumerate(new_items_data[:remaining]):
         quiz_type_str = str(item_data.get("quiz_type", "mcq"))
+        if quiz_type_str not in quiz_types:
+            quiz_type_str = quiz_types[idx % len(quiz_types)]
         item = QuizItem(
             quiz_id=quiz.id,
             source_chunk_id=uuid.UUID(str(item_data["source_chunk_id"])),
