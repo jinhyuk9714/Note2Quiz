@@ -4,6 +4,11 @@ import { renderWithProviders, screen } from "@/test/test-utils";
 import { DocumentCard } from "../DocumentCard";
 import type { Document } from "@/types/api";
 
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock("@/lib/api", () => ({
   deleteDocument: vi.fn(),
 }));
@@ -23,6 +28,7 @@ const mockDocument: Document = {
 describe("DocumentCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPush.mockClear();
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
@@ -76,5 +82,11 @@ describe("DocumentCard", () => {
   it("hides quiz count when 0", () => {
     renderWithProviders(<DocumentCard document={mockDocument} />);
     expect(screen.queryByText(/개 퀴즈/)).not.toBeInTheDocument();
+  });
+
+  it("navigates to document detail page on card click", async () => {
+    renderWithProviders(<DocumentCard document={mockDocument} />);
+    await userEvent.click(screen.getByText("Introduction to CS"));
+    expect(mockPush).toHaveBeenCalledWith("/documents/abc-123");
   });
 });

@@ -1,6 +1,6 @@
 import type { QuizItem as QuizItemType } from "@/types/api";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle, AlertCircle, HelpCircle, ListOrdered, CheckSquare, PenTool } from "lucide-react";
+import { CheckCircle2, Circle, HelpCircle, ListOrdered, CheckSquare, PenTool } from "lucide-react";
 
 interface QuizItemProps {
   item: QuizItemType;

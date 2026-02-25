@@ -1,11 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, Trash2, Zap, Calendar, Hash, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileText, Trash2, Zap, Calendar, Hash, Sparkles, ChevronRight } from "lucide-react";
 import type { Document } from "@/types/api";
 import { formatDate } from "@/lib/utils";
 import { deleteDocument } from "@/lib/api";
-import { cn } from "@/lib/utils";
 
 interface DocumentCardProps {
   document: Document;
@@ -13,6 +13,7 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document, onSelect }: DocumentCardProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -34,12 +35,9 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
   }
 
   return (
-    <div 
-      onClick={() => onSelect?.(document.id)}
-      className={cn(
-        "group flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.99]",
-        onSelect && "cursor-pointer hover:border-indigo-200"
-      )}
+    <div
+      onClick={() => router.push(`/documents/${document.id}`)}
+      className="group flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer hover:border-indigo-200"
     >
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-500">
@@ -101,6 +99,9 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
             <Trash2 className="h-4 w-4" />
           )}
         </button>
+        <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 group-hover:translate-x-1 transition-transform">
+          <ChevronRight className="h-5 w-5" />
+        </div>
       </div>
     </div>
   );

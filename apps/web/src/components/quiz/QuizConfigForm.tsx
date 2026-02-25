@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight, Type } from "lucide-react";
 import { listDocuments } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const QUIZ_TYPE_OPTIONS = [
   { value: "mcq", label: "객관식", icon: ListOrdered },
@@ -99,9 +100,9 @@ export function QuizConfigForm({
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <div className="text-xs font-bold text-amber-700">
                 업로드된 문서가 없습니다.{" "}
-                <a href="/documents" className="underline decoration-2 underline-offset-2">
+                <Link href="/documents" className="underline decoration-2 underline-offset-2">
                   먼저 문서를 업로드하세요.
-                </a>
+                </Link>
               </div>
             </div>
           )}
