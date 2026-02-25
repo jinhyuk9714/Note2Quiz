@@ -11,6 +11,7 @@ from app.models.quiz import Quiz, QuizItem
 from app.models.user import User
 from app.services.dashboard_service import (
     _get_mastery_summary,  # pyright: ignore[reportPrivateUsage]
+    _get_recent_activity,  # pyright: ignore[reportPrivateUsage]
     _get_streak_stats,  # pyright: ignore[reportPrivateUsage]
 )
 
@@ -232,3 +233,75 @@ class TestGetMasterySummary:
         assert result.total_wrong_notes == 3
         assert result.mastered_count == 3
         assert result.mastery_rate == 1.0
+
+
+@pytest.mark.usefixtures("setup_database")
+class TestGetRecentActivity:
+    async def test_no_activity(self, db_session: AsyncSession, seeded_user: User) -> None:
+        result = await _get_recent_activity(db_session, seeded_user.id)
+        assert result == []
+
+    async def test_document_appears(self, db_session: AsyncSession, seeded_user: User) -> None:
+        from app.models.document import Document
+
+        doc = Document(
+            owner_id=seeded_user.id,
+            title="My Notes",
+            source_type="text",
+            char_count=500,
+            chunk_count=3,
+        )
+        db_session.add(doc)
+        await db_session.flush()
+
+        result = await _get_recent_activity(db_session, seeded_user.id)
+        assert len(result) == 1
+        assert result[0].type == "document_uploaded"
+        assert result[0].title == "My Notes"
+        assert result[0].description == "3개 섹션"
+        assert result[0].entity_id == str(doc.id)
+
+    async def test_quiz_attempt_appears(self, db_session: AsyncSession, seeded_user: User) -> None:
+        quiz, _ = await _create_quiz_with_item(db_session, seeded_user.id)
+        attempt = QuizAttempt(
+            user_id=seeded_user.id,
+            quiz_id=quiz.id,
+            attempt_number=1,
+            score=4,
+            total=5,
+            answers=[],
+        )
+        db_session.add(attempt)
+        await db_session.flush()
+
+        result = await _get_recent_activity(db_session, seeded_user.id)
+        # Should have both the document (from _create_quiz_with_item) and the attempt
+        attempt_items = [r for r in result if r.type == "quiz_attempted"]
+        assert len(attempt_items) == 1
+        assert attempt_items[0].title == "Test Quiz"
+        assert attempt_items[0].description == "4/5 정답"
+        assert attempt_items[0].entity_id == str(quiz.id)
+
+    async def test_sorted_by_recency(self, db_session: AsyncSession, seeded_user: User) -> None:
+        quiz, _ = await _create_quiz_with_item(db_session, seeded_user.id)
+        now = datetime.now(UTC)
+
+        # Create an older attempt
+        await _create_attempt_on_date(db_session, seeded_user.id, quiz.id, now - timedelta(hours=2))
+
+        result = await _get_recent_activity(db_session, seeded_user.id)
+        # Items should be sorted newest first
+        for i in range(len(result) - 1):
+            assert result[i].created_at >= result[i + 1].created_at
+
+    async def test_limit_applied(self, db_session: AsyncSession, seeded_user: User) -> None:
+        quiz, _ = await _create_quiz_with_item(db_session, seeded_user.id)
+        now = datetime.now(UTC)
+
+        for i in range(5):
+            await _create_attempt_on_date(
+                db_session, seeded_user.id, quiz.id, now - timedelta(hours=i), i + 1
+            )
+
+        result = await _get_recent_activity(db_session, seeded_user.id, limit=3)
+        assert len(result) <= 3

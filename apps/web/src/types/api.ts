@@ -190,10 +190,19 @@ export interface MasterySummaryStats {
   mastery_rate: number;
 }
 
+export interface RecentActivityItem {
+  type: "document_uploaded" | "quiz_attempted" | "wrong_note_created";
+  title: string;
+  description: string;
+  entity_id: string;
+  created_at: string;
+}
+
 export interface DashboardStats {
   learning_progress: LearningProgressStats;
   weak_concepts: WeakConceptItem[];
   review_schedule: ReviewScheduleStats;
   streak: StreakStats;
   mastery_summary: MasterySummaryStats;
+  recent_activity: RecentActivityItem[];
 }

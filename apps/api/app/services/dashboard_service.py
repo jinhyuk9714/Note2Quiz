@@ -8,11 +8,13 @@ from sqlalchemy import distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attempt import QuizAttempt, WrongAnswerNote
+from app.models.document import Document
 from app.models.quiz import Quiz
 from app.schemas.dashboard import (
     DashboardStatsResponse,
     LearningProgressStats,
     MasterySummaryStats,
+    RecentActivityItem,
     ReviewScheduleDay,
     ReviewScheduleStats,
     StreakStats,
@@ -29,6 +31,7 @@ async def get_dashboard_stats(
     review_schedule = await _get_review_schedule(db, user_id)
     streak = await _get_streak_stats(db, user_id)
     mastery_summary = await _get_mastery_summary(db, user_id)
+    recent_activity = await _get_recent_activity(db, user_id)
 
     return DashboardStatsResponse(
         learning_progress=learning_progress,
@@ -36,6 +39,7 @@ async def get_dashboard_stats(
         review_schedule=review_schedule,
         streak=streak,
         mastery_summary=mastery_summary,
+        recent_activity=recent_activity,
     )
 
 
@@ -251,3 +255,64 @@ async def _get_mastery_summary(
         mastered_count=mastered,
         mastery_rate=round(mastery_rate, 4),
     )
+
+
+async def _get_recent_activity(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    limit: int = 10,
+) -> list[RecentActivityItem]:
+    # Recent documents
+    doc_stmt = (
+        select(Document.id, Document.title, Document.chunk_count, Document.created_at)
+        .where(Document.owner_id == user_id)
+        .order_by(Document.created_at.desc())
+        .limit(limit)
+    )
+    doc_result = await db.execute(doc_stmt)
+    doc_rows = doc_result.all()
+
+    # Recent quiz attempts (join with Quiz for title)
+    attempt_stmt = (
+        select(
+            Quiz.id.label("quiz_id"),
+            Quiz.title,
+            QuizAttempt.score,
+            QuizAttempt.total,
+            QuizAttempt.created_at,
+        )
+        .select_from(QuizAttempt)
+        .join(Quiz, QuizAttempt.quiz_id == Quiz.id)
+        .where(QuizAttempt.user_id == user_id)
+        .order_by(QuizAttempt.created_at.desc())
+        .limit(limit)
+    )
+    attempt_result = await db.execute(attempt_stmt)
+    attempt_rows = attempt_result.all()
+
+    items: list[RecentActivityItem] = []
+
+    for row in doc_rows:
+        items.append(
+            RecentActivityItem(
+                type="document_uploaded",
+                title=row.title,  # type: ignore[union-attr]
+                description=f"{row.chunk_count}개 섹션",  # type: ignore[union-attr]
+                entity_id=str(row.id),
+                created_at=row.created_at.isoformat(),  # type: ignore[union-attr]
+            )
+        )
+
+    for row in attempt_rows:
+        items.append(
+            RecentActivityItem(
+                type="quiz_attempted",
+                title=row.title,  # type: ignore[union-attr]
+                description=f"{row.score}/{row.total} 정답",  # type: ignore[union-attr]
+                entity_id=str(row.quiz_id),  # type: ignore[union-attr]
+                created_at=row.created_at.isoformat(),  # type: ignore[union-attr]
+            )
+        )
+
+    items.sort(key=lambda x: x.created_at, reverse=True)
+    return items[:limit]

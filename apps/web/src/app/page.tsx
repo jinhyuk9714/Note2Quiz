@@ -10,6 +10,7 @@ import { LearningStreakCard } from "@/components/dashboard/LearningStreakCard";
 import { MasterySummaryCard } from "@/components/dashboard/MasterySummaryCard";
 import { WeakConceptsCard } from "@/components/dashboard/WeakConceptsCard";
 import { ReviewScheduleCard } from "@/components/dashboard/ReviewScheduleCard";
+import { RecentActivityCard } from "@/components/dashboard/RecentActivityCard";
 
 export default function DashboardPage() {
   const {
@@ -70,6 +71,10 @@ export default function DashboardPage() {
 
             <div className="lg:col-span-5">
               <ReviewScheduleCard schedule={stats.review_schedule} />
+            </div>
+
+            <div className="lg:col-span-12">
+              <RecentActivityCard activities={stats.recent_activity} />
             </div>
           </div>
         </div>

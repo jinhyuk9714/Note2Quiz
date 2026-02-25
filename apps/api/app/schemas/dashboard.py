@@ -42,9 +42,18 @@ class MasterySummaryStats(BaseModel):
     mastery_rate: float
 
 
+class RecentActivityItem(BaseModel):
+    type: str
+    title: str
+    description: str
+    entity_id: str
+    created_at: str
+
+
 class DashboardStatsResponse(BaseModel):
     learning_progress: LearningProgressStats
     weak_concepts: list[WeakConceptItem]
     review_schedule: ReviewScheduleStats
     streak: StreakStats
     mastery_summary: MasterySummaryStats
+    recent_activity: list[RecentActivityItem]
