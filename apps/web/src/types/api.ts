@@ -181,6 +181,13 @@ export interface ListParams {
   order?: "asc" | "desc";
 }
 
+export interface QuizListParams extends ListParams {
+  document_id?: string;
+  attempt_status?: "all" | "not_attempted" | "attempted";
+  score_min?: number;
+  score_max?: number;
+}
+
 // Dashboard
 export interface LearningProgressStats {
   total_quizzes_taken: number;

@@ -185,59 +185,108 @@ async def list_quizzes(
     offset: int = Query(default=0, ge=0),
     search: str | None = Query(default=None, min_length=1, max_length=200),
     document_id: uuid.UUID | None = None,
-    sort_by: Literal["created_at", "title"] = Query(default="created_at"),
+    attempt_status: Literal["all", "not_attempted", "attempted"] = Query(default="all"),
+    score_min: int | None = Query(default=None, ge=0, le=100),
+    score_max: int | None = Query(default=None, ge=0, le=100),
+    sort_by: Literal["created_at", "title", "item_count", "latest_score"] = Query(
+        default="created_at"
+    ),
     order: Literal["asc", "desc"] = Query(default="desc"),
 ) -> PaginatedResponse[QuizListItemResponse]:
-    base = select(Quiz).join(Quiz.document).where(Document.owner_id == user_id)
+    # Attempt count subquery
+    attempt_count_sq = (
+        select(
+            QuizAttempt.quiz_id,
+            func.count(QuizAttempt.id).label("attempt_count"),
+        )
+        .where(QuizAttempt.user_id == user_id)
+        .group_by(QuizAttempt.quiz_id)
+        .subquery()
+    )
+
+    # Latest attempt subquery (window function)
+    latest_numbered = (
+        select(
+            QuizAttempt.quiz_id,
+            QuizAttempt.score,
+            QuizAttempt.total,
+            func.row_number()
+            .over(
+                partition_by=QuizAttempt.quiz_id,
+                order_by=QuizAttempt.created_at.desc(),
+            )
+            .label("rn"),
+        )
+        .where(QuizAttempt.user_id == user_id)
+        .subquery()
+    )
+    latest_sq = (
+        select(
+            latest_numbered.c.quiz_id,
+            latest_numbered.c.score,
+            latest_numbered.c.total,
+        )
+        .where(latest_numbered.c.rn == 1)
+        .subquery()
+    )
+
+    # Main query with joins
+    base = (
+        select(
+            Quiz,
+            func.coalesce(attempt_count_sq.c.attempt_count, 0).label("attempt_count"),
+            latest_sq.c.score.label("latest_score"),
+            latest_sq.c.total.label("latest_total"),
+        )
+        .join(Quiz.document)
+        .outerjoin(attempt_count_sq, Quiz.id == attempt_count_sq.c.quiz_id)
+        .outerjoin(latest_sq, Quiz.id == latest_sq.c.quiz_id)
+        .where(Document.owner_id == user_id)
+    )
 
     if search:
         base = base.where(Quiz.title.ilike(f"%{search}%"))
     if document_id:
         base = base.where(Quiz.document_id == document_id)
 
+    # Attempt status filter
+    if attempt_status == "not_attempted":
+        base = base.where(func.coalesce(attempt_count_sq.c.attempt_count, 0) == 0)
+    elif attempt_status == "attempted":
+        base = base.where(func.coalesce(attempt_count_sq.c.attempt_count, 0) > 0)
+
+    # Score filter (percentage-based)
+    if score_min is not None:
+        base = base.where(
+            latest_sq.c.total > 0,
+            (latest_sq.c.score * 100.0 / latest_sq.c.total) >= score_min,
+        )
+    if score_max is not None:
+        base = base.where(
+            latest_sq.c.total > 0,
+            (latest_sq.c.score * 100.0 / latest_sq.c.total) < score_max,
+        )
+
     # Total count
     count_stmt = select(func.count()).select_from(base.subquery())
     total = (await db.execute(count_stmt)).scalar_one()
 
-    # Sorting + pagination
-    sort_col = Quiz.created_at if sort_by == "created_at" else Quiz.title
+    # Sorting
+    sort_map = {
+        "created_at": Quiz.created_at,
+        "title": Quiz.title,
+        "item_count": Quiz.item_count,
+        "latest_score": func.coalesce(latest_sq.c.score, -1),
+    }
+    sort_col = sort_map[sort_by]
     base = base.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
+
+    # Pagination + eager load
     base = base.offset(offset).limit(limit)
     base = base.options(selectinload(Quiz.document))
 
     result = await db.execute(base)
-    quizzes = list(result.scalars().all())
-
-    if not quizzes:
-        return PaginatedResponse[QuizListItemResponse](
-            items=[], total=int(total), limit=limit, offset=offset
-        )
-
-    quiz_ids = [q.id for q in quizzes]
-
-    # Attempt count per quiz
-    stats_stmt = (
-        select(
-            QuizAttempt.quiz_id,
-            func.count(QuizAttempt.id).label("attempt_count"),
-        )
-        .where(QuizAttempt.quiz_id.in_(quiz_ids), QuizAttempt.user_id == user_id)
-        .group_by(QuizAttempt.quiz_id)
-    )
-    stats_result = await db.execute(stats_stmt)
-    stats_map: dict[uuid.UUID, int] = {row.quiz_id: row.attempt_count for row in stats_result.all()}  # type: ignore[attr-defined]
-
-    # Latest attempt per quiz (most recent first)
-    latest_stmt = (
-        select(QuizAttempt)
-        .where(QuizAttempt.quiz_id.in_(quiz_ids), QuizAttempt.user_id == user_id)
-        .order_by(QuizAttempt.created_at.desc())
-    )
-    latest_result = await db.execute(latest_stmt)
-    latest_map: dict[uuid.UUID, QuizAttempt] = {}
-    for attempt in latest_result.scalars().all():
-        if attempt.quiz_id not in latest_map:
-            latest_map[attempt.quiz_id] = attempt
+    rows = result.all()
 
     return PaginatedResponse[QuizListItemResponse](
         items=[
@@ -248,11 +297,11 @@ async def list_quizzes(
                 document_id=q.document_id,
                 document_title=q.document.title if q.document else "",
                 created_at=q.created_at,
-                attempt_count=stats_map.get(q.id, 0),
-                latest_score=latest_map[q.id].score if q.id in latest_map else None,
-                latest_total=latest_map[q.id].total if q.id in latest_map else None,
+                attempt_count=int(ac),
+                latest_score=s,
+                latest_total=t,
             )
-            for q in quizzes
+            for q, ac, s, t in rows
         ],
         total=int(total),
         limit=limit,

@@ -491,6 +491,132 @@ class TestQuizSearchAndPagination:
         assert resp2.json()["total"] == 0
 
 
+async def _make_quiz_with_title(
+    client: AsyncClient, title: str, doc_title: str = "Doc"
+) -> dict[str, Any]:
+    """Create a document + quiz with a specific title."""
+    mock_cls, _ = _mock_anthropic()
+    doc_resp = await client.post(
+        "/api/documents/",
+        data={
+            "title": doc_title,
+            "text": "Long enough material for quiz generation testing purposes.",
+        },
+    )
+    doc_id = doc_resp.json()["id"]
+    with (
+        patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+        patch(
+            "app.services.quiz_generation.isinstance",
+            side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+        ),
+    ):
+        quiz_resp = await client.post(
+            "/api/quiz/generate",
+            json={
+                "document_id": doc_id,
+                "n_questions": 1,
+                "quiz_types": ["mcq"],
+                "title": title,
+            },
+        )
+    return quiz_resp.json()
+
+
+async def _submit_quiz(
+    client: AsyncClient, quiz: dict[str, Any], answer: str = "A"
+) -> dict[str, Any]:
+    """Submit an answer to a quiz and return the result."""
+    item = quiz["items"][0]
+    resp = await client.post(
+        f"/api/quiz/{quiz['id']}/submit",
+        json={"answers": [{"quiz_item_id": item["id"], "user_answer": answer}]},
+    )
+    return resp.json()
+
+
+class TestQuizFilters:
+    """Test attempt_status, score_min, score_max, and extended sort_by filters."""
+
+    async def test_attempt_status_not_attempted(self, client: AsyncClient) -> None:
+        quiz_a = await _make_quiz_with_title(client, "QuizA")
+        await _make_quiz_with_title(client, "QuizB")
+        # Submit only QuizA
+        await _submit_quiz(client, quiz_a, "A")
+
+        resp = await client.get("/api/quiz/?attempt_status=not_attempted")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["title"] == "QuizB"
+
+    async def test_attempt_status_attempted(self, client: AsyncClient) -> None:
+        quiz_a = await _make_quiz_with_title(client, "QuizA")
+        await _make_quiz_with_title(client, "QuizB")
+        await _submit_quiz(client, quiz_a, "A")
+
+        resp = await client.get("/api/quiz/?attempt_status=attempted")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["title"] == "QuizA"
+
+    async def test_score_filter_high(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz_with_title(client, "Perfect")
+        await _submit_quiz(client, quiz, "A")  # 1/1 = 100%
+
+        resp = await client.get("/api/quiz/?score_min=90")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["title"] == "Perfect"
+
+    async def test_score_filter_low(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz_with_title(client, "Failed")
+        await _submit_quiz(client, quiz, "WRONG")  # 0/1 = 0%
+
+        resp = await client.get("/api/quiz/?score_min=0&score_max=70")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["title"] == "Failed"
+
+    async def test_score_filter_excludes_unattempted(self, client: AsyncClient) -> None:
+        await _make_quiz_with_title(client, "Unattempted")
+
+        resp = await client.get("/api/quiz/?score_min=0&score_max=70")
+        data = resp.json()
+        assert data["total"] == 0
+
+    async def test_sort_by_item_count(self, client: AsyncClient) -> None:
+        await _make_quiz_with_title(client, "QuizA")
+        await _make_quiz_with_title(client, "QuizB")
+
+        resp = await client.get("/api/quiz/?sort_by=item_count&order=desc")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["items"]) == 2
+
+    async def test_sort_by_latest_score(self, client: AsyncClient) -> None:
+        quiz_perfect = await _make_quiz_with_title(client, "Perfect")
+        quiz_fail = await _make_quiz_with_title(client, "Fail")
+        await _submit_quiz(client, quiz_perfect, "A")  # 100%
+        await _submit_quiz(client, quiz_fail, "WRONG")  # 0%
+
+        resp = await client.get("/api/quiz/?sort_by=latest_score&order=desc")
+        data = resp.json()
+        assert data["items"][0]["title"] == "Perfect"
+        assert data["items"][1]["title"] == "Fail"
+
+    async def test_combined_filters(self, client: AsyncClient) -> None:
+        quiz_a = await _make_quiz_with_title(client, "QuizA")
+        quiz_b = await _make_quiz_with_title(client, "QuizB")
+        await _submit_quiz(client, quiz_a, "A")  # 100%
+        await _submit_quiz(client, quiz_b, "WRONG")  # 0%
+
+        # attempted + high score
+        resp = await client.get("/api/quiz/?attempt_status=attempted&score_min=90")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["title"] == "QuizA"
+
+
 async def _make_short_answer_quiz(client: AsyncClient) -> dict[str, Any]:
     """Create a document + short_answer quiz using mocked Anthropic."""
     mock_cls, _ = _mock_anthropic(MOCK_SHORT_ANSWER_RESPONSE)

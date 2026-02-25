@@ -10,6 +10,7 @@ import type {
   GenerateQuizPayload,
   ListParams,
   LoginPayload,
+  QuizListParams,
   PaginatedResponse,
   Quiz,
   QuizListItem,
@@ -239,9 +240,7 @@ export function deleteDocument(id: string): Promise<void> {
 }
 
 // Quiz
-export function listQuizzes(
-  params?: ListParams & { document_id?: string },
-) {
+export function listQuizzes(params?: QuizListParams) {
   const qs = buildQuery({
     limit: params?.limit,
     offset: params?.offset,
@@ -249,6 +248,9 @@ export function listQuizzes(
     document_id: params?.document_id,
     sort_by: params?.sort_by,
     order: params?.order,
+    attempt_status: params?.attempt_status,
+    score_min: params?.score_min,
+    score_max: params?.score_max,
   });
   return apiFetch<PaginatedResponse<QuizListItem>>(`/api/quiz/${qs}`);
 }
