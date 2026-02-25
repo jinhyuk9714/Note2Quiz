@@ -33,3 +33,11 @@ export function getRelativeTime(iso: string): string {
 export function cn(...classes: (string | false | undefined | null)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+export function formatElapsedTime(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  if (min === 0) return `${sec}초`;
+  return `${min}분 ${sec}초`;
+}

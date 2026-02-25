@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History } from "lucide-react";
+import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw } from "lucide-react";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { QuizItem } from "@/components/quiz/QuizItem";
 import { QuizResults } from "@/components/quiz/QuizResults";
+import { QuizTimer } from "@/components/quiz/QuizTimer";
 import type { SubmitResult } from "@/types/api";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
@@ -20,6 +21,10 @@ export default function QuizPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [phase, setPhase] = useState<Phase>("taking");
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [retryItemIds, setRetryItemIds] = useState<Set<string> | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [finalElapsedMs, setFinalElapsedMs] = useState<number | null>(null);
+  const [timerEnabled, setTimerEnabled] = useState(true);
 
   const { data: quiz, isLoading, error } = useQuery({
     queryKey: ["quiz", id],
@@ -32,6 +37,13 @@ export default function QuizPage() {
     enabled: phase === "results",
   });
 
+  // Timer: count up every second while taking
+  useEffect(() => {
+    if (phase !== "taking") return;
+    const intervalId = setInterval(() => setElapsedSec((s) => s + 1), 1000);
+    return () => clearInterval(intervalId);
+  }, [phase]);
+
   const mutation = useMutation({
     mutationFn: () =>
       submitQuiz(
@@ -41,7 +53,10 @@ export default function QuizPage() {
           user_answer,
         })),
       ),
-    onMutate: () => setPhase("submitting"),
+    onMutate: () => {
+      setFinalElapsedMs(elapsedSec * 1000);
+      setPhase("submitting");
+    },
     onSuccess: (data) => {
       setResult(data);
       setPhase("results");
@@ -53,8 +68,25 @@ export default function QuizPage() {
   });
 
   function handleRetake() {
+    setRetryItemIds(null);
     setAnswers({});
     setResult(null);
+    setElapsedSec(0);
+    setFinalElapsedMs(null);
+    setPhase("taking");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleRetakeWrongOnly() {
+    if (!result) return;
+    const wrongIds = new Set(
+      result.results.filter((r) => !r.is_correct).map((r) => r.quiz_item_id),
+    );
+    setRetryItemIds(wrongIds);
+    setAnswers({});
+    setResult(null);
+    setElapsedSec(0);
+    setFinalElapsedMs(null);
     setPhase("taking");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -90,8 +122,11 @@ export default function QuizPage() {
     );
   }
 
+  const displayItems = retryItemIds
+    ? quiz.items.filter((item) => retryItemIds.has(item.id))
+    : quiz.items;
   const answeredCount = Object.keys(answers).length;
-  const totalCount = quiz.items.length;
+  const totalCount = displayItems.length;
   const allAnswered = answeredCount === totalCount;
   const progressPercent = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
 
@@ -108,12 +143,21 @@ export default function QuizPage() {
           </Link>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{quiz.title}</h1>
           <p className="text-slate-500 font-medium">
-            {phase === "results" ? "퀴즈 결과 분석" : "문제를 정독하고 정답을 선택하세요."}
+            {phase === "results"
+              ? "퀴즈 결과 분석"
+              : retryItemIds
+                ? `오답 ${retryItemIds.size}문제를 다시 풀어보세요.`
+                : "문제를 정독하고 정답을 선택하세요."}
           </p>
         </div>
 
         {phase === "taking" && (
           <div className="flex flex-col items-end gap-2 shrink-0">
+            <QuizTimer
+              elapsedSec={elapsedSec}
+              enabled={timerEnabled}
+              onToggle={() => setTimerEnabled((p) => !p)}
+            />
             <div className="flex items-center gap-2 text-sm font-black text-indigo-600">
               <span className="text-2xl">{answeredCount}</span>
               <span className="text-slate-300">/</span>
@@ -131,7 +175,7 @@ export default function QuizPage() {
 
       {phase === "results" && result ? (
         <div className="space-y-10 animate-in fade-in duration-700">
-          <QuizResults result={result} items={quiz.items} />
+          <QuizResults result={result} items={quiz.items} elapsedMs={finalElapsedMs} />
 
           {attempts && attempts.length > 1 && (
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -173,6 +217,15 @@ export default function QuizPage() {
               <BookOpenCheck className="h-4 w-4 text-indigo-500" />
               오답노트로 복습하기
             </button>
+            {result.score < result.total && (
+              <button
+                onClick={handleRetakeWrongOnly}
+                className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-rose-500 py-5 text-sm font-bold text-white shadow-lg shadow-rose-200 transition-all hover:bg-rose-600 active:scale-[0.98]"
+              >
+                <RefreshCw className="h-4 w-4" />
+                오답만 다시 풀기 ({result.total - result.score}문제)
+              </button>
+            )}
             <button
               onClick={handleRetake}
               className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-amber-500 py-5 text-sm font-bold text-white shadow-lg shadow-amber-200 transition-all hover:bg-amber-600 active:scale-[0.98]"
@@ -192,18 +245,21 @@ export default function QuizPage() {
       ) : (
         <div className="space-y-6">
           <div className="space-y-6">
-            {quiz.items.map((item, i) => (
-              <QuizItem
-                key={item.id}
-                item={item}
-                index={i}
-                value={answers[item.id] ?? ""}
-                onChange={(val) =>
-                  setAnswers((prev) => ({ ...prev, [item.id]: val }))
-                }
-                disabled={phase !== "taking"}
-              />
-            ))}
+            {displayItems.map((item) => {
+              const originalIndex = quiz.items.findIndex((q) => q.id === item.id);
+              return (
+                <QuizItem
+                  key={item.id}
+                  item={item}
+                  index={originalIndex}
+                  value={answers[item.id] ?? ""}
+                  onChange={(val) =>
+                    setAnswers((prev) => ({ ...prev, [item.id]: val }))
+                  }
+                  disabled={phase !== "taking"}
+                />
+              );
+            })}
           </div>
 
           <button
