@@ -16,6 +16,7 @@ const mockDocument: Document = {
   source_type: "text",
   char_count: 5000,
   chunk_count: 3,
+  quiz_count: 0,
   created_at: "2025-06-01T10:00:00Z",
 };
 
@@ -64,5 +65,16 @@ describe("DocumentCard", () => {
     renderWithProviders(<DocumentCard document={mockDocument} />);
     await userEvent.click(screen.getByTitle("삭제"));
     expect(deleteDocument).not.toHaveBeenCalled();
+  });
+
+  it("shows quiz count when > 0", () => {
+    const docWithQuizzes = { ...mockDocument, quiz_count: 3 };
+    renderWithProviders(<DocumentCard document={docWithQuizzes} />);
+    expect(screen.getByText(/3개 퀴즈/)).toBeInTheDocument();
+  });
+
+  it("hides quiz count when 0", () => {
+    renderWithProviders(<DocumentCard document={mockDocument} />);
+    expect(screen.queryByText(/개 퀴즈/)).not.toBeInTheDocument();
   });
 });

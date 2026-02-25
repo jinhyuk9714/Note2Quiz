@@ -15,6 +15,7 @@ class QuizGenerateRequest(BaseModel):
     chunk_ids: list[uuid.UUID] | None = None
     n_questions: int = Field(default=5, ge=1, le=20)
     quiz_types: list[str] = Field(default=["mcq", "short_answer"])
+    title: str | None = Field(default=None, max_length=500)
 
     @field_validator("quiz_types")
     @classmethod
@@ -42,6 +43,7 @@ class QuizListItemResponse(BaseModel):
     title: str
     item_count: int
     document_id: uuid.UUID
+    document_title: str
     created_at: datetime
     attempt_count: int = 0
     latest_score: int | None = None

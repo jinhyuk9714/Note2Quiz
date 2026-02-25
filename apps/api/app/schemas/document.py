@@ -19,6 +19,7 @@ class DocumentResponse(BaseModel):
     source_type: str
     char_count: int
     chunk_count: int
+    quiz_count: int = 0
     created_at: datetime
 
 

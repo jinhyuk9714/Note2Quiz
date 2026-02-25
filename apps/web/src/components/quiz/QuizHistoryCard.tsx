@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { History, Trash2, ChevronRight, Calendar, Layers, AlertCircle, Trophy, RotateCcw } from "lucide-react";
+import { History, Trash2, ChevronRight, Calendar, Layers, AlertCircle, Trophy, RotateCcw, FileText } from "lucide-react";
 import { deleteQuiz } from "@/lib/api";
 import type { QuizListItem } from "@/types/api";
 import { formatDate } from "@/lib/utils";
@@ -41,6 +41,12 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
           <h3 className="truncate text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
             {quiz.title}
           </h3>
+          {quiz.document_title && (
+            <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+              <FileText className="h-3 w-3" />
+              <span className="truncate">{quiz.document_title}</span>
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
             <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
               <Layers className="h-3.5 w-3.5" />

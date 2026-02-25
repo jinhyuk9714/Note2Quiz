@@ -17,11 +17,13 @@ function QuizGenerateContent() {
       documentId: string;
       nQuestions: number;
       quizTypes: string[];
+      title: string;
     }) =>
       generateQuiz({
         document_id: config.documentId,
         n_questions: config.nQuestions,
         quiz_types: config.quizTypes,
+        title: config.title || undefined,
       }),
     onSuccess: (quiz) => {
       router.push(`/quiz/${quiz.id}`);

@@ -19,6 +19,7 @@ const quiz: QuizListItem = {
   title: "OS Fundamentals Quiz",
   item_count: 5,
   document_id: "doc-1",
+  document_title: "운영체제 강의노트",
   created_at: "2025-06-01T10:00:00Z",
   attempt_count: 0,
   latest_score: null,
@@ -71,5 +72,10 @@ describe("QuizHistoryCard", () => {
   it("does not show score when no attempts", () => {
     renderWithProviders(<QuizHistoryCard quiz={quiz} />);
     expect(screen.queryByText(/회 풀이/)).not.toBeInTheDocument();
+  });
+
+  it("shows document title", () => {
+    renderWithProviders(<QuizHistoryCard quiz={quiz} />);
+    expect(screen.getByText("운영체제 강의노트")).toBeInTheDocument();
   });
 });

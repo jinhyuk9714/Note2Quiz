@@ -108,6 +108,48 @@ class TestGenerateQuiz:
         assert resp.status_code == 404
 
 
+class TestQuizTitle:
+    async def test_auto_generated_title(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        assert quiz["title"] == "QuizSource 퀴즈"
+
+    async def test_custom_title(self, client: AsyncClient) -> None:
+        mock_cls, _ = _mock_anthropic()
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "My Document",
+                "text": "Long enough material for quiz generation testing purposes.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            resp = await client.post(
+                "/api/quiz/generate",
+                json={
+                    "document_id": doc_id,
+                    "n_questions": 1,
+                    "quiz_types": ["mcq"],
+                    "title": "My Custom Quiz",
+                },
+            )
+        assert resp.status_code == 201
+        assert resp.json()["title"] == "My Custom Quiz"
+
+    async def test_list_includes_document_title(self, client: AsyncClient) -> None:
+        await _make_quiz(client)
+        resp = await client.get("/api/quiz/")
+        items = resp.json()["items"]
+        assert len(items) >= 1
+        assert items[0]["document_title"] == "QuizSource"
+
+
 class TestGetQuiz:
     async def test_get_nonexistent_quiz_returns_404(self, client: AsyncClient) -> None:
         resp = await client.get(f"/api/quiz/{uuid.uuid4()}")
@@ -395,11 +437,11 @@ class TestQuizSearchAndPagination:
     """Test search, filter, sort and pagination on quiz list."""
 
     async def test_search_by_title(self, client: AsyncClient) -> None:
-        # _make_quiz creates quizzes with title "Quiz from document"
+        # _make_quiz creates quizzes with auto title "QuizSource 퀴즈"
         await _make_quiz(client)
         await _make_quiz(client)
 
-        resp = await client.get("/api/quiz/?search=Quiz")
+        resp = await client.get("/api/quiz/?search=QuizSource")
         data = resp.json()
         assert data["total"] == 2
 

@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
 from app.models.document import Document
+from app.models.quiz import Quiz
 from app.schemas.common import PaginatedResponse
 from app.schemas.document import (
     ChunkResponse,
@@ -75,6 +76,7 @@ async def upload_document(
         source_type=doc.source_type,
         char_count=doc.char_count,
         chunk_count=doc.chunk_count,
+        quiz_count=0,
         created_at=doc.created_at,
     )
 
@@ -109,6 +111,18 @@ async def list_documents(
     result = await db.execute(base)
     docs = list(result.scalars().all())
 
+    # Quiz counts per document (single query)
+    quiz_count_map: dict[uuid.UUID, int] = {}
+    if docs:
+        doc_ids = [d.id for d in docs]
+        qc_stmt = (
+            select(Quiz.document_id, func.count(Quiz.id))
+            .where(Quiz.document_id.in_(doc_ids))
+            .group_by(Quiz.document_id)
+        )
+        qc_result = await db.execute(qc_stmt)
+        quiz_count_map = {row[0]: row[1] for row in qc_result.all()}
+
     return PaginatedResponse[DocumentResponse](
         items=[
             DocumentResponse(
@@ -117,6 +131,7 @@ async def list_documents(
                 source_type=d.source_type,
                 char_count=d.char_count,
                 chunk_count=d.chunk_count,
+                quiz_count=quiz_count_map.get(d.id, 0),
                 created_at=d.created_at,
             )
             for d in docs
@@ -143,12 +158,17 @@ async def get_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
+    # Quiz count for this document
+    qc_stmt = select(func.count(Quiz.id)).where(Quiz.document_id == doc.id)
+    doc_quiz_count = (await db.execute(qc_stmt)).scalar_one()
+
     return DocumentDetailResponse(
         id=doc.id,
         title=doc.title,
         source_type=doc.source_type,
         char_count=doc.char_count,
         chunk_count=doc.chunk_count,
+        quiz_count=int(doc_quiz_count),
         created_at=doc.created_at,
         chunks=[
             ChunkResponse(

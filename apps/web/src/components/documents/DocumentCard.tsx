@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, Trash2, Zap, Calendar, Hash } from "lucide-react";
+import { FileText, Trash2, Zap, Calendar, Hash, Sparkles } from "lucide-react";
 import type { Document } from "@/types/api";
 import { formatDate } from "@/lib/utils";
 import { deleteDocument } from "@/lib/api";
@@ -58,6 +58,12 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
               <Zap className="h-3.5 w-3.5" />
               {document.chunk_count}개 섹션
             </div>
+            {document.quiz_count > 0 && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-500">
+                <Sparkles className="h-3.5 w-3.5" />
+                {document.quiz_count}개 퀴즈
+              </div>
+            )}
             <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(document.created_at)}

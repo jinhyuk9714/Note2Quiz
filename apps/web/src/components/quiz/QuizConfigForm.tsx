@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight } from "lucide-react";
+import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight, Type } from "lucide-react";
 import { listDocuments } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ interface QuizConfigFormProps {
     documentId: string;
     nQuestions: number;
     quizTypes: string[];
+    title: string;
   }) => void;
   isPending: boolean;
 }
@@ -29,6 +30,7 @@ export function QuizConfigForm({
   isPending,
 }: QuizConfigFormProps) {
   const [documentId, setDocumentId] = useState(defaultDocumentId ?? "");
+  const [title, setTitle] = useState("");
   const [nQuestions, setNQuestions] = useState(5);
   const [quizTypes, setQuizTypes] = useState<string[]>([
     "mcq",
@@ -53,7 +55,7 @@ export function QuizConfigForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (canSubmit) onSubmit({ documentId, nQuestions, quizTypes });
+        if (canSubmit) onSubmit({ documentId, nQuestions, quizTypes, title });
       }}
       className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md"
     >
@@ -103,6 +105,28 @@ export function QuizConfigForm({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Quiz Title */}
+        <div className="space-y-3">
+          <label htmlFor="quiz-title" className="ml-1 flex items-center gap-2 text-sm font-bold text-slate-700">
+            <Type className="h-4 w-4 text-slate-400" />
+            퀴즈 제목
+          </label>
+          <input
+            id="quiz-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={
+              documentId && documents
+                ? `${documents.find((d) => d.id === documentId)?.title ?? ""} 퀴즈`
+                : "문서를 선택하면 자동으로 지정됩니다"
+            }
+            maxLength={500}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5 text-sm font-medium transition-all placeholder:text-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+          />
+          <p className="ml-1 text-[11px] font-medium text-slate-400">비워두면 문서 제목 기반으로 자동 생성됩니다</p>
         </div>
 
         {/* Number of Questions */}

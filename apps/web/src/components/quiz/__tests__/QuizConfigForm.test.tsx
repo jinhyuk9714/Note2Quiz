@@ -10,6 +10,7 @@ const MOCK_DOCUMENTS = [
     source_type: "text",
     char_count: 1000,
     chunk_count: 5,
+    quiz_count: 0,
     created_at: "2025-01-01T00:00:00Z",
   },
   {
@@ -18,6 +19,7 @@ const MOCK_DOCUMENTS = [
     source_type: "pdf",
     char_count: 2500,
     chunk_count: 10,
+    quiz_count: 2,
     created_at: "2025-01-02T00:00:00Z",
   },
 ];
@@ -103,6 +105,7 @@ describe("QuizConfigForm", () => {
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         documentId: "def-456",
+        title: "",
         quizTypes: expect.arrayContaining(["mcq", "short_answer"]) as string[],
       }),
     );

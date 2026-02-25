@@ -29,6 +29,7 @@ export interface Document {
   source_type: string;
   char_count: number;
   chunk_count: number;
+  quiz_count: number;
   created_at: string;
 }
 
@@ -67,6 +68,7 @@ export interface QuizListItem {
   title: string;
   item_count: number;
   document_id: string;
+  document_title: string;
   created_at: string;
   attempt_count: number;
   latest_score: number | null;
@@ -78,6 +80,7 @@ export interface GenerateQuizPayload {
   chunk_ids?: string[] | null;
   n_questions: number;
   quiz_types: string[];
+  title?: string;
 }
 
 export interface AnswerItem {

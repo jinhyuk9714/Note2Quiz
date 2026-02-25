@@ -65,6 +65,7 @@ describe("DocumentUploadForm", () => {
       source_type: "text",
       char_count: 100,
       chunk_count: 2,
+      quiz_count: 0,
       created_at: "2025-01-01T00:00:00Z",
     });
 

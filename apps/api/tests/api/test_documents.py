@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import uuid
 from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import fitz  # pyright: ignore[reportMissingTypeStubs]
 from httpx import AsyncClient
@@ -164,6 +166,68 @@ class TestDocumentSearchAndPagination:
 
         resp = await client.get("/api/documents/?search=machine")
         assert resp.json()["total"] == 1
+
+
+class TestDocumentQuizCount:
+    async def test_quiz_count_initially_zero(self, client: AsyncClient) -> None:
+        resp = await client.post(
+            "/api/documents/",
+            data={"title": "No Quiz Doc", "text": "Long enough text for testing purpose here."},
+        )
+        assert resp.status_code == 201
+        assert resp.json()["quiz_count"] == 0
+
+    async def test_quiz_count_after_quiz_generation(self, client: AsyncClient) -> None:
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Quiz Count Doc",
+                "text": "Long enough text for quiz generation testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        mock_block = MagicMock()
+        mock_block.text = json.dumps(
+            [
+                {
+                    "quiz_type": "mcq",
+                    "question": "Q?",
+                    "correct_answer": "A",
+                    "explanation": "E",
+                    "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
+                    "concept_tags": ["test"],
+                    "difficulty": 1,
+                }
+            ]
+        )
+        mock_response = MagicMock()
+        mock_response.content = [mock_block]
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+        mock_cls = MagicMock(return_value=mock_client)
+
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            await client.post(
+                "/api/quiz/generate",
+                json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+            )
+
+        # List documents should show quiz_count=1
+        list_resp = await client.get("/api/documents/")
+        items = list_resp.json()["items"]
+        target = next(d for d in items if d["id"] == doc_id)
+        assert target["quiz_count"] == 1
+
+        # Get document detail should also show quiz_count=1
+        detail_resp = await client.get(f"/api/documents/{doc_id}")
+        assert detail_resp.json()["quiz_count"] == 1
 
 
 class TestGetDocument:

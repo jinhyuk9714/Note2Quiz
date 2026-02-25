@@ -62,8 +62,11 @@ async def generate_quiz(
         Document.owner_id == user_id,
     )
     doc_result = await db.execute(doc_stmt)
-    if not doc_result.scalar_one_or_none():
+    doc = doc_result.scalar_one_or_none()
+    if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+
+    title = payload.title or f"{doc.title} 퀴즈"
 
     try:
         quiz = await generate_quiz_from_chunks(
@@ -72,7 +75,7 @@ async def generate_quiz(
             chunk_ids=payload.chunk_ids,
             n_questions=payload.n_questions,
             quiz_types=payload.quiz_types,
-            title="Quiz from document",
+            title=title,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -111,6 +114,7 @@ async def list_quizzes(
     sort_col = Quiz.created_at if sort_by == "created_at" else Quiz.title
     base = base.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
     base = base.offset(offset).limit(limit)
+    base = base.options(selectinload(Quiz.document))
 
     result = await db.execute(base)
     quizzes = list(result.scalars().all())
@@ -153,6 +157,7 @@ async def list_quizzes(
                 title=q.title,
                 item_count=q.item_count,
                 document_id=q.document_id,
+                document_title=q.document.title if q.document else "",
                 created_at=q.created_at,
                 attempt_count=stats_map.get(q.id, 0),
                 latest_score=latest_map[q.id].score if q.id in latest_map else None,
