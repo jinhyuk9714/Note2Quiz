@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import cast
 
 from sqlalchemy import distinct, func, select
@@ -12,8 +12,10 @@ from app.models.quiz import Quiz
 from app.schemas.dashboard import (
     DashboardStatsResponse,
     LearningProgressStats,
+    MasterySummaryStats,
     ReviewScheduleDay,
     ReviewScheduleStats,
+    StreakStats,
     WeakConceptItem,
 )
 
@@ -25,11 +27,15 @@ async def get_dashboard_stats(
     learning_progress = await _get_learning_progress(db, user_id)
     weak_concepts = await _get_weak_concepts(db, user_id)
     review_schedule = await _get_review_schedule(db, user_id)
+    streak = await _get_streak_stats(db, user_id)
+    mastery_summary = await _get_mastery_summary(db, user_id)
 
     return DashboardStatsResponse(
         learning_progress=learning_progress,
         weak_concepts=weak_concepts,
         review_schedule=review_schedule,
+        streak=streak,
+        mastery_summary=mastery_summary,
     )
 
 
@@ -158,4 +164,90 @@ async def _get_review_schedule(
         overdue_count=overdue_count,
         today_count=today_count,
         upcoming=upcoming,
+    )
+
+
+async def _get_streak_stats(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> StreakStats:
+    stmt = (
+        select(func.date(QuizAttempt.created_at).label("day"))
+        .distinct()
+        .where(QuizAttempt.user_id == user_id)
+        .order_by(func.date(QuizAttempt.created_at).desc())
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    # func.date() returns date objects on PostgreSQL but strings on SQLite
+    days: list[date] = []
+    for row in rows:
+        raw = row.day  # type: ignore[attr-defined]
+        if isinstance(raw, str):
+            days.append(date.fromisoformat(raw))
+        elif isinstance(raw, date):
+            days.append(raw)
+
+    if not days:
+        return StreakStats(
+            current_streak_days=0,
+            longest_streak_days=0,
+            total_active_days=0,
+            last_activity_date=None,
+        )
+
+    today = datetime.now(UTC).date()
+
+    # Calculate current streak (from today or yesterday backwards)
+    current_streak = 0
+    if days[0] == today or days[0] == today - timedelta(days=1):
+        current_streak = 1
+        for i in range(1, len(days)):
+            if days[i] == days[i - 1] - timedelta(days=1):
+                current_streak += 1
+            else:
+                break
+
+    # Calculate longest streak
+    longest_streak = 1
+    run = 1
+    for i in range(1, len(days)):
+        if days[i] == days[i - 1] - timedelta(days=1):
+            run += 1
+            longest_streak = max(longest_streak, run)
+        else:
+            run = 1
+
+    return StreakStats(
+        current_streak_days=current_streak,
+        longest_streak_days=longest_streak,
+        total_active_days=len(days),
+        last_activity_date=days[0].isoformat(),
+    )
+
+
+async def _get_mastery_summary(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> MasterySummaryStats:
+    total_stmt = select(func.count(WrongAnswerNote.id)).where(
+        WrongAnswerNote.user_id == user_id,
+    )
+    total_result = await db.execute(total_stmt)
+    total: int = total_result.scalar_one()  # type: ignore[assignment]
+
+    mastered_stmt = select(func.count(WrongAnswerNote.id)).where(
+        WrongAnswerNote.user_id == user_id,
+        WrongAnswerNote.is_mastered == True,  # noqa: E712
+    )
+    mastered_result = await db.execute(mastered_stmt)
+    mastered: int = mastered_result.scalar_one()  # type: ignore[assignment]
+
+    mastery_rate = mastered / total if total > 0 else 0.0
+
+    return MasterySummaryStats(
+        total_wrong_notes=total,
+        mastered_count=mastered,
+        mastery_rate=round(mastery_rate, 4),
     )

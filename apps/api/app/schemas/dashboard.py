@@ -29,7 +29,22 @@ class ReviewScheduleStats(BaseModel):
     upcoming: list[ReviewScheduleDay]
 
 
+class StreakStats(BaseModel):
+    current_streak_days: int
+    longest_streak_days: int
+    total_active_days: int
+    last_activity_date: str | None
+
+
+class MasterySummaryStats(BaseModel):
+    total_wrong_notes: int
+    mastered_count: int
+    mastery_rate: float
+
+
 class DashboardStatsResponse(BaseModel):
     learning_progress: LearningProgressStats
     weak_concepts: list[WeakConceptItem]
     review_schedule: ReviewScheduleStats
+    streak: StreakStats
+    mastery_summary: MasterySummaryStats

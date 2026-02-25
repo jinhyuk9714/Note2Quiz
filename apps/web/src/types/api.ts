@@ -177,8 +177,23 @@ export interface ReviewScheduleStats {
   upcoming: ReviewScheduleDay[];
 }
 
+export interface StreakStats {
+  current_streak_days: number;
+  longest_streak_days: number;
+  total_active_days: number;
+  last_activity_date: string | null;
+}
+
+export interface MasterySummaryStats {
+  total_wrong_notes: number;
+  mastered_count: number;
+  mastery_rate: number;
+}
+
 export interface DashboardStats {
   learning_progress: LearningProgressStats;
   weak_concepts: WeakConceptItem[];
   review_schedule: ReviewScheduleStats;
+  streak: StreakStats;
+  mastery_summary: MasterySummaryStats;
 }

@@ -6,6 +6,8 @@ import { PlusCircle, Sparkles, ArrowUpRight } from "lucide-react";
 
 import { getDashboardStats } from "@/lib/api";
 import { LearningProgressCard } from "@/components/dashboard/LearningProgressCard";
+import { LearningStreakCard } from "@/components/dashboard/LearningStreakCard";
+import { MasterySummaryCard } from "@/components/dashboard/MasterySummaryCard";
 import { WeakConceptsCard } from "@/components/dashboard/WeakConceptsCard";
 import { ReviewScheduleCard } from "@/components/dashboard/ReviewScheduleCard";
 
@@ -52,6 +54,14 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="lg:col-span-12">
               <LearningProgressCard stats={stats.learning_progress} />
+            </div>
+
+            <div className="lg:col-span-5">
+              <LearningStreakCard streak={stats.streak} />
+            </div>
+
+            <div className="lg:col-span-7">
+              <MasterySummaryCard summary={stats.mastery_summary} />
             </div>
 
             <div className="lg:col-span-7">
