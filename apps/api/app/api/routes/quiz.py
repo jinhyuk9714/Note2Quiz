@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import json
 import uuid
+from collections.abc import AsyncGenerator
 from typing import Literal
 
+import anthropic
 from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from starlette.requests import Request
+from starlette.responses import StreamingResponse
 
 from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
@@ -23,7 +27,12 @@ from app.schemas.quiz import (
     QuizListItemResponse,
     QuizResponse,
 )
-from app.services.quiz_generation import generate_quiz_from_chunks
+from app.services.quiz_generation import (
+    generate_questions_for_chunk,
+    generate_quiz_from_chunks,
+    load_chunks,
+    save_quiz_to_db,
+)
 from app.services.wrong_note_service import create_attempt_with_wrong_notes
 
 router = APIRouter(prefix="/quiz", tags=["quiz"])
@@ -84,6 +93,88 @@ async def generate_quiz(
     quiz = result.scalar_one()
 
     return _quiz_to_response(quiz)
+
+
+def _sse_event(event: str, data: dict[str, object]) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False, default=str)}\n\n"
+
+
+@router.post("/generate-stream")
+@limiter.limit(settings.rate_limit_quiz_gen)  # pyright: ignore[reportUntypedFunctionDecorator,reportUnknownMemberType]
+async def generate_quiz_stream(
+    request: Request,
+    payload: QuizGenerateRequest,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> StreamingResponse:
+    # Verify user owns the document (before starting the stream)
+    doc_stmt = select(Document).where(
+        Document.id == payload.document_id,
+        Document.owner_id == user_id,
+    )
+    doc_result = await db.execute(doc_stmt)
+    doc = doc_result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    title = payload.title or f"{doc.title} 퀴즈"
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        try:
+            chunks = await load_chunks(db, payload.document_id, payload.chunk_ids)
+            client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+            questions_per_chunk = max(1, payload.n_questions // len(chunks))
+            total = len(chunks)
+            all_items: list[dict[str, object]] = []
+
+            for i, chunk in enumerate(chunks):
+                yield _sse_event(
+                    "progress",
+                    {
+                        "step": "analyzing",
+                        "current": i + 1,
+                        "total": total,
+                        "message": f"청크 {i + 1}/{total} 분석 중...",
+                    },
+                )
+                items = await generate_questions_for_chunk(
+                    client, chunk, questions_per_chunk, payload.quiz_types
+                )
+                all_items.extend(items)
+
+            yield _sse_event(
+                "progress",
+                {
+                    "step": "saving",
+                    "current": total,
+                    "total": total,
+                    "message": "퀴즈 저장 중...",
+                },
+            )
+            quiz = await save_quiz_to_db(
+                db, payload.document_id, title, all_items, payload.n_questions, payload.quiz_types
+            )
+
+            yield _sse_event(
+                "complete",
+                {
+                    "quiz_id": quiz.id,
+                    "item_count": quiz.item_count,
+                },
+            )
+        except ValueError as e:
+            yield _sse_event("error", {"message": str(e)})
+        except Exception:
+            yield _sse_event("error", {"message": "퀴즈 생성 중 오류가 발생했습니다."})
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/", response_model=PaginatedResponse[QuizListItemResponse])

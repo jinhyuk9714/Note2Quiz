@@ -13,6 +13,9 @@ import type {
   PaginatedResponse,
   Quiz,
   QuizListItem,
+  QuizStreamComplete,
+  QuizStreamError,
+  QuizStreamProgress,
   SignupPayload,
   SubmitResult,
   TokenResponse,
@@ -254,6 +257,87 @@ export function generateQuiz(payload: GenerateQuizPayload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function generateQuizStream(
+  payload: GenerateQuizPayload,
+  callbacks: {
+    onProgress: (data: QuizStreamProgress) => void;
+    onComplete: (data: QuizStreamComplete) => void;
+    onError: (message: string) => void;
+  },
+): AbortController {
+  const controller = new AbortController();
+  const token = getToken();
+
+  void (async () => {
+    try {
+      const res = await fetch(`${BASE}/api/quiz/generate-stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          clearToken();
+          if (typeof window !== "undefined") window.location.href = "/login";
+          return;
+        }
+        const body = (await res.json().catch(() => ({}))) as { detail?: string };
+        callbacks.onError(body.detail ?? `HTTP ${res.status}`);
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) {
+        callbacks.onError("Stream not available");
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEvent = "";
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith("data: ") && currentEvent) {
+            try {
+              const data: unknown = JSON.parse(line.slice(6));
+              if (currentEvent === "progress") {
+                callbacks.onProgress(data as QuizStreamProgress);
+              } else if (currentEvent === "complete") {
+                callbacks.onComplete(data as QuizStreamComplete);
+              } else if (currentEvent === "error") {
+                callbacks.onError((data as QuizStreamError).message);
+              }
+            } catch {
+              // Ignore malformed JSON
+            }
+            currentEvent = "";
+          }
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      callbacks.onError(err instanceof Error ? err.message : "Stream failed");
+    }
+  })();
+
+  return controller;
 }
 
 export function getQuiz(id: string) {

@@ -14,50 +14,57 @@ from app.models.quiz import Quiz, QuizItem, QuizType
 from app.prompts.quiz_prompt import build_quiz_generation_prompt
 
 
-async def generate_quiz_from_chunks(
+async def load_chunks(
     db: AsyncSession,
     document_id: uuid.UUID,
     chunk_ids: list[uuid.UUID] | None,
-    n_questions: int,
-    quiz_types: list[str],
-    title: str,
-) -> Quiz:
-    # 1. Load chunks
+) -> list[Chunk]:
+    """Load chunks for a document, optionally filtered by chunk IDs."""
     stmt = select(Chunk).where(Chunk.document_id == document_id)
     if chunk_ids:
         stmt = stmt.where(Chunk.id.in_(chunk_ids))
     stmt = stmt.order_by(Chunk.index)
     result = await db.execute(stmt)
     chunks = list(result.scalars().all())
-
     if not chunks:
         raise ValueError("No chunks found for the given document/chunk IDs")
+    return chunks
 
-    # 2. Generate quiz items via LLM for all chunks
-    new_items_data: list[dict[str, object]] = []
-    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-    questions_per_chunk = max(1, n_questions // len(chunks))
 
-    for chunk in chunks:
-        prompt = build_quiz_generation_prompt(
-            chunk_text=chunk.content,
-            n_questions=questions_per_chunk,
-            quiz_types=quiz_types,
-        )
-        response = await client.messages.create(
-            model=settings.anthropic_model,
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
+async def generate_questions_for_chunk(
+    client: anthropic.AsyncAnthropic,
+    chunk: Chunk,
+    questions_per_chunk: int,
+    quiz_types: list[str],
+) -> list[dict[str, object]]:
+    """Call LLM for a single chunk and return parsed quiz items."""
+    prompt = build_quiz_generation_prompt(
+        chunk_text=chunk.content,
+        n_questions=questions_per_chunk,
+        quiz_types=quiz_types,
+    )
+    response = await client.messages.create(
+        model=settings.anthropic_model,
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    first_block = response.content[0]
+    raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
+    parsed = _parse_quiz_json(raw_text)
+    for item_data in parsed:
+        item_data["source_chunk_id"] = str(chunk.id)
+    return parsed
 
-        first_block = response.content[0]
-        raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
-        parsed = _parse_quiz_json(raw_text)
-        for item_data in parsed:
-            item_data["source_chunk_id"] = str(chunk.id)
-        new_items_data.extend(parsed)
 
-    # 3. Create Quiz + QuizItems
+async def save_quiz_to_db(
+    db: AsyncSession,
+    document_id: uuid.UUID,
+    title: str,
+    items_data: list[dict[str, object]],
+    n_questions: int,
+    quiz_types: list[str],
+) -> Quiz:
+    """Create Quiz + QuizItem rows from generated item data."""
     quiz = Quiz(
         document_id=document_id,
         title=title,
@@ -67,7 +74,7 @@ async def generate_quiz_from_chunks(
     await db.flush()
 
     all_items: list[QuizItem] = []
-    for idx, item_data in enumerate(new_items_data[:n_questions]):
+    for idx, item_data in enumerate(items_data[:n_questions]):
         quiz_type_str = str(item_data.get("quiz_type", "mcq"))
         if quiz_type_str not in quiz_types:
             quiz_type_str = quiz_types[idx % len(quiz_types)]
@@ -87,6 +94,27 @@ async def generate_quiz_from_chunks(
 
     quiz.item_count = len(all_items)
     return quiz
+
+
+async def generate_quiz_from_chunks(
+    db: AsyncSession,
+    document_id: uuid.UUID,
+    chunk_ids: list[uuid.UUID] | None,
+    n_questions: int,
+    quiz_types: list[str],
+    title: str,
+) -> Quiz:
+    chunks = await load_chunks(db, document_id, chunk_ids)
+
+    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    questions_per_chunk = max(1, n_questions // len(chunks))
+
+    new_items_data: list[dict[str, object]] = []
+    for chunk in chunks:
+        items = await generate_questions_for_chunk(client, chunk, questions_per_chunk, quiz_types)
+        new_items_data.extend(items)
+
+    return await save_quiz_to_db(db, document_id, title, new_items_data, n_questions, quiz_types)
 
 
 def _parse_quiz_json(raw_text: str) -> list[dict[str, object]]:

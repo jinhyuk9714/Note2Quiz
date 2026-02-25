@@ -64,3 +64,22 @@ class QuizAttemptSummaryResponse(BaseModel):
     score: int
     total: int
     created_at: datetime
+
+
+# SSE streaming event payloads
+
+
+class QuizStreamProgress(BaseModel):
+    step: str  # "analyzing" | "saving"
+    current: int
+    total: int
+    message: str
+
+
+class QuizStreamComplete(BaseModel):
+    quiz_id: uuid.UUID
+    item_count: int
+
+
+class QuizStreamError(BaseModel):
+    message: str

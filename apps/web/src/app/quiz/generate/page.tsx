@@ -1,51 +1,60 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { Sparkles, AlertCircle } from "lucide-react";
-import { generateQuiz } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
+import { Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { QuizConfigForm } from "@/components/quiz/QuizConfigForm";
+import { useQuizGenerateStream } from "@/hooks/useQuizGenerateStream";
 
 function QuizGenerateContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const defaultDocumentId = searchParams.get("document_id") ?? undefined;
 
-  const mutation = useMutation({
-    mutationFn: (config: {
-      documentId: string;
-      nQuestions: number;
-      quizTypes: string[];
-      title: string;
-      chunkIds?: string[];
-    }) =>
-      generateQuiz({
-        document_id: config.documentId,
-        chunk_ids: config.chunkIds?.length ? config.chunkIds : null,
-        n_questions: config.nQuestions,
-        quiz_types: config.quizTypes,
-        title: config.title || undefined,
-      }),
-    onSuccess: (quiz) => {
-      router.push(`/quiz/${quiz.id}`);
-    },
-  });
+  const { state, startGeneration, cancel } = useQuizGenerateStream();
+  const isStreaming = state.status === "streaming";
 
   return (
     <div className="space-y-6">
       <QuizConfigForm
         defaultDocumentId={defaultDocumentId}
-        onSubmit={(config) => mutation.mutate(config)}
-        isPending={mutation.isPending}
+        onSubmit={(config) =>
+          startGeneration({
+            document_id: config.documentId,
+            chunk_ids: config.chunkIds?.length ? config.chunkIds : null,
+            n_questions: config.nQuestions,
+            quiz_types: config.quizTypes,
+            title: config.title || undefined,
+          })
+        }
+        isPending={isStreaming}
+        onCancel={isStreaming ? cancel : undefined}
       />
 
-      {mutation.isError && (
+      {isStreaming && state.progress && (
+        <div className="rounded-[2rem] border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm animate-in fade-in duration-500">
+          <div className="mb-4 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+            <p className="text-sm font-bold text-indigo-700">{state.progress.message}</p>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-indigo-100 ring-1 ring-inset ring-indigo-200/50">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-700 ease-out"
+              style={{ width: `${Math.round((state.progress.current / state.progress.total) * 100)}%` }}
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs font-bold text-indigo-500">
+            <span>{state.progress.step === "saving" ? "저장 중" : "문서 분석 중"}</span>
+            <span>{state.progress.current} / {state.progress.total}</span>
+          </div>
+        </div>
+      )}
+
+      {state.status === "error" && state.errorMessage && (
         <div className="flex items-center gap-3 rounded-[2rem] border border-red-100 bg-red-50 p-6 text-sm font-bold text-red-600 shadow-sm animate-in shake duration-500">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-red-600 shadow-sm">
             <AlertCircle className="h-5 w-5" />
           </div>
-          <p>{mutation.error.message}</p>
+          <p>{state.errorMessage}</p>
         </div>
       )}
     </div>
@@ -64,7 +73,7 @@ export default function QuizGeneratePage() {
         </p>
       </div>
 
-      <Suspense 
+      <Suspense
         fallback={
           <div className="h-96 w-full animate-pulse rounded-[2rem] bg-slate-100" />
         }

@@ -24,12 +24,14 @@ interface QuizConfigFormProps {
     chunkIds?: string[];
   }) => void;
   isPending: boolean;
+  onCancel?: () => void;
 }
 
 export function QuizConfigForm({
   defaultDocumentId,
   onSubmit,
   isPending,
+  onCancel,
 }: QuizConfigFormProps) {
   const [documentId, setDocumentId] = useState(defaultDocumentId ?? "");
   const [title, setTitle] = useState("");
@@ -317,20 +319,34 @@ export function QuizConfigForm({
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={!canSubmit || isPending}
-          className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 disabled:opacity-50 active:scale-[0.98]"
-        >
-          {isPending ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          ) : (
-            <>
-              퀴즈 생성하기
-              <Sparkles className="h-4 w-4 transition-transform group-hover:scale-125 group-hover:rotate-12" />
-            </>
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={!canSubmit || isPending}
+            className="group relative flex flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 disabled:opacity-50 active:scale-[0.98]"
+          >
+            {isPending ? (
+              <>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span>생성 중...</span>
+              </>
+            ) : (
+              <>
+                퀴즈 생성하기
+                <Sparkles className="h-4 w-4 transition-transform group-hover:scale-125 group-hover:rotate-12" />
+              </>
+            )}
+          </button>
+          {isPending && onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98]"
+            >
+              취소
+            </button>
           )}
-        </button>
+        </div>
       </div>
     </form>
   );

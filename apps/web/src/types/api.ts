@@ -94,6 +94,23 @@ export interface GenerateQuizPayload {
   title?: string;
 }
 
+// SSE streaming events for quiz generation
+export interface QuizStreamProgress {
+  step: "analyzing" | "saving";
+  current: number;
+  total: number;
+  message: string;
+}
+
+export interface QuizStreamComplete {
+  quiz_id: string;
+  item_count: number;
+}
+
+export interface QuizStreamError {
+  message: string;
+}
+
 export interface AnswerItem {
   quiz_item_id: string;
   user_answer: string;
