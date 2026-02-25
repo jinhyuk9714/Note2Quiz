@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "QuizNote AI 프로젝트용 Skill activation rules (Next.js + FastAPI + AI quiz generation).",
+  "description": "Note2Quiz 프로젝트용 Skill activation rules (Next.js + FastAPI + AI quiz generation).",
   "skills": {
     "nextjs-dev-guidelines": {
       "type": "domain",

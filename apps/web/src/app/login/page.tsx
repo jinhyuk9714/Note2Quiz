@@ -39,7 +39,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200 ring-4 ring-white">
             <Brain className="h-9 w-9" />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">QuizNote AI</h1>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Note2Quiz</h1>
           <p className="mt-2 text-slate-500 font-medium">학습을 시작할 준비가 되셨나요?</p>
         </div>
 

@@ -3,7 +3,7 @@ name: quiznote-domain
 description: 퀴즈/오답노트 도메인 설계 및 생성 규칙
 ---
 
-# QuizNote Domain (퀴즈 + 오답노트)
+# Note2Quiz Domain (퀴즈 + 오답노트)
 
 ## 목표
 - “문제 생성”만이 아니라 **학습을 돕는 오답노트**까지 자동화

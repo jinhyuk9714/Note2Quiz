@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     )
 
     # App
-    app_name: str = "QuizNote API"
+    app_name: str = "Note2Quiz API"
     debug: bool = False
 
     # Database

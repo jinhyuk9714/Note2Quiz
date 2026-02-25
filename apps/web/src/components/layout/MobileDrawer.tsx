@@ -53,7 +53,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm ring-1 ring-black/5">
               <Brain className="h-5 w-5" />
             </div>
-            QuizNote
+            Note2Quiz
           </Link>
           <button
             onClick={onClose}

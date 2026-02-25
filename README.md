@@ -1,4 +1,4 @@
-# QuizNote AI – Claude Code Starter (Next.js + FastAPI)
+# Note2Quiz – Claude Code Starter (Next.js + FastAPI)
 
 이 저장소는 **Claude Code(클로드 코드)** 를 “제대로” 쓰기 위한 기초 인프라 템플릿입니다.
 

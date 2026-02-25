@@ -1,4 +1,4 @@
-# QuizNote AI – Project Memory (Claude Code)
+# Note2Quiz – Project Memory (Claude Code)
 
 ## 목표
 대학생들이 강의자료/노트 기반으로 **퀴즈 + 오답노트**를 자동 생성하고, 반복 학습(Spaced Repetition)까지 할 수 있는 웹 서비스.

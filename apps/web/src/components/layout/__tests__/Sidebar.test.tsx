@@ -49,10 +49,10 @@ describe("Sidebar", () => {
     expect(docsLink?.className).toContain("indigo");
   });
 
-  it("renders QuizNote brand link", () => {
+  it("renders Note2Quiz brand link", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     render(<Sidebar />);
-    expect(screen.getByText("QuizNote")).toBeInTheDocument();
+    expect(screen.getByText("Note2Quiz")).toBeInTheDocument();
   });
 
   it("renders user info and logout button", () => {

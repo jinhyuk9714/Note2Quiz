@@ -14,7 +14,7 @@ export function MobileHeader({ onOpen }: MobileHeaderProps) {
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm ring-1 ring-black/5">
           <Brain className="h-4 w-4" />
         </div>
-        QuizNote
+        Note2Quiz
       </Link>
       <button
         onClick={onOpen}

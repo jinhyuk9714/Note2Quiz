@@ -4,7 +4,7 @@ import { AuthGuard } from "@/components/layout/AuthGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "QuizNote AI",
+  title: "Note2Quiz",
   description: "강의자료 기반 퀴즈 자동 생성 + 오답노트 학습",
 };
 

@@ -1,4 +1,4 @@
-# Claude Code Hooks (QuizNote AI)
+# Claude Code Hooks (Note2Quiz)
 
 이 폴더는 **Claude Code hooks** 스크립트 모음입니다. (stdlib-only Python)
 
