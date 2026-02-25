@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw } from "lucide-react";
+import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X } from "lucide-react";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { QuizItem } from "@/components/quiz/QuizItem";
 import { QuizResults } from "@/components/quiz/QuizResults";
 import { QuizTimer } from "@/components/quiz/QuizTimer";
-import type { SubmitResult } from "@/types/api";
+import { loadDraftSnapshot, useQuizDraft, useDraftBanner } from "@/hooks/useQuizDraft";
+import type { Quiz, SubmitResult } from "@/types/api";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -16,80 +17,11 @@ type Phase = "taking" | "submitting" | "results";
 
 export default function QuizPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [phase, setPhase] = useState<Phase>("taking");
-  const [result, setResult] = useState<SubmitResult | null>(null);
-  const [retryItemIds, setRetryItemIds] = useState<Set<string> | null>(null);
-  const [elapsedSec, setElapsedSec] = useState(0);
-  const [finalElapsedMs, setFinalElapsedMs] = useState<number | null>(null);
-  const [timerEnabled, setTimerEnabled] = useState(true);
 
   const { data: quiz, isLoading, error } = useQuery({
     queryKey: ["quiz", id],
     queryFn: () => getQuiz(id),
   });
-
-  const { data: attempts } = useQuery({
-    queryKey: ["quiz-attempts", id],
-    queryFn: () => listQuizAttempts(id),
-    enabled: phase === "results",
-  });
-
-  // Timer: count up every second while taking
-  useEffect(() => {
-    if (phase !== "taking") return;
-    const intervalId = setInterval(() => setElapsedSec((s) => s + 1), 1000);
-    return () => clearInterval(intervalId);
-  }, [phase]);
-
-  const mutation = useMutation({
-    mutationFn: () =>
-      submitQuiz(
-        id,
-        Object.entries(answers).map(([quiz_item_id, user_answer]) => ({
-          quiz_item_id,
-          user_answer,
-        })),
-      ),
-    onMutate: () => {
-      setFinalElapsedMs(elapsedSec * 1000);
-      setPhase("submitting");
-    },
-    onSuccess: (data) => {
-      setResult(data);
-      setPhase("results");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      void queryClient.invalidateQueries({ queryKey: ["quiz-attempts", id] });
-      void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
-    },
-    onError: () => setPhase("taking"),
-  });
-
-  function handleRetake() {
-    setRetryItemIds(null);
-    setAnswers({});
-    setResult(null);
-    setElapsedSec(0);
-    setFinalElapsedMs(null);
-    setPhase("taking");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function handleRetakeWrongOnly() {
-    if (!result) return;
-    const wrongIds = new Set(
-      result.results.filter((r) => !r.is_correct).map((r) => r.quiz_item_id),
-    );
-    setRetryItemIds(wrongIds);
-    setAnswers({});
-    setResult(null);
-    setElapsedSec(0);
-    setFinalElapsedMs(null);
-    setPhase("taking");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
 
   if (isLoading) {
     return (
@@ -120,6 +52,111 @@ export default function QuizPage() {
         </Link>
       </div>
     );
+  }
+
+  return <QuizTaker quiz={quiz} />;
+}
+
+/** Inner component — mounted only after quiz data is available, so useState initializers can read the draft. */
+function QuizTaker({ quiz }: { quiz: Quiz }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const itemIds = quiz.items.map((i) => i.id);
+  const [snapshot] = useState(() => loadDraftSnapshot(quiz.id, itemIds));
+
+  const [answers, setAnswers] = useState<Record<string, string>>(
+    () => snapshot?.answers ?? {},
+  );
+  const [phase, setPhase] = useState<Phase>("taking");
+  const [result, setResult] = useState<SubmitResult | null>(null);
+  const [retryItemIds, setRetryItemIds] = useState<Set<string> | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(
+    () => snapshot?.elapsedSec ?? 0,
+  );
+  const [finalElapsedMs, setFinalElapsedMs] = useState<number | null>(null);
+  const [timerEnabled, setTimerEnabled] = useState(true);
+
+  const { saveDraft, clearDraft } = useQuizDraft(quiz.id, itemIds);
+  const { wasRestored, dismissRestored } = useDraftBanner(snapshot !== null);
+
+  const { data: attempts } = useQuery({
+    queryKey: ["quiz-attempts", quiz.id],
+    queryFn: () => listQuizAttempts(quiz.id),
+    enabled: phase === "results",
+  });
+
+  // Auto-save answers to localStorage on change
+  useEffect(() => {
+    if (phase !== "taking" || Object.keys(answers).length === 0) return;
+    saveDraft(answers, elapsedSec);
+  }, [answers, phase, saveDraft, elapsedSec]);
+
+  // Warn before leaving with unsaved answers
+  useEffect(() => {
+    if (phase !== "taking" || Object.keys(answers).length === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [phase, answers]);
+
+  // Timer: count up every second while taking
+  useEffect(() => {
+    if (phase !== "taking") return;
+    const intervalId = setInterval(() => setElapsedSec((s) => s + 1), 1000);
+    return () => clearInterval(intervalId);
+  }, [phase]);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      submitQuiz(
+        quiz.id,
+        Object.entries(answers).map(([quiz_item_id, user_answer]) => ({
+          quiz_item_id,
+          user_answer,
+        })),
+      ),
+    onMutate: () => {
+      setFinalElapsedMs(elapsedSec * 1000);
+      setPhase("submitting");
+    },
+    onSuccess: (data) => {
+      setResult(data);
+      setPhase("results");
+      clearDraft();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      void queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quiz.id] });
+      void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+    onError: () => setPhase("taking"),
+  });
+
+  function handleRetake() {
+    clearDraft();
+    setRetryItemIds(null);
+    setAnswers({});
+    setResult(null);
+    setElapsedSec(0);
+    setFinalElapsedMs(null);
+    setPhase("taking");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleRetakeWrongOnly() {
+    if (!result) return;
+    clearDraft();
+    const wrongIds = new Set(
+      result.results.filter((r) => !r.is_correct).map((r) => r.quiz_item_id),
+    );
+    setRetryItemIds(wrongIds);
+    setAnswers({});
+    setResult(null);
+    setElapsedSec(0);
+    setFinalElapsedMs(null);
+    setPhase("taking");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const displayItems = retryItemIds
@@ -244,6 +281,18 @@ export default function QuizPage() {
         </div>
       ) : (
         <div className="space-y-6">
+          {wasRestored && phase === "taking" && (
+            <div className="flex items-center justify-between rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm font-semibold text-indigo-700">
+              <span>이전에 작성하던 답안이 복원되었습니다.</span>
+              <button
+                type="button"
+                onClick={dismissRestored}
+                className="ml-4 flex h-6 w-6 items-center justify-center rounded-lg text-indigo-400 transition-colors hover:bg-indigo-100 hover:text-indigo-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           <div className="space-y-6">
             {displayItems.map((item) => {
               const originalIndex = quiz.items.findIndex((q) => q.id === item.id);
