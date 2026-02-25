@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentUserID, DBSession
@@ -32,6 +32,9 @@ async def list_wrong_notes(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     search: str | None = Query(default=None, min_length=1, max_length=200),
+    concept_tag: str | None = Query(
+        default=None, min_length=1, max_length=100, description="개념 태그로 필터링"
+    ),
     sort_by: Literal["next_review_at", "created_at"] = Query(default="next_review_at"),
     order: Literal["asc", "desc"] = Query(default="asc"),
 ) -> WrongAnswerNoteListResponse:
@@ -44,6 +47,9 @@ async def list_wrong_notes(
 
     if due_only:
         base = base.where(WrongAnswerNote.next_review_at <= datetime.now(UTC))
+    if concept_tag:
+        # concept_tags is JSON array — use cast+LIKE for SQLite/PostgreSQL compatibility
+        base = base.where(cast(WrongAnswerNote.concept_tags, String).contains(f'"{concept_tag}"'))
     if search:
         base = base.join(WrongAnswerNote.quiz_item).where(QuizItem.question.ilike(f"%{search}%"))
 

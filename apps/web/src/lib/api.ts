@@ -238,6 +238,7 @@ export function listWrongNotes(
     search?: string;
     sort_by?: string;
     order?: string;
+    concept_tag?: string;
   },
 ) {
   const qs = buildQuery({
@@ -248,6 +249,7 @@ export function listWrongNotes(
     search: params?.search,
     sort_by: params?.sort_by,
     order: params?.order,
+    concept_tag: params?.concept_tag,
   });
   return apiFetch<WrongNoteListResponse>(`/api/wrong-notes/${qs}`);
 }

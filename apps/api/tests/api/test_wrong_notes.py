@@ -220,3 +220,59 @@ class TestWrongNotesSearchAndPagination:
 
         resp2 = await client.get("/api/wrong-notes/?search=nonexistent")
         assert resp2.json()["total"] == 0
+
+
+class TestConceptTagFilter:
+    async def _create_wrong_note(self, client: AsyncClient) -> None:
+        mock_cls = _mock_anthropic()
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Tag Test",
+                "text": "Enough text material for creating a quiz for concept tag testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            quiz_resp = await client.post(
+                "/api/quiz/generate",
+                json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+            )
+        quiz_data = quiz_resp.json()
+        await client.post(
+            f"/api/quiz/{quiz_data['id']}/submit",
+            json={
+                "answers": [{"quiz_item_id": quiz_data["items"][0]["id"], "user_answer": "WRONG"}]
+            },
+        )
+
+    async def test_filter_by_concept_tag(self, client: AsyncClient) -> None:
+        # Mock quiz has concept_tags: ["test"]
+        await self._create_wrong_note(client)
+
+        resp = await client.get("/api/wrong-notes/?concept_tag=test")
+        assert resp.json()["total"] == 1
+
+    async def test_concept_tag_no_match(self, client: AsyncClient) -> None:
+        await self._create_wrong_note(client)
+
+        resp = await client.get("/api/wrong-notes/?concept_tag=nonexistent")
+        assert resp.json()["total"] == 0
+
+    async def test_concept_tag_combined_with_mastered(self, client: AsyncClient) -> None:
+        """concept_tag + is_mastered filters work together."""
+        await self._create_wrong_note(client)
+
+        # Note is not mastered, so is_mastered=true + concept_tag should return 0
+        resp = await client.get("/api/wrong-notes/?concept_tag=test&is_mastered=true")
+        assert resp.json()["total"] == 0
+
+        # is_mastered not set (defaults to false) + concept_tag should return 1
+        resp2 = await client.get("/api/wrong-notes/?concept_tag=test")
+        assert resp2.json()["total"] == 1

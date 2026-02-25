@@ -1,8 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { WeakConceptsCard } from "../WeakConceptsCard";
 import type { WeakConceptItem } from "@/types/api";
+
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 const concepts: WeakConceptItem[] = [
   { tag: "calculus", wrong_count: 8, mastered_count: 2, total_count: 8 },
@@ -23,5 +29,18 @@ describe("WeakConceptsCard", () => {
     expect(
       screen.getByText(/아직 충분한 오답 데이터가 없습니다/),
     ).toBeInTheDocument();
+  });
+
+  it("links concept tags to wrong-notes page with concept_tag param", () => {
+    render(<WeakConceptsCard concepts={concepts} />);
+    const calculusLink = screen.getByText("calculus").closest("a");
+    expect(calculusLink).toHaveAttribute("href", "/wrong-notes?concept_tag=calculus");
+    const algebraLink = screen.getByText("algebra").closest("a");
+    expect(algebraLink).toHaveAttribute("href", "/wrong-notes?concept_tag=algebra");
+  });
+
+  it("has no links when empty", () => {
+    render(<WeakConceptsCard concepts={[]} />);
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
   });
 });

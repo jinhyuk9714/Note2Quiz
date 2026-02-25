@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, AlertCircle } from "lucide-react";
 import { reviewWrongNote } from "@/lib/api";
@@ -37,13 +38,14 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {note.concept_tags.map((tag) => (
-              <span
+              <Link
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 ring-1 ring-inset ring-indigo-100"
+                href={`/wrong-notes?concept_tag=${encodeURIComponent(tag)}`}
+                className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 ring-1 ring-inset ring-indigo-100 transition-colors hover:bg-indigo-100"
               >
                 <Tag className="h-2.5 w-2.5" />
                 {tag}
-              </span>
+              </Link>
             ))}
           </div>
         </div>

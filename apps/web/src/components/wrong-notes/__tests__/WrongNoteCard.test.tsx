@@ -4,6 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { WrongNoteCard } from "../WrongNoteCard";
 import type { WrongNote } from "@/types/api";
 
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 vi.mock("@/lib/api", () => ({
   reviewWrongNote: vi.fn(),
 }));
@@ -100,5 +106,13 @@ describe("WrongNoteCard", () => {
 
     await userEvent.click(screen.getByText("아직 헷갈려요"));
     expect(reviewWrongNote).toHaveBeenCalledWith("note-1", false);
+  });
+
+  it("renders concept tags as clickable links to wrong-notes filter", () => {
+    renderWithProviders(<WrongNoteCard note={note} />);
+    const geoLink = screen.getByText("geography").closest("a");
+    expect(geoLink).toHaveAttribute("href", "/wrong-notes?concept_tag=geography");
+    const koreaLink = screen.getByText("korea").closest("a");
+    expect(koreaLink).toHaveAttribute("href", "/wrong-notes?concept_tag=korea");
   });
 });

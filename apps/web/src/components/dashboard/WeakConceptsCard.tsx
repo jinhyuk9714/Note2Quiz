@@ -1,4 +1,5 @@
-import { AlertCircle, Zap } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, ArrowRight, Zap } from "lucide-react";
 import type { WeakConceptItem } from "@/types/api";
 
 interface WeakConceptsCardProps {
@@ -37,23 +38,29 @@ export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
             const barWidth = Math.round((c.wrong_count / maxWrong) * 100);
 
             return (
-              <li key={c.tag} className="group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="inline-flex items-center rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition-colors group-hover:bg-indigo-100">
-                    {c.tag}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs font-semibold">
-                    <span className="text-red-500">오답 {c.wrong_count}회</span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-slate-500">숙달 {masteryPercent}%</span>
+              <li key={c.tag}>
+                <Link
+                  href={`/wrong-notes?concept_tag=${encodeURIComponent(c.tag)}`}
+                  className="group block rounded-2xl p-3 -mx-3 transition-colors hover:bg-indigo-50/50"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="inline-flex items-center rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition-colors group-hover:bg-indigo-100">
+                      {c.tag}
+                    </span>
+                    <div className="flex items-center gap-2 text-xs font-semibold">
+                      <span className="text-red-500">오답 {c.wrong_count}회</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-500">숙달 {masteryPercent}%</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+                    </div>
                   </div>
-                </div>
-                <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/50">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-500 transition-all duration-700"
-                    style={{ width: `${barWidth}%` }}
-                  />
-                </div>
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/50">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-500 transition-all duration-700"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </Link>
               </li>
             );
           })}

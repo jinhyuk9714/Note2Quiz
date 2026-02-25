@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, CheckCircle2, Sparkles, PlayCircle } from "lucide-react";
+import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, CheckCircle2, Sparkles, PlayCircle, Tag, X } from "lucide-react";
 import { listWrongNotes } from "@/lib/api";
 import { WrongNoteCard } from "@/components/wrong-notes/WrongNoteCard";
 import { ReviewSession } from "@/components/wrong-notes/ReviewSession";
@@ -31,11 +31,12 @@ export default function WrongNotesPage() {
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
 
+  const conceptTag = searchParams.get("concept_tag");
   const isMastered = filter === "mastered";
   const dueOnly = filter === "due";
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["wrong-notes", { filter, search, offset }],
+    queryKey: ["wrong-notes", { filter, search, offset, conceptTag }],
     queryFn: () =>
       listWrongNotes({
         due_only: dueOnly || undefined,
@@ -45,6 +46,7 @@ export default function WrongNotesPage() {
         offset,
         sort_by: isMastered ? "created_at" : undefined,
         order: isMastered ? "desc" : undefined,
+        concept_tag: conceptTag || undefined,
       }),
   });
 
@@ -72,11 +74,13 @@ export default function WrongNotesPage() {
     { key: "mastered", label: "Mastered", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
   ];
 
-  const subHeading = isMastered
-    ? "숙달 완료 아카이브"
-    : dueOnly
-      ? "복습 대기 중인 문항"
-      : "내 오답 보관함";
+  const subHeading = conceptTag
+    ? `'${conceptTag}' 관련 오답노트`
+    : isMastered
+      ? "숙달 완료 아카이브"
+      : dueOnly
+        ? "복습 대기 중인 문항"
+        : "내 오답 보관함";
 
   const emptyMessage = isMastered
     ? { title: "아직 숙달 완료된 오답노트가 없습니다", description: "복습을 계속하면 여기에 쌓입니다!" }
@@ -86,6 +90,19 @@ export default function WrongNotesPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 pb-12">
+      {conceptTag && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-500">필터:</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-bold text-indigo-600 ring-1 ring-inset ring-indigo-200">
+            <Tag className="h-3.5 w-3.5" />
+            {conceptTag}
+            <Link href="/wrong-notes" className="ml-1 rounded-full p-0.5 hover:bg-indigo-100 transition-colors">
+              <X className="h-3.5 w-3.5" />
+            </Link>
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
