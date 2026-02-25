@@ -61,8 +61,6 @@ export interface QuizItem {
   id: string;
   quiz_type: "mcq" | "short_answer" | "true_false" | "fill_blank";
   question: string;
-  correct_answer: string;
-  explanation: string;
   options: Record<string, string> | null;
   concept_tags: string[];
   difficulty: number;

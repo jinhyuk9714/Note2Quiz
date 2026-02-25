@@ -19,7 +19,7 @@ from app.schemas.common import PaginatedResponse
 from app.schemas.quiz import (
     QuizAttemptSummaryResponse,
     QuizGenerateRequest,
-    QuizItemResponse,
+    QuizItemPublicResponse,
     QuizListItemResponse,
     QuizResponse,
 )
@@ -36,12 +36,10 @@ def _quiz_to_response(quiz: Quiz) -> QuizResponse:
         item_count=quiz.item_count,
         created_at=quiz.created_at,
         items=[
-            QuizItemResponse(
+            QuizItemPublicResponse(
                 id=item.id,
                 quiz_type=item.quiz_type.value,
                 question=item.question,
-                correct_answer=item.correct_answer,
-                explanation=item.explanation,
                 options=item.options,  # type: ignore[arg-type]
                 concept_tags=item.concept_tags,
                 difficulty=item.difficulty,

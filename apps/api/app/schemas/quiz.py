@@ -27,12 +27,12 @@ class QuizGenerateRequest(BaseModel):
         return v
 
 
-class QuizItemResponse(BaseModel):
+class QuizItemPublicResponse(BaseModel):
+    """Quiz item without correct_answer/explanation — safe to send before submission."""
+
     id: uuid.UUID
     quiz_type: str
     question: str
-    correct_answer: str
-    explanation: str
     options: dict[str, str] | None = None
     concept_tags: list[str]
     difficulty: int
@@ -55,7 +55,7 @@ class QuizResponse(BaseModel):
     title: str
     item_count: int
     created_at: datetime
-    items: list[QuizItemResponse]
+    items: list[QuizItemPublicResponse]
 
 
 class QuizAttemptSummaryResponse(BaseModel):

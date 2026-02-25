@@ -206,7 +206,9 @@ class TestSubmitQuiz:
 
         resp = await client.post(
             f"/api/quiz/{quiz_id}/submit",
-            json={"answers": [{"quiz_item_id": item["id"], "user_answer": item["correct_answer"]}]},
+            json={
+                "answers": [{"quiz_item_id": item["id"], "user_answer": "A"}]
+            },  # "A" matches MOCK_QUIZ_RESPONSE
         )
         assert resp.status_code == 201
         result = resp.json()
@@ -427,7 +429,9 @@ class TestQuizListWithScores:
         item = quiz["items"][0]
         await client.post(
             f"/api/quiz/{quiz['id']}/submit",
-            json={"answers": [{"quiz_item_id": item["id"], "user_answer": item["correct_answer"]}]},
+            json={
+                "answers": [{"quiz_item_id": item["id"], "user_answer": "A"}]
+            },  # "A" matches MOCK_QUIZ_RESPONSE
         )
 
         resp = await client.get("/api/quiz/")

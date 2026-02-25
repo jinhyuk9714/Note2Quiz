@@ -144,7 +144,7 @@ class TestDashboardStats:
                 "answers": [
                     {
                         "quiz_item_id": quiz_data["items"][0]["id"],
-                        "user_answer": quiz_data["items"][0]["correct_answer"],
+                        "user_answer": "A",  # matches MOCK_QUIZ_RESPONSE correct_answer
                     }
                 ]
             },

@@ -123,12 +123,12 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
               )}
             </div>
 
-            {(r.explanation || item?.explanation) && (
+            {r.explanation && (
               <div className="mt-4 flex items-start gap-2 rounded-xl bg-slate-100/50 p-4 ring-1 ring-inset ring-slate-200/30">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
                 <div className="text-xs font-medium leading-relaxed text-slate-500">
                   <span className="font-bold text-slate-700">해설: </span>
-                  {r.explanation || item?.explanation}
+                  {r.explanation}
                 </div>
               </div>
             )}

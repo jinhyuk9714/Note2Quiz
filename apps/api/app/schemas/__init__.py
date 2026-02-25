@@ -29,7 +29,7 @@ from app.schemas.document import (
 )
 from app.schemas.quiz import (
     QuizGenerateRequest,
-    QuizItemResponse,
+    QuizItemPublicResponse,
     QuizResponse,
 )
 
@@ -44,7 +44,7 @@ __all__ = [
     "LearningProgressStats",
     "LoginRequest",
     "QuizGenerateRequest",
-    "QuizItemResponse",
+    "QuizItemPublicResponse",
     "QuizResponse",
     "QuizSubmitRequest",
     "QuizSubmitResponse",
