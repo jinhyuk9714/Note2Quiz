@@ -1,6 +1,6 @@
 import type { SubmitResult, QuizItem as QuizItemType } from "@/types/api";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, XCircle, Info, Trophy, Target, Brain } from "lucide-react";
+import { CheckCircle2, XCircle, Info, Trophy, Target, Brain, Sparkles } from "lucide-react";
 
 interface QuizResultsProps {
   result: SubmitResult;
@@ -82,7 +82,15 @@ export function QuizResults({ result, items }: QuizResultsProps) {
                     
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="rounded-xl bg-white/50 p-3 ring-1 ring-inset ring-slate-200/50">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">My Answer</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">My Answer</p>
+                          {r.grading_method === "semantic" && (
+                            <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600 ring-1 ring-inset ring-violet-200">
+                              <Sparkles className="h-2.5 w-2.5" />
+                              AI 채점
+                            </span>
+                          )}
+                        </div>
                         <p className={cn("text-sm font-bold", r.is_correct ? "text-emerald-600" : "text-red-600")}>
                           {r.user_answer || "(No Answer)"}
                         </p>

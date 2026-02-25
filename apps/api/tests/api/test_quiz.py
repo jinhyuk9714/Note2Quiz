@@ -21,11 +21,24 @@ MOCK_QUIZ_RESPONSE = json.dumps(
     ]
 )
 
+MOCK_SHORT_ANSWER_RESPONSE = json.dumps(
+    [
+        {
+            "quiz_type": "short_answer",
+            "question": "What is the powerhouse of the cell?",
+            "correct_answer": "mitochondria",
+            "explanation": "Mitochondria produce ATP through cellular respiration.",
+            "concept_tags": ["biology"],
+            "difficulty": 1,
+        }
+    ]
+)
 
-def _mock_anthropic() -> tuple[MagicMock, AsyncMock]:
+
+def _mock_anthropic(response_text: str = MOCK_QUIZ_RESPONSE) -> tuple[MagicMock, AsyncMock]:
     """Return (patched_cls, mock_client_instance) for Anthropic API mock."""
     mock_block = MagicMock()
-    mock_block.text = MOCK_QUIZ_RESPONSE
+    mock_block.text = response_text
 
     mock_response = MagicMock()
     mock_response.content = [mock_block]
@@ -472,3 +485,120 @@ class TestQuizSearchAndPagination:
 
         resp2 = await client.get(f"/api/quiz/?document_id={uuid.uuid4()}")
         assert resp2.json()["total"] == 0
+
+
+async def _make_short_answer_quiz(client: AsyncClient) -> dict[str, Any]:
+    """Create a document + short_answer quiz using mocked Anthropic."""
+    mock_cls, _ = _mock_anthropic(MOCK_SHORT_ANSWER_RESPONSE)
+    doc_resp = await client.post(
+        "/api/documents/",
+        data={
+            "title": "Biology Notes",
+            "text": "Long enough material for quiz generation testing purposes.",
+        },
+    )
+    doc_id = doc_resp.json()["id"]
+    with (
+        patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+        patch(
+            "app.services.quiz_generation.isinstance",
+            side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+        ),
+    ):
+        quiz_resp = await client.post(
+            "/api/quiz/generate",
+            json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["short_answer"]},
+        )
+    return quiz_resp.json()
+
+
+class TestSemanticGrading:
+    """Test semantic grading for short_answer / fill_blank quiz types."""
+
+    async def test_exact_match_no_semantic_call(self, client: AsyncClient) -> None:
+        """If exact match succeeds for short_answer, no semantic grading needed."""
+        quiz = await _make_short_answer_quiz(client)
+        item = quiz["items"][0]
+
+        with patch("app.services.wrong_note_service.grade_answers_semantically") as mock_grade:
+            resp = await client.post(
+                f"/api/quiz/{quiz['id']}/submit",
+                json={"answers": [{"quiz_item_id": item["id"], "user_answer": "mitochondria"}]},
+            )
+        assert resp.status_code == 201
+        assert resp.json()["score"] == 1
+        mock_grade.assert_not_called()
+
+    async def test_semantic_correct_answer(self, client: AsyncClient) -> None:
+        """A semantically correct answer should be graded True."""
+        quiz = await _make_short_answer_quiz(client)
+        item = quiz["items"][0]
+
+        with patch(
+            "app.services.wrong_note_service.grade_answers_semantically",
+            return_value={item["id"]: True},
+        ):
+            resp = await client.post(
+                f"/api/quiz/{quiz['id']}/submit",
+                json={
+                    "answers": [{"quiz_item_id": item["id"], "user_answer": "the mitochondrion"}]
+                },
+            )
+        assert resp.status_code == 201
+        result = resp.json()
+        assert result["score"] == 1
+        assert result["wrong_notes_created"] == 0
+        assert result["results"][0]["grading_method"] == "semantic"
+
+    async def test_semantic_wrong_answer(self, client: AsyncClient) -> None:
+        """A semantically wrong answer should create a wrong note."""
+        quiz = await _make_short_answer_quiz(client)
+        item = quiz["items"][0]
+
+        with patch(
+            "app.services.wrong_note_service.grade_answers_semantically",
+            return_value={item["id"]: False},
+        ):
+            resp = await client.post(
+                f"/api/quiz/{quiz['id']}/submit",
+                json={"answers": [{"quiz_item_id": item["id"], "user_answer": "ribosome"}]},
+            )
+        assert resp.status_code == 201
+        result = resp.json()
+        assert result["score"] == 0
+        assert result["wrong_notes_created"] == 1
+        assert result["results"][0]["grading_method"] == "semantic"
+
+    async def test_mcq_never_uses_semantic(self, client: AsyncClient) -> None:
+        """MCQ should never trigger semantic grading, even on wrong answer."""
+        quiz = await _make_quiz(client)
+        item = quiz["items"][0]
+
+        with patch("app.services.wrong_note_service.grade_answers_semantically") as mock_grade:
+            resp = await client.post(
+                f"/api/quiz/{quiz['id']}/submit",
+                json={"answers": [{"quiz_item_id": item["id"], "user_answer": "WRONG"}]},
+            )
+        assert resp.status_code == 201
+        assert resp.json()["score"] == 0
+        mock_grade.assert_not_called()
+
+    async def test_api_failure_falls_back_to_exact(self, client: AsyncClient) -> None:
+        """If semantic grading API fails, fall back to exact match (wrong)."""
+        quiz = await _make_short_answer_quiz(client)
+        item = quiz["items"][0]
+
+        with patch(
+            "app.services.wrong_note_service.grade_answers_semantically",
+            return_value={},
+        ):
+            resp = await client.post(
+                f"/api/quiz/{quiz['id']}/submit",
+                json={
+                    "answers": [{"quiz_item_id": item["id"], "user_answer": "the mitochondrion"}]
+                },
+            )
+        assert resp.status_code == 201
+        result = resp.json()
+        assert result["score"] == 0
+        assert result["results"][0]["grading_method"] == "exact_fallback"

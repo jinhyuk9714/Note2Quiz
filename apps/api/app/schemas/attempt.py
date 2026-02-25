@@ -21,6 +21,7 @@ class AnswerResult(BaseModel):
     correct_answer: str
     is_correct: bool
     explanation: str
+    grading_method: str | None = None
 
 
 class QuizSubmitResponse(BaseModel):

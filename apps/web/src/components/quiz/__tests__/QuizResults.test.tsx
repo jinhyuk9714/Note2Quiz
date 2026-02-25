@@ -83,4 +83,25 @@ describe("QuizResults", () => {
     render(<QuizResults result={perfectResult} items={items} />);
     expect(screen.queryByText(/오답노트가 생성/)).not.toBeInTheDocument();
   });
+
+  it("shows AI 채점 badge for semantic grading", () => {
+    const semanticResult: SubmitResult = {
+      ...result,
+      results: [
+        { ...result.results[0], grading_method: "semantic" },
+        { ...result.results[1], grading_method: "exact" },
+      ],
+    };
+    render(<QuizResults result={semanticResult} items={items} />);
+    expect(screen.getByText("AI 채점")).toBeInTheDocument();
+  });
+
+  it("hides AI 채점 badge for exact grading", () => {
+    const exactResult: SubmitResult = {
+      ...result,
+      results: result.results.map((r) => ({ ...r, grading_method: "exact" as const })),
+    };
+    render(<QuizResults result={exactResult} items={items} />);
+    expect(screen.queryByText("AI 채점")).not.toBeInTheDocument();
+  });
 });

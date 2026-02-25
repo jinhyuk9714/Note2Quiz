@@ -277,6 +277,7 @@ async def submit_quiz(
                 correct_answer=item.correct_answer if item else str(g["user_answer"]),
                 is_correct=bool(g["is_correct"]),
                 explanation=item.explanation if item else "",
+                grading_method=str(g["grading_method"]) if g.get("grading_method") else None,
             )
         )
 

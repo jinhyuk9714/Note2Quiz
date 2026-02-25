@@ -94,6 +94,7 @@ export interface AnswerResult {
   correct_answer: string;
   is_correct: boolean;
   explanation: string;
+  grading_method?: "exact" | "semantic" | "exact_fallback" | null;
 }
 
 export interface SubmitResult {
