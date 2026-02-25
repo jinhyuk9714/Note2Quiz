@@ -2,7 +2,9 @@ import type {
   AnswerItem,
   AttemptSummary,
   AuthUser,
+  ChangePasswordPayload,
   DashboardStats,
+  DeleteAccountPayload,
   Document,
   DocumentDetail,
   GenerateQuizPayload,
@@ -14,6 +16,7 @@ import type {
   SignupPayload,
   SubmitResult,
   TokenResponse,
+  UpdateProfilePayload,
   WrongNote,
   WrongNoteListResponse,
 } from "@/types/api";
@@ -88,6 +91,43 @@ export async function login(payload: LoginPayload): Promise<TokenResponse> {
 
 export function getMe(): Promise<AuthUser> {
   return apiFetch<AuthUser>("/api/auth/me");
+}
+
+export function updateProfile(payload: UpdateProfilePayload): Promise<AuthUser> {
+  return apiFetch<AuthUser>("/api/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function changePassword(payload: ChangePasswordPayload): Promise<void> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}/api/auth/me/password`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+  }
+}
+
+export async function deleteAccount(payload: DeleteAccountPayload): Promise<void> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}/api/auth/me`, {
+    method: "DELETE",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+  }
 }
 
 // Multipart form fetch (for file uploads — no Content-Type header; browser sets boundary)

@@ -62,15 +62,17 @@ export function Sidebar() {
 
       {user && (
         <div className="m-3 mt-auto flex items-center gap-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200/50 transition-colors hover:bg-slate-100/50">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-700 font-bold shadow-sm ring-1 ring-black/5">
-            {user.display_name.charAt(0).toUpperCase()}
-          </div>
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <p className="truncate text-sm font-semibold text-slate-700">
-              {user.display_name}
-            </p>
-            <p className="truncate text-xs text-slate-500">{user.email}</p>
-          </div>
+          <Link href="/settings" className="flex flex-1 items-center gap-3 overflow-hidden">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-700 font-bold shadow-sm ring-1 ring-black/5">
+              {user.display_name.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <p className="truncate text-sm font-semibold text-slate-700">
+                {user.display_name}
+              </p>
+              <p className="truncate text-xs text-slate-500">{user.email}</p>
+            </div>
+          </Link>
           <button
             onClick={handleLogout}
             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-red-600"

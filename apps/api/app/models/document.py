@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "documents"
 
-    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     title: Mapped[str] = mapped_column(String(500))
     source_type: Mapped[str] = mapped_column(String(20))  # "text", "pdf"
     char_count: Mapped[int] = mapped_column(Integer)

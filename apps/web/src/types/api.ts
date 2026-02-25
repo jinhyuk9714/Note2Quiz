@@ -21,6 +21,19 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface UpdateProfilePayload {
+  display_name: string;
+}
+
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}
+
+export interface DeleteAccountPayload {
+  password: string;
+}
+
 // Backend Pydantic 스키마 미러링
 
 export interface Document {

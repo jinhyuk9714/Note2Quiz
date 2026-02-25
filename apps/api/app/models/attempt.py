@@ -21,7 +21,9 @@ class QuizAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     quiz_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("quizzes.id", ondelete="CASCADE"), index=True
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     attempt_number: Mapped[int] = mapped_column(Integer, default=1)
     score: Mapped[int] = mapped_column(Integer)
     total: Mapped[int] = mapped_column(Integer)
@@ -40,7 +42,9 @@ class WrongAnswerNote(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     attempt_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("quiz_attempts.id", ondelete="CASCADE"), index=True
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     quiz_item_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("quiz_items.id", ondelete="CASCADE"), index=True
     )
