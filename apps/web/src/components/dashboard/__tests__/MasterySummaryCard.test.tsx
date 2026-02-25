@@ -54,4 +54,21 @@ describe("MasterySummaryCard", () => {
     render(<MasterySummaryCard summary={emptyNotes} />);
     expect(screen.queryByText("오답노트 보기")).not.toBeInTheDocument();
   });
+
+  it("shows mastered archive link when mastered_count > 0", () => {
+    render(<MasterySummaryCard summary={partialMastery} />);
+    const link = screen.getByText("숙달 완료 보기");
+    expect(link).toBeInTheDocument();
+    expect(link.closest("a")).toHaveAttribute("href", "/wrong-notes?tab=mastered");
+  });
+
+  it("hides mastered archive link when mastered_count is 0", () => {
+    const noMastered: MasterySummaryStats = {
+      total_wrong_notes: 5,
+      mastered_count: 0,
+      mastery_rate: 0,
+    };
+    render(<MasterySummaryCard summary={noMastered} />);
+    expect(screen.queryByText("숙달 완료 보기")).not.toBeInTheDocument();
+  });
 });

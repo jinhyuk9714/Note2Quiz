@@ -26,17 +26,21 @@ async def list_wrong_notes(
     db: DBSession,
     user_id: CurrentUserID,
     due_only: bool = Query(default=False, description="복습 시점이 된 노트만 조회"),
+    is_mastered: bool | None = Query(
+        default=None, description="None=미숙달만, True=숙달만, False=미숙달만"
+    ),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     search: str | None = Query(default=None, min_length=1, max_length=200),
     sort_by: Literal["next_review_at", "created_at"] = Query(default="next_review_at"),
     order: Literal["asc", "desc"] = Query(default="asc"),
 ) -> WrongAnswerNoteListResponse:
-    base = (
-        select(WrongAnswerNote)
-        .where(WrongAnswerNote.user_id == user_id)
-        .where(WrongAnswerNote.is_mastered == False)  # noqa: E712
-    )
+    base = select(WrongAnswerNote).where(WrongAnswerNote.user_id == user_id)
+
+    if is_mastered is not None:
+        base = base.where(WrongAnswerNote.is_mastered == is_mastered)  # noqa: E712
+    else:
+        base = base.where(WrongAnswerNote.is_mastered == False)  # noqa: E712
 
     if due_only:
         base = base.where(WrongAnswerNote.next_review_at <= datetime.now(UTC))

@@ -230,13 +230,24 @@ export function listQuizAttempts(quizId: string) {
 
 // Wrong Notes
 export function listWrongNotes(
-  params?: { due_only?: boolean; limit?: number; offset?: number; search?: string },
+  params?: {
+    due_only?: boolean;
+    is_mastered?: boolean;
+    limit?: number;
+    offset?: number;
+    search?: string;
+    sort_by?: string;
+    order?: string;
+  },
 ) {
   const qs = buildQuery({
     due_only: params?.due_only,
+    is_mastered: params?.is_mastered,
     limit: params?.limit ?? 50,
     offset: params?.offset ?? 0,
     search: params?.search,
+    sort_by: params?.sort_by,
+    order: params?.order,
   });
   return apiFetch<WrongNoteListResponse>(`/api/wrong-notes/${qs}`);
 }

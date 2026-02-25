@@ -64,6 +64,22 @@ describe("WrongNoteCard", () => {
     expect(screen.getByText("Mastered")).toBeInTheDocument();
   });
 
+  it("hides review buttons and shows badge when mastered", () => {
+    renderWithProviders(
+      <WrongNoteCard note={{ ...note, is_mastered: true, consecutive_correct: 5 }} />,
+    );
+    expect(screen.getByText("숙달 완료")).toBeInTheDocument();
+    expect(screen.queryByText("알고 있어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("아직 헷갈려요")).not.toBeInTheDocument();
+  });
+
+  it("shows review buttons when not mastered", () => {
+    renderWithProviders(<WrongNoteCard note={note} />);
+    expect(screen.getByText("알고 있어요")).toBeInTheDocument();
+    expect(screen.getByText("아직 헷갈려요")).toBeInTheDocument();
+    expect(screen.queryByText("숙달 완료")).not.toBeInTheDocument();
+  });
+
   it('calls reviewWrongNote(true) when "알고 있어요" clicked', async () => {
     vi.mocked(reviewWrongNote).mockResolvedValueOnce({
       ...note,

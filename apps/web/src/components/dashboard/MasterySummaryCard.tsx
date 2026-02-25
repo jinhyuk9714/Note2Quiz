@@ -54,13 +54,23 @@ export function MasterySummaryCard({ summary }: MasterySummaryCardProps) {
       )}
 
       {summary.total_wrong_notes > 0 && (
-        <Link
-          href="/wrong-notes"
-          className="group mt-6 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700 hover:shadow-emerald-300 active:scale-95"
-        >
-          오답노트 보기
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Link>
+        <div className="mt-6 flex gap-3">
+          <Link
+            href="/wrong-notes"
+            className="group flex-1 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700 hover:shadow-emerald-300 active:scale-95"
+          >
+            오답노트 보기
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+          {summary.mastered_count > 0 && (
+            <Link
+              href="/wrong-notes?tab=mastered"
+              className="group flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm font-bold text-emerald-700 transition-all hover:bg-emerald-100 active:scale-95"
+            >
+              숙달 완료 보기
+            </Link>
+          )}
+        </div>
       )}
     </div>
   );

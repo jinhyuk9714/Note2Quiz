@@ -45,6 +45,66 @@ class TestListWrongNotes:
         assert resp.json()["total"] == 0
 
 
+class TestMasteredFilter:
+    async def _create_and_master_note(self, client: AsyncClient) -> str:
+        """Create a wrong note and review it 5 times to master it."""
+        mock_cls = _mock_anthropic()
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Master Test",
+                "text": "Enough text material for creating a quiz for mastery testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            quiz_resp = await client.post(
+                "/api/quiz/generate",
+                json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
+            )
+        quiz_data = quiz_resp.json()
+        await client.post(
+            f"/api/quiz/{quiz_data['id']}/submit",
+            json={
+                "answers": [{"quiz_item_id": quiz_data["items"][0]["id"], "user_answer": "WRONG"}]
+            },
+        )
+        notes_resp = await client.get("/api/wrong-notes/")
+        note_id = notes_resp.json()["notes"][0]["id"]
+
+        # Review correct 5 times to trigger mastery
+        for _ in range(5):
+            await client.post(
+                f"/api/wrong-notes/{note_id}/review",
+                json={"is_correct": True},
+            )
+        return note_id
+
+    async def test_default_excludes_mastered(self, client: AsyncClient) -> None:
+        await self._create_and_master_note(client)
+        resp = await client.get("/api/wrong-notes/")
+        assert resp.json()["total"] == 0
+
+    async def test_mastered_filter_returns_only_mastered(self, client: AsyncClient) -> None:
+        note_id = await self._create_and_master_note(client)
+        resp = await client.get("/api/wrong-notes/?is_mastered=true")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["notes"][0]["id"] == note_id
+        assert data["notes"][0]["is_mastered"] is True
+
+    async def test_mastered_false_explicit(self, client: AsyncClient) -> None:
+        await self._create_and_master_note(client)
+        resp = await client.get("/api/wrong-notes/?is_mastered=false")
+        assert resp.json()["total"] == 0
+
+
 class TestReviewWrongNote:
     async def test_review_nonexistent_returns_404(self, client: AsyncClient) -> None:
         resp = await client.post(

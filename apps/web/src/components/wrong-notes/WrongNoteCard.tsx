@@ -94,37 +94,44 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
         </div>
       </div>
 
-      {/* Review buttons */}
-      <div className="mt-6 flex gap-3">
-        <button
-          onClick={() => mutation.mutate(true)}
-          disabled={mutation.isPending}
-          className="group flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
-        >
-          {mutation.isPending ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
-          ) : (
-            <>
-              <CheckCircle2 className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
-              알고 있어요
-            </>
-          )}
-        </button>
-        <button
-          onClick={() => mutation.mutate(false)}
-          disabled={mutation.isPending}
-          className="group flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-50 active:scale-95"
-        >
-          {mutation.isPending ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-red-600" />
-          ) : (
-            <>
-              <XCircle className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
-              아직 헷갈려요
-            </>
-          )}
-        </button>
-      </div>
+      {/* Review buttons (hidden for mastered notes) */}
+      {note.is_mastered ? (
+        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 py-3 text-sm font-bold text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          숙달 완료
+        </div>
+      ) : (
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={() => mutation.mutate(true)}
+            disabled={mutation.isPending}
+            className="group flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+          >
+            {mutation.isPending ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                알고 있어요
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => mutation.mutate(false)}
+            disabled={mutation.isPending}
+            className="group flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-50 active:scale-95"
+          >
+            {mutation.isPending ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-red-600" />
+            ) : (
+              <>
+                <XCircle className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
+                아직 헷갈려요
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {mutation.isError && (
         <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-red-500 animate-in shake duration-300">
