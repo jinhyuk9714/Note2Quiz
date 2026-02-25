@@ -248,7 +248,7 @@ async def submit_quiz(
     if not ownership_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    attempt, wrong_notes = await create_attempt_with_wrong_notes(
+    attempt, wrong_notes, wrong_notes_updated = await create_attempt_with_wrong_notes(
         db=db,
         quiz_id=quiz_id,
         user_id=user_id,
@@ -286,4 +286,5 @@ async def submit_quiz(
         total=attempt.total,
         results=results,
         wrong_notes_created=len(wrong_notes),
+        wrong_notes_updated=wrong_notes_updated,
     )

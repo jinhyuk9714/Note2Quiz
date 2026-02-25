@@ -115,6 +115,7 @@ export interface SubmitResult {
   total: number;
   results: AnswerResult[];
   wrong_notes_created: number;
+  wrong_notes_updated: number;
 }
 
 export interface AttemptSummary {

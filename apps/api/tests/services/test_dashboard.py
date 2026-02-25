@@ -171,7 +171,7 @@ class TestGetMasterySummary:
         assert result.mastery_rate == 0.0
 
     async def test_partial_mastery(self, db_session: AsyncSession, seeded_user: User) -> None:
-        quiz, item = await _create_quiz_with_item(db_session, seeded_user.id)
+        quiz, _item = await _create_quiz_with_item(db_session, seeded_user.id)
         attempt = QuizAttempt(
             user_id=seeded_user.id,
             quiz_id=quiz.id,
@@ -183,11 +183,24 @@ class TestGetMasterySummary:
         db_session.add(attempt)
         await db_session.flush()
 
+        # Create 5 distinct quiz items so each WrongAnswerNote has a unique quiz_item_id
         for i in range(5):
+            qi = QuizItem(
+                quiz_id=quiz.id,
+                quiz_type="mcq",
+                question=f"Q{i}?",
+                correct_answer="A",
+                explanation="E",
+                options={"A": "a"},
+                concept_tags=["tag"],
+                difficulty=1,
+            )
+            db_session.add(qi)
+            await db_session.flush()
             note = WrongAnswerNote(
                 attempt_id=attempt.id,
                 user_id=seeded_user.id,
-                quiz_item_id=item.id,
+                quiz_item_id=qi.id,
                 user_answer="wrong",
                 correct_answer="right",
                 wrong_reason="reason",
@@ -203,7 +216,7 @@ class TestGetMasterySummary:
         assert result.mastery_rate == 0.4
 
     async def test_all_mastered(self, db_session: AsyncSession, seeded_user: User) -> None:
-        quiz, item = await _create_quiz_with_item(db_session, seeded_user.id)
+        quiz, _item = await _create_quiz_with_item(db_session, seeded_user.id)
         attempt = QuizAttempt(
             user_id=seeded_user.id,
             quiz_id=quiz.id,
@@ -215,11 +228,23 @@ class TestGetMasterySummary:
         db_session.add(attempt)
         await db_session.flush()
 
-        for _ in range(3):
+        for i in range(3):
+            qi = QuizItem(
+                quiz_id=quiz.id,
+                quiz_type="mcq",
+                question=f"M{i}?",
+                correct_answer="A",
+                explanation="E",
+                options={"A": "a"},
+                concept_tags=["tag"],
+                difficulty=1,
+            )
+            db_session.add(qi)
+            await db_session.flush()
             note = WrongAnswerNote(
                 attempt_id=attempt.id,
                 user_id=seeded_user.id,
-                quiz_item_id=item.id,
+                quiz_item_id=qi.id,
                 user_answer="wrong",
                 correct_answer="right",
                 wrong_reason="reason",

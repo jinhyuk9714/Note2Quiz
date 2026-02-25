@@ -180,10 +180,20 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
             </div>
           )}
 
-          {result.wrong_notes_created > 0 && (
-            <div className="mt-8 flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-2 text-xs font-bold text-amber-400 ring-1 ring-inset ring-amber-500/20">
-              <Brain className="h-3.5 w-3.5" />
-              {result.wrong_notes_created}개의 오답노트가 생성되었습니다
+          {(result.wrong_notes_created > 0 || result.wrong_notes_updated > 0) && (
+            <div className="mt-8 space-y-2">
+              {result.wrong_notes_created > 0 && (
+                <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-2 text-xs font-bold text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                  <Brain className="h-3.5 w-3.5" />
+                  {result.wrong_notes_created}개의 오답노트가 생성되었습니다
+                </div>
+              )}
+              {result.wrong_notes_updated > 0 && (
+                <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 px-4 py-2 text-xs font-bold text-orange-400 ring-1 ring-inset ring-orange-500/20">
+                  <Brain className="h-3.5 w-3.5" />
+                  {result.wrong_notes_updated}개의 기존 오답노트가 갱신되었습니다
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -49,6 +49,7 @@ const result: SubmitResult = {
     },
   ],
   wrong_notes_created: 1,
+  wrong_notes_updated: 0,
 };
 
 describe("QuizResults", () => {
@@ -83,6 +84,18 @@ describe("QuizResults", () => {
     };
     render(<QuizResults result={perfectResult} items={items} />);
     expect(screen.queryByText(/오답노트가 생성/)).not.toBeInTheDocument();
+  });
+
+  it("shows wrong notes updated message", () => {
+    const updatedResult: SubmitResult = {
+      ...result,
+      wrong_notes_created: 0,
+      wrong_notes_updated: 2,
+    };
+    render(<QuizResults result={updatedResult} items={items} />);
+    expect(
+      screen.getByText(/2개의 기존 오답노트가 갱신되었습니다/),
+    ).toBeInTheDocument();
   });
 
   it("shows AI 채점 badge for semantic grading", () => {

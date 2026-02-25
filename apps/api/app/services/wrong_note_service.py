@@ -25,7 +25,7 @@ async def create_attempt_with_wrong_notes(
     quiz_id: uuid.UUID,
     user_id: uuid.UUID,
     answers: list[dict[str, str]],
-) -> tuple[QuizAttempt, list[WrongAnswerNote]]:
+) -> tuple[QuizAttempt, list[WrongAnswerNote], int]:
     # Load quiz items
     item_ids = [uuid.UUID(a["quiz_item_id"]) for a in answers]
     stmt = select(QuizItem).where(QuizItem.id.in_(item_ids))
@@ -114,8 +114,23 @@ async def create_attempt_with_wrong_notes(
     db.add(attempt)
     await db.flush()
 
-    # Create wrong answer notes
-    wrong_notes: list[WrongAnswerNote] = []
+    # Upsert wrong answer notes (deduplicate by user_id + quiz_item_id)
+    wrong_item_ids = [uuid.UUID(str(g["quiz_item_id"])) for g in graded if not g["is_correct"]]
+
+    # Load existing notes for these items
+    existing_map: dict[uuid.UUID, WrongAnswerNote] = {}
+    if wrong_item_ids:
+        existing_stmt = select(WrongAnswerNote).where(
+            WrongAnswerNote.user_id == user_id,
+            WrongAnswerNote.quiz_item_id.in_(wrong_item_ids),
+        )
+        existing_result = await db.execute(existing_stmt)
+        for note in existing_result.scalars().all():
+            existing_map[note.quiz_item_id] = note
+
+    new_notes: list[WrongAnswerNote] = []
+    updated_count = 0
+
     for g in graded:
         if g["is_correct"]:
             continue
@@ -133,17 +148,31 @@ async def create_attempt_with_wrong_notes(
                 f"'{g['user_answer']}'(이)라고 답했지만, "
                 f"정답은 '{item.correct_answer}'입니다. {item.explanation}"
             )
-        note = WrongAnswerNote(
-            attempt_id=attempt.id,
-            user_id=user_id,
-            quiz_item_id=item.id,
-            user_answer=str(g["user_answer"]),
-            correct_answer=item.correct_answer,
-            wrong_reason=wrong_reason,
-            concept_tags=item.concept_tags,
-            next_review_at=calculate_next_review(0),
-        )
-        db.add(note)
-        wrong_notes.append(note)
 
-    return attempt, wrong_notes
+        existing = existing_map.get(item.id)
+        if existing:
+            # Update existing note: reset SRS progress
+            existing.attempt_id = attempt.id
+            existing.user_answer = str(g["user_answer"])
+            existing.correct_answer = item.correct_answer
+            existing.wrong_reason = wrong_reason
+            existing.concept_tags = item.concept_tags
+            existing.consecutive_correct = 0
+            existing.next_review_at = calculate_next_review(0)
+            existing.is_mastered = False
+            updated_count += 1
+        else:
+            note = WrongAnswerNote(
+                attempt_id=attempt.id,
+                user_id=user_id,
+                quiz_item_id=item.id,
+                user_answer=str(g["user_answer"]),
+                correct_answer=item.correct_answer,
+                wrong_reason=wrong_reason,
+                concept_tags=item.concept_tags,
+                next_review_at=calculate_next_review(0),
+            )
+            db.add(note)
+            new_notes.append(note)
+
+    return attempt, new_notes, updated_count

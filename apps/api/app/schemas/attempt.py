@@ -31,6 +31,7 @@ class QuizSubmitResponse(BaseModel):
     total: int
     results: list[AnswerResult]
     wrong_notes_created: int
+    wrong_notes_updated: int = 0
 
 
 class WrongAnswerNoteResponse(BaseModel):
