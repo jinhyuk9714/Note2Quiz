@@ -253,6 +253,48 @@ class TestGetDocument:
         assert resp.status_code == 404
 
 
+class TestUpdateDocument:
+    async def _create_doc(self, client: AsyncClient) -> str:
+        resp = await client.post(
+            "/api/documents/",
+            data={"title": "Original Title", "text": "Long enough text for testing purpose here."},
+        )
+        return resp.json()["id"]  # type: ignore[no-any-return]
+
+    async def test_rename_success(self, client: AsyncClient) -> None:
+        doc_id = await self._create_doc(client)
+        resp = await client.patch(f"/api/documents/{doc_id}", json={"title": "New Title"})
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "New Title"
+
+    async def test_rename_reflects_in_get(self, client: AsyncClient) -> None:
+        doc_id = await self._create_doc(client)
+        await client.patch(f"/api/documents/{doc_id}", json={"title": "Updated"})
+        get_resp = await client.get(f"/api/documents/{doc_id}")
+        assert get_resp.json()["title"] == "Updated"
+
+    async def test_rename_empty_title_returns_422(self, client: AsyncClient) -> None:
+        doc_id = await self._create_doc(client)
+        resp = await client.patch(f"/api/documents/{doc_id}", json={"title": ""})
+        assert resp.status_code == 422
+
+    async def test_rename_too_long_title_returns_422(self, client: AsyncClient) -> None:
+        doc_id = await self._create_doc(client)
+        resp = await client.patch(f"/api/documents/{doc_id}", json={"title": "x" * 501})
+        assert resp.status_code == 422
+
+    async def test_rename_nonexistent_returns_404(self, client: AsyncClient) -> None:
+        resp = await client.patch(f"/api/documents/{uuid.uuid4()}", json={"title": "New"})
+        assert resp.status_code == 404
+
+    async def test_rename_other_users_doc_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        doc_id = await self._create_doc(client)
+        resp = await second_client.patch(f"/api/documents/{doc_id}", json={"title": "Hacked"})
+        assert resp.status_code == 404
+
+
 class TestDeleteDocument:
     async def test_delete_existing_returns_204(self, client: AsyncClient) -> None:
         create_resp = await client.post(

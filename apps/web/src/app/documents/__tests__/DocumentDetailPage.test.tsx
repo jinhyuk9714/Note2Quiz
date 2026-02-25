@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders, screen } from "@/test/test-utils";
 import DocumentDetailPage from "../[id]/page";
 import type { DocumentDetail, QuizListItem } from "@/types/api";
@@ -22,11 +23,13 @@ vi.mock("next/link", () => ({
 const mockGetDocument = vi.fn();
 const mockListQuizzes = vi.fn();
 const mockDeleteDocument = vi.fn();
+const mockUpdateDocument = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   getDocument: (...args: unknown[]) => mockGetDocument(...args),
   listQuizzes: (...args: unknown[]) => mockListQuizzes(...args),
   deleteDocument: (...args: unknown[]) => mockDeleteDocument(...args),
+  updateDocument: (...args: unknown[]) => mockUpdateDocument(...args),
 }));
 
 const doc: DocumentDetail = {
@@ -132,5 +135,56 @@ describe("DocumentDetailPage", () => {
     mockGetDocument.mockReturnValue(new Promise(() => {}));
     renderWithProviders(<DocumentDetailPage />);
     expect(screen.getByText("문서를 불러오는 중...")).toBeInTheDocument();
+  });
+
+  it("shows edit button on hover and switches to input on click", async () => {
+    renderWithProviders(<DocumentDetailPage />);
+    await screen.findByText("Introduction to Algorithms");
+    const editBtn = screen.getByTitle("이름 변경");
+    await userEvent.click(editBtn);
+    const input = screen.getByDisplayValue("Introduction to Algorithms");
+    expect(input).toBeInTheDocument();
+    expect(input.tagName).toBe("INPUT");
+  });
+
+  it("calls updateDocument on Enter key", async () => {
+    mockUpdateDocument.mockResolvedValueOnce({ ...doc, title: "New Title" });
+    renderWithProviders(<DocumentDetailPage />);
+    await screen.findByText("Introduction to Algorithms");
+    await userEvent.click(screen.getByTitle("이름 변경"));
+    const input = screen.getByDisplayValue("Introduction to Algorithms");
+    await userEvent.clear(input);
+    await userEvent.type(input, "New Title{Enter}");
+    expect(mockUpdateDocument).toHaveBeenCalledWith("doc-1", { title: "New Title" });
+  });
+
+  it("cancels editing on Escape key", async () => {
+    renderWithProviders(<DocumentDetailPage />);
+    await screen.findByText("Introduction to Algorithms");
+    await userEvent.click(screen.getByTitle("이름 변경"));
+    expect(screen.getByDisplayValue("Introduction to Algorithms")).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByDisplayValue("Introduction to Algorithms")).not.toBeInTheDocument();
+    // Title should be visible again as h1
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading).toHaveTextContent("Introduction to Algorithms");
+  });
+
+  it("does not call updateDocument when title is unchanged", async () => {
+    renderWithProviders(<DocumentDetailPage />);
+    await screen.findByText("Introduction to Algorithms");
+    await userEvent.click(screen.getByTitle("이름 변경"));
+    await userEvent.keyboard("{Enter}");
+    expect(mockUpdateDocument).not.toHaveBeenCalled();
+  });
+
+  it("does not call updateDocument when title is empty", async () => {
+    renderWithProviders(<DocumentDetailPage />);
+    await screen.findByText("Introduction to Algorithms");
+    await userEvent.click(screen.getByTitle("이름 변경"));
+    const input = screen.getByDisplayValue("Introduction to Algorithms");
+    await userEvent.clear(input);
+    await userEvent.keyboard("{Enter}");
+    expect(mockUpdateDocument).not.toHaveBeenCalled();
   });
 });

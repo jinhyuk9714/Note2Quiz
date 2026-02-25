@@ -224,6 +224,13 @@ export function uploadDocumentFile(title: string, file: File) {
   return apiFormFetch<Document>("/api/documents/", formData);
 }
 
+export function updateDocument(id: string, data: { title: string }): Promise<Document> {
+  return apiFetch<Document>(`/api/documents/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 export function deleteDocument(id: string): Promise<void> {
   return apiDelete(`/api/documents/${id}`);
 }

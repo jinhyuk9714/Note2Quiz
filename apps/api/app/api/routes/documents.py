@@ -16,6 +16,7 @@ from app.schemas.document import (
     ChunkResponse,
     DocumentDetailResponse,
     DocumentResponse,
+    DocumentUpdateRequest,
 )
 from app.services.document_service import create_document_with_chunks
 from app.services.pdf_service import PDFExtractionError, extract_text_from_pdf
@@ -179,6 +180,37 @@ async def get_document(
             )
             for c in sorted(doc.chunks, key=lambda c: c.index)
         ],
+    )
+
+
+@router.patch("/{document_id}", response_model=DocumentResponse)
+async def update_document(
+    document_id: uuid.UUID,
+    payload: DocumentUpdateRequest,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> DocumentResponse:
+    stmt = select(Document).where(Document.id == document_id, Document.owner_id == user_id)
+    result = await db.execute(stmt)
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc.title = payload.title
+    await db.commit()
+    await db.refresh(doc)
+
+    qc_stmt = select(func.count(Quiz.id)).where(Quiz.document_id == doc.id)
+    doc_quiz_count = (await db.execute(qc_stmt)).scalar_one()
+
+    return DocumentResponse(
+        id=doc.id,
+        title=doc.title,
+        source_type=doc.source_type,
+        char_count=doc.char_count,
+        chunk_count=doc.chunk_count,
+        quiz_count=int(doc_quiz_count),
+        created_at=doc.created_at,
     )
 
 

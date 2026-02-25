@@ -3,7 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class DocumentUpdateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
 
 
 class ChunkResponse(BaseModel):

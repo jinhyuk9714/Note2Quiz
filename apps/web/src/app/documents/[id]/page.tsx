@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,8 +13,9 @@ import {
   Sparkles,
   Trash2,
   History,
+  Pencil,
 } from "lucide-react";
-import { getDocument, listQuizzes, deleteDocument } from "@/lib/api";
+import { getDocument, listQuizzes, deleteDocument, updateDocument } from "@/lib/api";
 import { QuizHistoryCard } from "@/components/quiz/QuizHistoryCard";
 import { ChunkViewer } from "@/components/documents/ChunkViewer";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -26,6 +27,9 @@ export default function DocumentDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     data: doc,
@@ -42,6 +46,15 @@ export default function DocumentDetailPage() {
     enabled: !!doc,
   });
 
+  const renameMutation = useMutation({
+    mutationFn: (title: string) => updateDocument(id, { title }),
+    onSuccess: () => {
+      setIsEditing(false);
+      void queryClient.invalidateQueries({ queryKey: ["document", id] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => deleteDocument(id),
     onSuccess: () => {
@@ -50,6 +63,22 @@ export default function DocumentDetailPage() {
       router.push("/documents");
     },
   });
+
+  function startEditing() {
+    if (!doc) return;
+    setEditTitle(doc.title);
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function handleRenameSubmit() {
+    const trimmed = editTitle.trim();
+    if (!trimmed || trimmed === doc?.title) {
+      setIsEditing(false);
+      return;
+    }
+    renameMutation.mutate(trimmed);
+  }
 
   if (isLoading) {
     return (
@@ -102,9 +131,34 @@ export default function DocumentDetailPage() {
             <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             Back to Documents
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            {doc.title}
-          </h1>
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameSubmit();
+                if (e.key === "Escape") setIsEditing(false);
+              }}
+              onBlur={handleRenameSubmit}
+              maxLength={500}
+              disabled={renameMutation.isPending}
+              className="w-full rounded-2xl border border-indigo-300 bg-white px-4 py-2 text-2xl font-extrabold tracking-tight text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50"
+            />
+          ) : (
+            <div className="group/title flex items-center gap-2">
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                {doc.title}
+              </h1>
+              <button
+                onClick={startEditing}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-500 group-hover/title:opacity-100"
+                title="이름 변경"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
               {doc.source_type === "pdf" ? "PDF" : "텍스트"}
@@ -147,10 +201,10 @@ export default function DocumentDetailPage() {
         </div>
       </div>
 
-      {deleteMutation.isError && (
+      {(deleteMutation.isError || renameMutation.isError) && (
         <div className="flex items-center gap-2 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-600 ring-1 ring-inset ring-red-200">
           <AlertCircle className="h-5 w-5 shrink-0" />
-          {deleteMutation.error.message}
+          {deleteMutation.error?.message ?? renameMutation.error?.message}
         </div>
       )}
 
