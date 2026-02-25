@@ -18,9 +18,11 @@ function QuizGenerateContent() {
       nQuestions: number;
       quizTypes: string[];
       title: string;
+      chunkIds?: string[];
     }) =>
       generateQuiz({
         document_id: config.documentId,
+        chunk_ids: config.chunkIds?.length ? config.chunkIds : null,
         n_questions: config.nQuestions,
         quiz_types: config.quizTypes,
         title: config.title || undefined,

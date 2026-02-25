@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight, Type } from "lucide-react";
-import { listDocuments } from "@/lib/api";
+import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight, Type, Layers, Zap, ChevronDown } from "lucide-react";
+import { listDocuments, getDocument } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -21,6 +21,7 @@ interface QuizConfigFormProps {
     nQuestions: number;
     quizTypes: string[];
     title: string;
+    chunkIds?: string[];
   }) => void;
   isPending: boolean;
 }
@@ -37,12 +38,44 @@ export function QuizConfigForm({
     "mcq",
     "short_answer",
   ]);
+  const [selectedChunkIds, setSelectedChunkIds] = useState<Set<string>>(new Set());
+  const [chunkSectionOpen, setChunkSectionOpen] = useState(false);
 
   const { data: docsData, isLoading: docsLoading } = useQuery({
     queryKey: ["documents"],
     queryFn: () => listDocuments({ limit: 100 }),
   });
   const documents = docsData?.items;
+
+  const { data: docDetail, isLoading: chunksLoading } = useQuery({
+    queryKey: ["document", documentId],
+    queryFn: () => getDocument(documentId),
+    enabled: documentId.length > 0,
+  });
+  const chunks = docDetail?.chunks ?? [];
+
+  const handleDocumentChange = (newDocId: string) => {
+    setDocumentId(newDocId);
+    setSelectedChunkIds(new Set());
+    setChunkSectionOpen(false);
+  };
+
+  const toggleChunk = (chunkId: string) => {
+    setSelectedChunkIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(chunkId)) next.delete(chunkId);
+      else next.add(chunkId);
+      return next;
+    });
+  };
+
+  const selectAllChunks = () => {
+    setSelectedChunkIds(new Set(chunks.map((c) => c.id)));
+  };
+
+  const deselectAllChunks = () => {
+    setSelectedChunkIds(new Set());
+  };
 
   const toggleType = (type: string) => {
     setQuizTypes((prev) =>
@@ -52,11 +85,17 @@ export function QuizConfigForm({
 
   const canSubmit = documentId.trim().length > 0 && quizTypes.length > 0;
 
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    const chunkIds = selectedChunkIds.size > 0 ? [...selectedChunkIds] : undefined;
+    onSubmit({ documentId, nQuestions, quizTypes, title, chunkIds });
+  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (canSubmit) onSubmit({ documentId, nQuestions, quizTypes, title });
+        handleSubmit();
       }}
       className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md"
     >
@@ -81,7 +120,7 @@ export function QuizConfigForm({
               <select
                 id="doc-select"
                 value={documentId}
-                onChange={(e) => setDocumentId(e.target.value)}
+                onChange={(e) => handleDocumentChange(e.target.value)}
                 className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
               >
                 <option value="">문서를 선택하세요</option>
@@ -107,6 +146,104 @@ export function QuizConfigForm({
             </div>
           )}
         </div>
+
+        {/* Chunk Selection */}
+        {documentId && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setChunkSectionOpen((prev) => !prev)}
+              className="ml-1 flex items-center gap-2 text-sm font-bold text-slate-700"
+            >
+              <Layers className="h-4 w-4 text-slate-400" />
+              범위 선택
+              {selectedChunkIds.size > 0 && (
+                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-black text-indigo-600 ring-1 ring-inset ring-indigo-200">
+                  {selectedChunkIds.size}/{chunks.length}
+                </span>
+              )}
+              <span className="text-[11px] font-medium text-slate-400">(선택사항)</span>
+              <ChevronDown className={cn("h-3.5 w-3.5 text-slate-400 transition-transform", chunkSectionOpen && "rotate-180")} />
+            </button>
+
+            {chunkSectionOpen && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+                {chunksLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-10 animate-pulse rounded-xl bg-slate-100" />
+                    ))}
+                  </div>
+                ) : chunks.length > 0 ? (
+                  <>
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-xs font-medium text-slate-500">
+                        {selectedChunkIds.size > 0
+                          ? `${selectedChunkIds.size}/${chunks.length}개 섹션 선택됨`
+                          : "선택하지 않으면 전체 문서에서 출제됩니다"}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={selectAllChunks}
+                          className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >
+                          전체 선택
+                        </button>
+                        <span className="text-slate-300">|</span>
+                        <button
+                          type="button"
+                          onClick={deselectAllChunks}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                        >
+                          전체 해제
+                        </button>
+                      </div>
+                    </div>
+                    <div className="max-h-64 space-y-1.5 overflow-y-auto">
+                      {chunks.map((chunk) => {
+                        const isSelected = selectedChunkIds.has(chunk.id);
+                        return (
+                          <label
+                            key={chunk.id}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all",
+                              isSelected
+                                ? "border-indigo-300 bg-indigo-50/80 ring-1 ring-indigo-300"
+                                : "border-transparent bg-white hover:border-slate-200 hover:bg-slate-50",
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleChunk(chunk.id)}
+                              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
+                            />
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-black text-slate-500">
+                              {chunk.index + 1}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-xs text-slate-600">
+                              {chunk.content.slice(0, 60)}
+                              {chunk.content.length > 60 && "..."}
+                            </span>
+                            <span className="flex shrink-0 items-center gap-1 text-[10px] font-bold text-slate-400">
+                              <Zap className="h-2.5 w-2.5" />
+                              {chunk.token_count}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="py-4 text-center text-xs font-medium text-slate-400">
+                    청크 정보를 불러올 수 없습니다
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Quiz Title */}
         <div className="space-y-3">
