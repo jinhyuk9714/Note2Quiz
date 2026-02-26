@@ -732,3 +732,71 @@ class TestSemanticGrading:
         result = resp.json()
         assert result["score"] == 0
         assert result["results"][0]["grading_method"] == "exact_fallback"
+
+
+class TestGetAttemptDetail:
+    async def test_get_attempt_detail_success(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        submit_result = await _submit_quiz(client, quiz, "A")
+        quiz_id = quiz["id"]
+        attempt_id = submit_result["attempt_id"]
+
+        resp = await client.get(f"/api/quiz/{quiz_id}/attempts/{attempt_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+
+        assert data["attempt_id"] == attempt_id
+        assert data["quiz_id"] == quiz_id
+        assert data["score"] == submit_result["score"]
+        assert data["total"] == submit_result["total"]
+        assert data["attempt_number"] == submit_result["attempt_number"]
+        assert "quiz_title" in data
+        assert len(data["results"]) == 1
+
+        item_result = data["results"][0]
+        assert "question" in item_result
+        assert "correct_answer" in item_result
+        assert "explanation" in item_result
+        assert "quiz_type" in item_result
+        assert "concept_tags" in item_result
+        assert "difficulty" in item_result
+        assert isinstance(item_result["is_correct"], bool)
+
+    async def test_get_attempt_detail_nonexistent_attempt_returns_404(
+        self, client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.get(f"/api/quiz/{quiz['id']}/attempts/{uuid.uuid4()}")
+        assert resp.status_code == 404
+
+    async def test_get_attempt_detail_wrong_quiz_id_returns_404(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        submit_result = await _submit_quiz(client, quiz, "A")
+        attempt_id = submit_result["attempt_id"]
+
+        resp = await client.get(f"/api/quiz/{uuid.uuid4()}/attempts/{attempt_id}")
+        assert resp.status_code == 404
+
+    async def test_get_attempt_detail_other_users_attempt_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        submit_result = await _submit_quiz(client, quiz, "A")
+        quiz_id = quiz["id"]
+        attempt_id = submit_result["attempt_id"]
+
+        resp = await second_client.get(f"/api/quiz/{quiz_id}/attempts/{attempt_id}")
+        assert resp.status_code == 404
+
+    async def test_get_attempt_detail_mcq_includes_options(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        submit_result = await _submit_quiz(client, quiz, "A")
+        quiz_id = quiz["id"]
+        attempt_id = submit_result["attempt_id"]
+
+        resp = await client.get(f"/api/quiz/{quiz_id}/attempts/{attempt_id}")
+        assert resp.status_code == 200
+        item_result = resp.json()["results"][0]
+        assert item_result["quiz_type"] == "mcq"
+        assert item_result["options"] is not None
+        assert isinstance(item_result["options"], dict)

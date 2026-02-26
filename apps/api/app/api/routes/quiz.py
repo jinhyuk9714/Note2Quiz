@@ -21,6 +21,8 @@ from app.models.quiz import Quiz, QuizItem
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
 from app.schemas.common import PaginatedResponse
 from app.schemas.quiz import (
+    AttemptDetailResponse,
+    AttemptItemResult,
     QuizAttemptSummaryResponse,
     QuizGenerateRequest,
     QuizItemPublicResponse,
@@ -423,6 +425,71 @@ async def list_quiz_attempts(
         )
         for a in attempts
     ]
+
+
+@router.get("/{quiz_id}/attempts/{attempt_id}", response_model=AttemptDetailResponse)
+async def get_attempt_detail(
+    quiz_id: uuid.UUID,
+    attempt_id: uuid.UUID,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> AttemptDetailResponse:
+    """Return per-item results for a specific past attempt."""
+    quiz_stmt = (
+        select(Quiz)
+        .join(Quiz.document)
+        .where(Quiz.id == quiz_id, Document.owner_id == user_id)
+        .options(selectinload(Quiz.items))
+    )
+    quiz_result = await db.execute(quiz_stmt)
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    attempt_stmt = select(QuizAttempt).where(
+        QuizAttempt.id == attempt_id,
+        QuizAttempt.quiz_id == quiz_id,
+        QuizAttempt.user_id == user_id,
+    )
+    attempt_result = await db.execute(attempt_stmt)
+    attempt = attempt_result.scalar_one_or_none()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+
+    items_map: dict[str, QuizItem] = {str(item.id): item for item in quiz.items}
+
+    results: list[AttemptItemResult] = []
+    for answer in attempt.answers:
+        qi_id_str = str(answer["quiz_item_id"])
+        item = items_map.get(qi_id_str)
+        results.append(
+            AttemptItemResult(
+                quiz_item_id=uuid.UUID(qi_id_str),
+                quiz_type=item.quiz_type.value if item else "unknown",
+                question=item.question if item else "",
+                user_answer=str(answer["user_answer"]),
+                correct_answer=item.correct_answer if item else "",
+                is_correct=bool(answer["is_correct"]),
+                explanation=item.explanation if item else "",
+                grading_method=str(answer["grading_method"])
+                if answer.get("grading_method")
+                else None,
+                concept_tags=item.concept_tags if item else [],
+                difficulty=item.difficulty if item else 0,
+                options=item.options if item else None,  # type: ignore[arg-type]
+            )
+        )
+
+    return AttemptDetailResponse(
+        attempt_id=attempt.id,
+        attempt_number=attempt.attempt_number,
+        score=attempt.score,
+        total=attempt.total,
+        created_at=attempt.created_at,
+        quiz_id=quiz.id,
+        quiz_title=quiz.title,
+        results=results,
+    )
 
 
 @router.post("/{quiz_id}/submit", response_model=QuizSubmitResponse, status_code=201)

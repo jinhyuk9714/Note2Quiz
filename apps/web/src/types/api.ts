@@ -163,6 +163,31 @@ export interface AttemptSummary {
   created_at: string;
 }
 
+export interface AttemptItemResult {
+  quiz_item_id: string;
+  quiz_type: "mcq" | "short_answer" | "true_false" | "fill_blank";
+  question: string;
+  user_answer: string;
+  correct_answer: string;
+  is_correct: boolean;
+  explanation: string;
+  grading_method: "exact" | "semantic" | "exact_fallback" | null;
+  concept_tags: string[];
+  difficulty: number;
+  options: Record<string, string> | null;
+}
+
+export interface AttemptDetail {
+  attempt_id: string;
+  attempt_number: number;
+  score: number;
+  total: number;
+  created_at: string;
+  quiz_id: string;
+  quiz_title: string;
+  results: AttemptItemResult[];
+}
+
 export interface WrongNote {
   id: string;
   quiz_item_id: string;

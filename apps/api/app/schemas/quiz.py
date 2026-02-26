@@ -102,6 +102,35 @@ class QuizAttemptSummaryResponse(BaseModel):
     created_at: datetime
 
 
+class AttemptItemResult(BaseModel):
+    """Per-item result for a past attempt, combining attempt.answers with QuizItem data."""
+
+    quiz_item_id: uuid.UUID
+    quiz_type: str
+    question: str
+    user_answer: str
+    correct_answer: str
+    is_correct: bool
+    explanation: str
+    grading_method: str | None
+    concept_tags: list[str]
+    difficulty: int
+    options: dict[str, str] | None
+
+
+class AttemptDetailResponse(BaseModel):
+    """Full attempt result with per-item data — for the attempt detail page."""
+
+    attempt_id: uuid.UUID
+    attempt_number: int
+    score: int
+    total: int
+    created_at: datetime
+    quiz_id: uuid.UUID
+    quiz_title: str
+    results: list[AttemptItemResult]
+
+
 # SSE streaming event payloads
 
 

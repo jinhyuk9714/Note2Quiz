@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { downloadFile } from "@/lib/download";
@@ -273,13 +273,14 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
               </h3>
               <div className="space-y-2">
                 {attempts.map((a) => (
-                  <div
+                  <Link
                     key={a.attempt_id}
+                    href={`/quiz/${quiz.id}/attempts/${a.attempt_id}`}
                     className={cn(
-                      "flex items-center justify-between rounded-xl px-4 py-3",
+                      "flex items-center justify-between rounded-xl px-4 py-3 transition-all hover:ring-1 hover:ring-inset hover:ring-indigo-300",
                       a.attempt_id === result.attempt_id
                         ? "bg-indigo-50 ring-1 ring-inset ring-indigo-200"
-                        : "bg-slate-50",
+                        : "bg-slate-50 hover:bg-indigo-50/50",
                     )}
                   >
                     <span className="text-sm font-bold text-slate-600">
@@ -288,10 +289,13 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                     <span className="text-sm font-bold text-slate-800">
                       {a.score}/{a.total}
                     </span>
-                    <span className="text-xs font-medium text-slate-400">
-                      {formatDate(a.created_at)}
-                    </span>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-slate-400">
+                        {formatDate(a.created_at)}
+                      </span>
+                      <ChevronRight className="h-3 w-3 text-slate-300" />
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>

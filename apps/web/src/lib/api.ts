@@ -1,5 +1,6 @@
 import type {
   AnswerItem,
+  AttemptDetail,
   AttemptSummary,
   AuthUser,
   ChangePasswordPayload,
@@ -365,6 +366,10 @@ export function deleteQuiz(id: string): Promise<void> {
 
 export function listQuizAttempts(quizId: string) {
   return apiFetch<AttemptSummary[]>(`/api/quiz/${quizId}/attempts`);
+}
+
+export function getAttemptDetail(quizId: string, attemptId: string) {
+  return apiFetch<AttemptDetail>(`/api/quiz/${quizId}/attempts/${attemptId}`);
 }
 
 // Wrong Notes

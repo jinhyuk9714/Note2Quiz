@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import type { SubmitResult, QuizItem as QuizItemType, AnswerResult } from "@/types/api";
 import { cn, formatElapsedTime } from "@/lib/utils";
-import { CheckCircle2, XCircle, Info, Trophy, Target, Brain, Sparkles, ChevronDown, Timer } from "lucide-react";
+import { CheckCircle2, XCircle, Trophy, Target, Brain, Sparkles, ChevronDown, Timer } from "lucide-react";
+import { ResultCard, type ResultCardData } from "@/components/quiz/ResultCard";
 
 const TYPE_LABELS: Record<string, string> = {
   mcq: "객관식",
@@ -52,90 +53,23 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
   const correctResults = result.results.filter((r) => r.is_correct);
   const incorrectResults = result.results.filter((r) => !r.is_correct);
 
-  function renderResultCard(r: AnswerResult) {
+  function toResultCard(r: AnswerResult) {
     const item = items.find((q) => q.id === r.quiz_item_id);
     const globalIndex = result.results.indexOf(r);
-    return (
-      <div
-        key={r.quiz_item_id}
-        className={cn(
-          "overflow-hidden rounded-[2rem] border p-6 transition-all",
-          r.is_correct
-            ? "border-emerald-100 bg-emerald-50/30"
-            : "border-red-100 bg-red-50/30",
-        )}
-      >
-        <div className="flex items-start gap-4">
-          <div className={cn(
-            "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-            r.is_correct ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
-          )}>
-            {r.is_correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-bold text-slate-800 leading-relaxed">
-              <span className="mr-2 text-slate-400">Q{globalIndex + 1}.</span>
-              {item?.question ?? ""}
-            </p>
-
-            {/* Concept tags + difficulty */}
-            {item && (item.concept_tags.length > 0 || item.difficulty > 0) && (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {item.concept_tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {item.difficulty > 0 && (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-600 ring-1 ring-inset ring-amber-200/50">
-                    {"★".repeat(item.difficulty)}
-                    {"☆".repeat(Math.max(0, 3 - item.difficulty))}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-xl bg-white/50 p-3 ring-1 ring-inset ring-slate-200/50">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">My Answer</p>
-                  {r.grading_method === "semantic" && (
-                    <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-600 ring-1 ring-inset ring-violet-200">
-                      <Sparkles className="h-2.5 w-2.5" />
-                      AI 채점
-                    </span>
-                  )}
-                </div>
-                <p className={cn("text-sm font-bold", r.is_correct ? "text-emerald-600" : "text-red-600")}>
-                  {r.user_answer || "(No Answer)"}
-                </p>
-              </div>
-              {!r.is_correct && (
-                <div className="rounded-xl bg-emerald-500/5 p-3 ring-1 ring-inset ring-emerald-500/10">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600/60 mb-1">Correct Answer</p>
-                  <p className="text-sm font-bold text-emerald-700">
-                    {r.correct_answer}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {r.explanation && (
-              <div className="mt-4 flex items-start gap-2 rounded-xl bg-slate-100/50 p-4 ring-1 ring-inset ring-slate-200/30">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <div className="text-xs font-medium leading-relaxed text-slate-500">
-                  <span className="font-bold text-slate-700">해설: </span>
-                  {r.explanation}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
+    const data: ResultCardData = {
+      quiz_item_id: r.quiz_item_id,
+      question: item?.question ?? "",
+      user_answer: r.user_answer,
+      correct_answer: r.correct_answer,
+      is_correct: r.is_correct,
+      explanation: r.explanation,
+      grading_method: r.grading_method,
+      concept_tags: item?.concept_tags ?? [],
+      difficulty: item?.difficulty ?? 0,
+      quiz_type: item?.quiz_type,
+      options: item?.options,
+    };
+    return <ResultCard key={r.quiz_item_id} data={data} index={globalIndex + 1} />;
   }
 
   return (
@@ -241,7 +175,7 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
             </button>
             {showIncorrect && (
               <div className="grid grid-cols-1 gap-4">
-                {incorrectResults.map((r) => renderResultCard(r))}
+                {incorrectResults.map((r) => toResultCard(r))}
               </div>
             )}
           </div>
@@ -263,7 +197,7 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
             </button>
             {showCorrect && (
               <div className="grid grid-cols-1 gap-4">
-                {correctResults.map((r) => renderResultCard(r))}
+                {correctResults.map((r) => toResultCard(r))}
               </div>
             )}
           </div>
