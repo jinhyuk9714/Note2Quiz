@@ -19,7 +19,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     return (
       <div
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-xl",
+          "flex h-10 w-10 items-center justify-center rounded-xl",
           className,
         )}
       />
@@ -35,13 +35,13 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       onClick={() => setTheme(next)}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300",
+        "flex h-10 w-10 items-center justify-center rounded-xl text-text-tertiary transition-all hover:bg-surface hover:text-text-primary active:scale-95",
         className,
       )}
       aria-label={`테마 변경: 현재 ${LABELS[current]}, ${LABELS[next]}(으)로 전환`}
       title={`${LABELS[current]} → ${LABELS[next]}`}
     >
-      <Icon className="h-4.5 w-4.5" />
+      <Icon className="h-5 w-5" />
     </button>
   );
 }

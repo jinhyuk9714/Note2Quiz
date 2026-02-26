@@ -34,7 +34,7 @@ export default function AttemptDetailPage() {
         <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 animate-pulse">
           <BookOpenCheck className="h-8 w-8" />
         </div>
-        <p className="text-sm font-bold text-slate-400">결과를 불러오는 중...</p>
+        <p className="text-sm font-bold text-text-tertiary">결과를 불러오는 중...</p>
       </div>
     );
   }
@@ -42,16 +42,16 @@ export default function AttemptDetailPage() {
   if (error || !data) {
     return (
       <div className="mx-auto max-w-4xl py-20 text-center">
-        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 text-red-500">
+        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">결과를 찾을 수 없습니다</h2>
-        <p className="mt-2 text-sm font-medium text-slate-500">
+        <h2 className="text-xl font-bold text-text-primary">결과를 찾을 수 없습니다</h2>
+        <p className="mt-2 text-sm font-medium text-text-secondary">
           {error instanceof Error ? error.message : "존재하지 않거나 삭제된 풀이 기록입니다."}
         </p>
         <Link
           href={`/quiz/${quizId}`}
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200"
+          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-surface-alt px-6 py-3 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt/80"
         >
           퀴즈로 돌아가기
         </Link>
@@ -93,15 +93,15 @@ function AttemptDetailView({ data, quizId }: { data: AttemptDetail; quizId: stri
       <div className="flex flex-col gap-1">
         <Link
           href={`/quiz/${quizId}`}
-          className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-indigo-600"
+          className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-text-tertiary transition-colors hover:text-indigo-600"
         >
           <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
           퀴즈로 돌아가기
         </Link>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
           {data.quiz_title}
         </h1>
-        <p className="text-slate-500 font-medium flex items-center gap-2">
+        <p className="text-text-secondary font-medium flex items-center gap-2">
           <History className="h-4 w-4 text-indigo-500" />
           {data.attempt_number}회차 풀이 — {formatDate(data.created_at)}
         </p>
@@ -136,7 +136,7 @@ function AttemptDetailView({ data, quizId }: { data: AttemptDetail; quizId: stri
 
       {/* Per-item results */}
       <div className="space-y-6">
-        <div className="flex items-center gap-2 px-1 text-slate-800">
+        <div className="flex items-center gap-2 px-1 text-text-primary">
           <Target className="h-5 w-5 text-indigo-600" />
           <h3 className="text-xl font-bold tracking-tight">상세 결과 분석</h3>
         </div>
@@ -146,7 +146,7 @@ function AttemptDetailView({ data, quizId }: { data: AttemptDetail; quizId: stri
             <button
               type="button"
               onClick={() => setShowIncorrect((p) => !p)}
-              className="mb-4 flex w-full items-center justify-between rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 ring-1 ring-inset ring-red-200/50 transition-all hover:bg-red-100"
+              className="mb-4 flex w-full items-center justify-between rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-200/50 dark:ring-red-800/50 transition-all hover:bg-red-100 dark:hover:bg-red-900/30"
             >
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
@@ -167,7 +167,7 @@ function AttemptDetailView({ data, quizId }: { data: AttemptDetail; quizId: stri
             <button
               type="button"
               onClick={() => setShowCorrect((p) => !p)}
-              className="mb-4 flex w-full items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200/50 transition-all hover:bg-emerald-100"
+              className="mb-4 flex w-full items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm font-bold text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200/50 dark:ring-emerald-800/50 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
             >
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />
@@ -194,7 +194,7 @@ function AttemptDetailView({ data, quizId }: { data: AttemptDetail; quizId: stri
         </Link>
         <Link
           href="/wrong-notes"
-          className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-white border border-slate-200 py-5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98]"
+          className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-surface-card border border-border-default py-5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:bg-surface-alt active:scale-[0.98]"
         >
           오답노트 보기
         </Link>

@@ -15,19 +15,19 @@ const steps = [
     icon: FileUp,
     title: "문서 업로드",
     description: "PDF나 텍스트 강의자료를 업로드하세요.",
-    color: "bg-indigo-50 text-indigo-600 ring-indigo-100",
+    color: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 ring-indigo-100 dark:ring-indigo-800",
   },
   {
     icon: Sparkles,
     title: "AI 퀴즈 생성",
     description: "AI가 자동으로 고품질 문제를 만들어요.",
-    color: "bg-purple-50 text-purple-600 ring-purple-100",
+    color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 ring-purple-100 dark:ring-purple-800",
   },
   {
     icon: RefreshCw,
     title: "오답노트 복습",
     description: "틀린 문제를 반복 학습으로 완전히 익혀요.",
-    color: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+    color: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 ring-emerald-100 dark:ring-emerald-800",
   },
 ];
 
@@ -80,15 +80,15 @@ export function OnboardingModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-title"
-        className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-xl animate-in zoom-in-95 fade-in duration-200"
+        className="relative w-full max-w-md rounded-2xl bg-surface-card p-8 shadow-xl animate-in zoom-in-95 fade-in duration-200"
       >
         <h2
           id="onboarding-title"
-          className="text-xl font-extrabold tracking-tight text-slate-800"
+          className="text-xl font-extrabold tracking-tight text-text-primary"
         >
           {userName}님, 환영합니다!
         </h2>
-        <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">
+        <p className="mt-2 text-sm font-medium leading-relaxed text-text-secondary">
           퀴즈노트 AI로 학습하는 3단계를 소개할게요.
         </p>
 
@@ -101,11 +101,11 @@ export function OnboardingModal({
                 <step.icon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-800">
-                  <span className="text-slate-400 mr-1.5">{i + 1}.</span>
+                <p className="text-sm font-bold text-text-primary">
+                  <span className="text-text-tertiary mr-1.5">{i + 1}.</span>
                   {step.title}
                 </p>
-                <p className="mt-0.5 text-sm text-slate-500">
+                <p className="mt-0.5 text-sm text-text-secondary">
                   {step.description}
                 </p>
               </div>
@@ -117,7 +117,7 @@ export function OnboardingModal({
           <button
             ref={dismissRef}
             onClick={onDismiss}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
+            className="rounded-xl border border-border-default bg-surface-card px-5 py-2.5 text-sm font-bold text-text-secondary transition-colors hover:bg-surface-alt"
           >
             나중에 보기
           </button>

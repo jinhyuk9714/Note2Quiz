@@ -111,7 +111,7 @@ export function FolderSidebar({
 
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-400 transition-all hover:bg-indigo-50 hover:text-indigo-600"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-text-tertiary transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400"
           >
             <FolderPlus className="h-4 w-4" />
             새 폴더
@@ -145,7 +145,7 @@ export function FolderSidebar({
         />
         <button
           onClick={() => setShowCreateDialog(true)}
-          className="shrink-0 flex items-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 px-3 py-2 text-xs font-bold text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-600"
+          className="shrink-0 flex items-center gap-1.5 rounded-xl border-2 border-dashed border-border-default px-3 py-2 text-xs font-bold text-text-tertiary transition-all hover:border-indigo-300 hover:text-indigo-600"
         >
           <FolderPlus className="h-3.5 w-3.5" />
         </button>
@@ -216,13 +216,13 @@ function SidebarItem({
           "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
           active
             ? "bg-indigo-50 text-indigo-700 font-bold"
-            : "text-slate-600 hover:bg-slate-50",
+            : "text-text-secondary hover:bg-surface-alt",
         )}
       >
         <span
           className={cn(
             "flex h-6 w-6 items-center justify-center rounded-lg",
-            active ? "text-indigo-600" : "text-slate-400",
+            active ? "text-indigo-600" : "text-text-tertiary",
           )}
           style={color ? { color } : undefined}
         >
@@ -232,7 +232,7 @@ function SidebarItem({
         <span
           className={cn(
             "text-[11px] font-bold",
-            active ? "text-indigo-500" : "text-slate-400",
+            active ? "text-indigo-500" : "text-text-tertiary",
           )}
         >
           {count}
@@ -247,7 +247,7 @@ function SidebarItem({
                 e.stopPropagation();
                 onEdit();
               }}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 hover:bg-slate-100 hover:text-slate-500 transition-all"
+              className="flex h-6 w-6 items-center justify-center rounded-md text-text-tertiary hover:bg-surface-alt hover:text-text-secondary transition-all"
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -258,7 +258,7 @@ function SidebarItem({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all"
+              className="flex h-6 w-6 items-center justify-center rounded-md text-text-tertiary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-all"
             >
               <Trash2 className="h-3 w-3" />
             </button>
@@ -289,7 +289,7 @@ function MobileTab({
         "shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all whitespace-nowrap",
         active
           ? "bg-indigo-600 text-white shadow-lg"
-          : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50",
+          : "bg-surface-card text-text-secondary ring-1 ring-inset ring-border-default hover:bg-surface-alt",
       )}
       style={!active && color ? { borderColor: color } : undefined}
     >
@@ -297,7 +297,7 @@ function MobileTab({
       <span
         className={cn(
           "text-[10px] font-bold",
-          active ? "text-white/70" : "text-slate-400",
+          active ? "text-white/70" : "text-text-tertiary",
         )}
       >
         {count}

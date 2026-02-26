@@ -37,14 +37,14 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-10 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200 dark:shadow-indigo-900/30 ring-4 ring-white dark:ring-slate-800">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200 dark:shadow-indigo-900/30 ring-4 ring-white dark:ring-surface-card">
             <Brain className="h-9 w-9" />
           </div>
           <h1 className="text-3xl font-black tracking-tight text-text-primary">Note2Quiz</h1>
           <p className="mt-2 text-text-secondary font-medium">새로운 학습 여정을 시작하세요</p>
         </div>
 
-        <div className="rounded-[2.5rem] border border-border-default bg-surface-card p-8 shadow-xl shadow-slate-200/50 dark:shadow-black/20 sm:p-12">
+        <div className="rounded-[2.5rem] border border-border-default bg-surface-card p-8 shadow-xl dark:shadow-black/20 sm:p-12">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="displayName" className="block text-sm font-bold text-text-secondary ml-1">

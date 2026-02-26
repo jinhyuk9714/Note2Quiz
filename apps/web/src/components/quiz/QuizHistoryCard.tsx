@@ -41,28 +41,28 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
   return (
     <div 
       onClick={() => router.push(`/quiz/${quiz.id}`)}
-      className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[2rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-lg active:scale-[0.99] cursor-pointer"
+      className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[2rem] border border-border-default bg-surface-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-lg active:scale-[0.99] cursor-pointer"
     >
       <div className="flex items-start gap-4 flex-1 min-w-0">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 shadow-sm ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
           <History className="h-6 w-6" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="truncate text-lg font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+          <h3 className="truncate text-lg font-bold text-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
             {quiz.title}
           </h3>
           {quiz.document_title && (
-            <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
               <FileText className="h-3 w-3" />
               <span className="truncate">{quiz.document_title}</span>
             </div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
               <Layers className="h-3.5 w-3.5" />
               {quiz.item_count}문제
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(quiz.created_at)}
             </div>
@@ -78,7 +78,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
                   <Trophy className="h-3.5 w-3.5" />
                   {quiz.latest_score}/{quiz.latest_total}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
                   <RotateCcw className="h-3.5 w-3.5" />
                   {quiz.attempt_count}회 풀이
                 </div>
@@ -94,7 +94,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             e.stopPropagation();
             router.push(`/quiz/${quiz.id}/flashcard`);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400"
           aria-label="플래시카드"
           title="플래시카드"
         >
@@ -105,7 +105,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             e.stopPropagation();
             router.push(`/quiz/${quiz.id}/edit`);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400"
           aria-label="편집"
           title="편집"
         >
@@ -116,7 +116,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             e.stopPropagation();
             setShareOpen(true);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
           aria-label="공유"
           title="공유"
         >
@@ -125,12 +125,12 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
         <button
           onClick={handleDelete}
           disabled={mutation.isPending}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
           aria-label="삭제"
           title="삭제"
         >
           {mutation.isPending ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-text-tertiary border-t-transparent" />
           ) : (
             <Trash2 className="h-4 w-4" />
           )}

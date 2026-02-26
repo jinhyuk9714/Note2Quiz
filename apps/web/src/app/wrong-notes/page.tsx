@@ -272,30 +272,30 @@ export default function WrongNotesPage() {
         ) : isLoading ? (
           <div className="grid grid-cols-1 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-64 animate-pulse rounded-[2rem] bg-slate-100" />
+              <div key={i} className="h-64 animate-pulse rounded-[2rem] bg-surface-alt" />
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-[2.5rem] border border-red-100 bg-red-50 p-8 text-center text-sm font-bold text-red-600">
+          <div className="rounded-[2.5rem] border border-red-100 dark:border-red-800/50 bg-red-50 dark:bg-red-900/20 p-8 text-center text-sm font-bold text-red-600 dark:text-red-400">
             {error instanceof Error ? error.message : "오류가 발생했습니다"}
           </div>
         ) : notes.length === 0 ? (
           search ? (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-20 text-center backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-slate-800">&ldquo;{search}&rdquo; 검색 결과가 없습니다</h3>
-              <p className="mt-2 text-sm font-medium text-slate-500">
+            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-border-default bg-surface-card/50 p-20 text-center backdrop-blur-sm">
+              <h3 className="text-lg font-bold text-text-primary">&ldquo;{search}&rdquo; 검색 결과가 없습니다</h3>
+              <p className="mt-2 text-sm font-medium text-text-secondary">
                 다른 검색어로 다시 시도해보세요.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-20 text-center backdrop-blur-sm">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-slate-300">
+            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-border-default bg-surface-card/50 p-20 text-center backdrop-blur-sm">
+              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-alt text-text-tertiary">
                 <BookOpenCheck className="h-10 w-10" />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">
+              <h3 className="text-lg font-bold text-text-primary">
                 {emptyMessage.title}
               </h3>
-              <p className="mt-2 text-sm font-medium text-slate-500 max-w-xs mx-auto leading-relaxed">
+              <p className="mt-2 text-sm font-medium text-text-secondary max-w-xs mx-auto leading-relaxed">
                 {emptyMessage.description}
               </p>
               {!isMastered && (

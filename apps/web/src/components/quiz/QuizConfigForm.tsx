@@ -124,7 +124,7 @@ export function QuizConfigForm({
             <span className="text-sm font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest">
               집중 개념:
             </span>
-            <span className="inline-flex items-center gap-2 rounded-xl bg-white dark:bg-slate-800 px-3 py-1.5 text-sm font-bold text-indigo-900 dark:text-indigo-200 shadow-sm ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800">
+            <span className="inline-flex items-center gap-2 rounded-xl bg-surface-card px-3 py-1.5 text-sm font-bold text-indigo-900 dark:text-indigo-200 shadow-sm ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800">
               {focusConcept}
               <button
                 type="button"
@@ -244,7 +244,7 @@ export function QuizConfigForm({
                             className={cn(
                               "flex cursor-pointer items-center gap-4 rounded-2xl border px-4 py-3.5 transition-all duration-200",
                               isSelected
-                                ? "border-indigo-600 bg-white dark:bg-slate-800 shadow-md shadow-indigo-100 dark:shadow-none ring-1 ring-indigo-600"
+                                ? "border-indigo-600 bg-surface-card shadow-md shadow-indigo-100 dark:shadow-none ring-1 ring-indigo-600"
                                 : "border-border-default bg-surface-card hover:border-indigo-300 hover:bg-surface-alt",
                             )}
                           >
@@ -347,7 +347,7 @@ export function QuizConfigForm({
               >
                 <div className={cn(
                   "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300",
-                  quizTypes.includes(value) ? "bg-indigo-600 text-white" : "bg-white dark:bg-slate-800 text-text-tertiary group-hover:text-indigo-600 group-hover:scale-110"
+                  quizTypes.includes(value) ? "bg-indigo-600 text-white" : "bg-surface-card text-text-tertiary group-hover:text-indigo-600 group-hover:scale-110"
                 )}>
                   <Icon className="h-5 w-5" />
                 </div>

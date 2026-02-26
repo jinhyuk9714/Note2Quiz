@@ -20,7 +20,7 @@ export function MasteryProgress({ consecutiveCorrect, isMastered, easeFactor }: 
               ? isMastered
                 ? "bg-emerald-500"
                 : "bg-indigo-500"
-              : "bg-slate-200",
+              : "bg-border-default",
           )}
         />
       ))}
@@ -30,7 +30,7 @@ export function MasteryProgress({ consecutiveCorrect, isMastered, easeFactor }: 
         </span>
       )}
       {!isMastered && easeFactor !== undefined && (
-        <span className="ml-1 text-[10px] font-medium text-slate-400">
+        <span className="ml-1 text-[10px] font-medium text-text-tertiary">
           EF {easeFactor.toFixed(1)}
         </span>
       )}

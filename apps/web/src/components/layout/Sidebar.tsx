@@ -66,7 +66,7 @@ export function Sidebar() {
         <div className="p-4">
           <div className="flex items-center gap-3 rounded-3xl bg-surface-alt p-4 ring-1 ring-border-default transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/10">
             <Link href="/settings" className="flex flex-1 items-center gap-3 overflow-hidden">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-indigo-600 font-black shadow-sm ring-1 ring-black/5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface-card text-indigo-600 font-black shadow-sm ring-1 ring-black/5">
                 {user.display_name.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-1 flex-col overflow-hidden">
@@ -80,7 +80,7 @@ export function Sidebar() {
               <ThemeToggle />
               <button
                 onClick={handleLogout}
-                className="rounded-xl p-2 text-text-tertiary transition-colors hover:bg-white dark:hover:bg-slate-800 hover:text-red-600"
+                className="rounded-xl p-2 text-text-tertiary transition-colors hover:bg-surface-card hover:text-red-600"
                 aria-label="로그아웃"
                 title="로그아웃"
               >

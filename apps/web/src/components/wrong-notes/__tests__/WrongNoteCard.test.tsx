@@ -60,7 +60,7 @@ describe("WrongNoteCard", () => {
     const masteryDots = Array.from(dots).filter(
       (d) =>
         d.classList.contains("bg-indigo-500") ||
-        d.classList.contains("bg-slate-200") ||
+        d.classList.contains("bg-border-default") ||
         d.classList.contains("bg-emerald-500"),
     );
     expect(masteryDots.length).toBeGreaterThanOrEqual(5);

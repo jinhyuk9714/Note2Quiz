@@ -20,7 +20,7 @@ describe("MasteryProgress", () => {
       d.classList.contains("bg-indigo-500"),
     );
     const empty = Array.from(dots).filter((d) =>
-      d.classList.contains("bg-slate-200"),
+      d.classList.contains("bg-border-default"),
     );
     expect(filled).toHaveLength(3);
     expect(empty).toHaveLength(2);

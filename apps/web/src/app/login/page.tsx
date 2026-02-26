@@ -36,14 +36,14 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-10 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200 dark:shadow-indigo-900/30 ring-4 ring-white dark:ring-slate-800">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200 dark:shadow-indigo-900/30 ring-4 ring-white dark:ring-surface-card">
             <Brain className="h-9 w-9" />
           </div>
           <h1 className="text-3xl font-black tracking-tight text-text-primary">Note2Quiz</h1>
           <p className="mt-2 text-text-secondary font-medium">학습을 시작할 준비가 되셨나요?</p>
         </div>
 
-        <div className="rounded-[2.5rem] border border-border-default bg-surface-card p-8 shadow-xl shadow-slate-200/50 dark:shadow-black/20 sm:p-12">
+        <div className="rounded-[2.5rem] border border-border-default bg-surface-card p-8 shadow-xl sm:p-12">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-bold text-text-secondary ml-1">
@@ -95,7 +95,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 dark:hover:shadow-indigo-900/40 disabled:opacity-50 active:scale-[0.98]"
+              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:bg-indigo-700 hover:shadow-indigo-300 disabled:opacity-50 active:scale-[0.98]"
             >
               {submitting ? "로그인 중..." : "시작하기"}
               {!submitting && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}

@@ -153,14 +153,14 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
         <div className="mt-6 flex gap-3">
           <button
             onClick={onExit}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 active:scale-95"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-surface-card px-6 py-3.5 text-sm font-bold text-text-secondary shadow-sm ring-1 ring-inset ring-border-default transition-all hover:bg-surface-alt active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
             돌아가기
           </button>
           <button
             onClick={handleRestart}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 active:scale-95"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-surface-card px-6 py-3.5 text-sm font-bold text-text-secondary shadow-sm ring-1 ring-inset ring-border-default transition-all hover:bg-surface-alt active:scale-95"
           >
             <RotateCcw className="h-4 w-4" />
             다시 보기
@@ -188,7 +188,7 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={onExit}
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700"
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt hover:text-text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           나가기
@@ -200,21 +200,21 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
               isShuffled
-                ? "bg-indigo-100 text-indigo-600 ring-1 ring-inset ring-indigo-200"
-                : "bg-slate-100 text-slate-400 hover:text-slate-600",
+                ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-700"
+                : "bg-surface-alt text-text-tertiary hover:text-text-secondary",
             )}
             title={isShuffled ? "순서대로 보기" : "셔플"}
           >
             <Shuffle className="h-4 w-4" />
           </button>
-          <span className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-slate-500 ring-1 ring-inset ring-slate-200/50">
+          <span className="rounded-full bg-surface-alt px-4 py-1.5 text-xs font-black uppercase tracking-widest text-text-secondary ring-1 ring-inset ring-border-default/50">
             {currentIndex + 1} / {displayItems.length}
           </span>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="mb-6 h-1.5 overflow-hidden rounded-full bg-slate-100">
+      <div className="mb-6 h-1.5 overflow-hidden rounded-full bg-surface-alt">
         <div
           className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
           style={{ width: `${progressPercent}%` }}
@@ -224,7 +224,7 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
       {/* Card */}
       <div
         className={cn(
-          "overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition-all duration-300",
+          "overflow-hidden rounded-[2rem] border border-border-default bg-surface-card shadow-sm transition-all duration-300",
           isAnimatingOut ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100",
         )}
       >
@@ -235,9 +235,9 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
               <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", typeConfig.bg)}>
                 <TypeIcon className={cn("h-4 w-4", typeConfig.color)} />
               </div>
-              <span className="text-xs font-bold text-slate-400">{typeConfig.label}</span>
+              <span className="text-xs font-bold text-text-tertiary">{typeConfig.label}</span>
               {currentItem.difficulty > 0 && (
-                <span className="rounded-lg bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-400 ring-1 ring-inset ring-slate-200/50">
+                <span className="rounded-lg bg-surface-alt px-2 py-0.5 text-[10px] font-bold text-text-tertiary ring-1 ring-inset ring-border-default/50">
                   {DIFFICULTY_LABELS[currentItem.difficulty] ?? `Lv.${currentItem.difficulty}`}
                 </span>
               )}
@@ -246,7 +246,7 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
               {currentItem.concept_tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 ring-1 ring-inset ring-indigo-100"
+                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800"
                 >
                   <Tag className="h-2.5 w-2.5" />
                   {tag}
@@ -255,7 +255,7 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
             </div>
           </div>
 
-          <p className="text-lg font-bold leading-relaxed text-slate-800">
+          <p className="text-lg font-bold leading-relaxed text-text-primary">
             {currentItem.question}
           </p>
 
@@ -268,8 +268,8 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-4 py-3 ring-1 ring-inset transition-all",
                     isFlipped && key === currentItem.correct_answer
-                      ? "bg-emerald-50 ring-emerald-300 text-emerald-700"
-                      : "bg-slate-50 ring-slate-200/50 text-slate-600",
+                      ? "bg-emerald-50 dark:bg-emerald-900/20 ring-emerald-300 dark:ring-emerald-700 text-emerald-700 dark:text-emerald-400"
+                      : "bg-surface-alt ring-border-default/50 text-text-secondary",
                   )}
                 >
                   <span
@@ -277,7 +277,7 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black",
                       isFlipped && key === currentItem.correct_answer
                         ? "bg-emerald-500 text-white"
-                        : "bg-white text-slate-400 ring-1 ring-inset ring-slate-200",
+                        : "bg-surface-card text-text-tertiary ring-1 ring-inset ring-border-default",
                     )}
                   >
                     {key}
@@ -301,12 +301,12 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
             )}
           >
             <div className="overflow-hidden">
-              <div className="border-t border-slate-100 p-8 pt-6">
-                <div className="rounded-xl bg-emerald-50/50 p-4 ring-1 ring-inset ring-emerald-100/50">
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-emerald-400">
+              <div className="border-t border-border-default p-8 pt-6">
+                <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 p-4 ring-1 ring-inset ring-emerald-100/50 dark:ring-emerald-800/30">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-emerald-400 dark:text-emerald-500">
                     Correct Answer
                   </p>
-                  <p className="text-sm font-bold text-emerald-600">
+                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                     {currentItem.quiz_type === "true_false"
                       ? currentItem.correct_answer === "O" ? "O (참)" : "X (거짓)"
                       : currentItem.correct_answer}
@@ -327,13 +327,13 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
           <div className="overflow-hidden">
             <div className={cn(
               "px-8 pb-6",
-              currentItem.quiz_type === "mcq" ? "pt-2 border-t border-slate-100" : "pt-0",
+              currentItem.quiz_type === "mcq" ? "pt-2 border-t border-border-default" : "pt-0",
             )}>
               {currentItem.explanation && (
-                <div className="flex items-start gap-2.5 rounded-2xl bg-slate-50 p-4 text-slate-500 ring-1 ring-inset ring-slate-200/30">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <div className="flex items-start gap-2.5 rounded-2xl bg-surface-alt p-4 text-text-secondary ring-1 ring-inset ring-border-default/30">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-text-tertiary" />
                   <p className="text-xs font-medium leading-relaxed">
-                    <span className="font-bold text-slate-700">해설: </span>
+                    <span className="font-bold text-text-primary">해설: </span>
                     {currentItem.explanation}
                   </p>
                 </div>
@@ -360,17 +360,17 @@ export function FlashcardSession({ items, quizTitle, onExit }: FlashcardSessionP
               <button
                 onClick={goPrev}
                 disabled={currentIndex === 0}
-                className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-30 active:scale-95"
+                className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-border-default bg-surface-card py-3.5 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt disabled:opacity-30 active:scale-95"
               >
                 <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
                 이전
-                <kbd className="ml-1 hidden rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400 sm:inline-block">
+                <kbd className="ml-1 hidden rounded bg-surface-alt px-1.5 py-0.5 text-[9px] font-mono font-bold text-text-tertiary sm:inline-block">
                   ←
                 </kbd>
               </button>
               <button
                 onClick={handleFlip}
-                className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-slate-400 transition-all hover:bg-slate-50 active:scale-95"
+                className="flex items-center justify-center rounded-xl border border-border-default bg-surface-card px-4 py-3.5 text-text-tertiary transition-all hover:bg-surface-alt active:scale-95"
                 title="정답 접기"
               >
                 <EyeOff className="h-4 w-4" />

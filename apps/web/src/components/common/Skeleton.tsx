@@ -8,7 +8,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-700",
+        "animate-pulse rounded-2xl bg-surface-alt",
         className,
       )}
     />
@@ -19,7 +19,7 @@ export function SkeletonCard({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "rounded-[2rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm",
+        "bento-card p-6",
         className,
       )}
     >
@@ -50,7 +50,7 @@ export function SkeletonDashboard() {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-36 rounded-[2rem]" />
+          <Skeleton key={i} className="h-36 rounded-3xl" />
         ))}
       </div>
     </div>

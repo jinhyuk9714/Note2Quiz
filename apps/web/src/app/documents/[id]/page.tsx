@@ -175,11 +175,11 @@ export default function DocumentDetailPage() {
               <Hash className="h-3.5 w-3.5" />
               {doc.char_count.toLocaleString()}자
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
               <Zap className="h-3.5 w-3.5" />
               {doc.chunk_count}개 섹션
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(doc.created_at)}
             </div>
@@ -197,11 +197,11 @@ export default function DocumentDetailPage() {
           <button
             onClick={() => setConfirmOpen(true)}
             disabled={deleteMutation.isPending}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
             title="삭제"
           >
             {deleteMutation.isPending ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-text-tertiary border-t-transparent" />
             ) : (
               <Trash2 className="h-4 w-4" />
             )}
@@ -214,11 +214,11 @@ export default function DocumentDetailPage() {
 
       {/* Related Quizzes */}
       <div className="space-y-4">
-        <h3 className="flex items-center gap-2 px-1 text-lg font-bold text-slate-800">
+        <h3 className="flex items-center gap-2 px-1 text-lg font-bold text-text-primary">
           <History className="h-5 w-5 text-indigo-600" />
           관련 퀴즈
           {quizzes.length > 0 && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+            <span className="rounded-full bg-surface-alt px-3 py-1 text-xs font-bold text-text-secondary ring-1 ring-inset ring-border-default/50">
               {quizzes.length}개
             </span>
           )}
@@ -231,11 +231,11 @@ export default function DocumentDetailPage() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-12 text-center backdrop-blur-sm">
-            <h4 className="text-base font-bold text-slate-800">
+          <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-border-default bg-surface-card/50 p-12 text-center backdrop-blur-sm">
+            <h4 className="text-base font-bold text-text-primary">
               아직 생성된 퀴즈가 없습니다
             </h4>
-            <p className="mt-2 text-sm font-medium text-slate-500">
+            <p className="mt-2 text-sm font-medium text-text-secondary">
               이 문서에서 퀴즈를 생성해보세요.
             </p>
             <Link

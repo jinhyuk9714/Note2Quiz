@@ -38,18 +38,18 @@ export function SearchInput({
 
   return (
     <div className="relative">
-      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
       <input
         type="text"
         value={local}
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-10 pr-9 text-sm font-medium text-slate-700 transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+        className="h-11 w-full rounded-2xl border border-border-default bg-surface-alt/50 pl-10 pr-9 text-sm font-medium text-text-primary transition-all placeholder:text-text-tertiary focus:border-indigo-500 focus:bg-surface-card focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
       />
       {local && (
         <button
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 transition-colors hover:text-slate-600"
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-text-tertiary transition-colors hover:text-text-secondary"
           title="지우기"
         >
           <X className="h-3.5 w-3.5" />

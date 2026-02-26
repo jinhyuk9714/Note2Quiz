@@ -51,14 +51,14 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
 
   return (
     <div className={cn(
-      "overflow-hidden rounded-[2rem] border bg-white p-6 shadow-sm transition-all hover:shadow-md",
+      "overflow-hidden rounded-[2rem] border bg-surface-card p-6 shadow-sm transition-all hover:shadow-md",
       note.is_mastered
-        ? "border-l-4 border-l-emerald-400 border-slate-200"
-        : "border-slate-200",
+        ? "border-l-4 border-l-emerald-400 dark:border-l-emerald-500 border-border-default"
+        : "border-border-default",
     )}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-500 ring-1 ring-inset ring-red-100">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-100 dark:ring-red-800">
             <Brain className="h-4 w-4" />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -66,7 +66,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
               <Link
                 key={tag}
                 href={`/wrong-notes?concept_tag=${encodeURIComponent(tag)}`}
-                className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 ring-1 ring-inset ring-indigo-100 transition-colors hover:bg-indigo-100"
+                className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
               >
                 <Tag className="h-2.5 w-2.5" />
                 {tag}
@@ -80,8 +80,8 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
               className={cn(
                 "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ring-1 ring-inset",
                 isOverdue
-                  ? "bg-amber-50 text-amber-600 ring-amber-200/50 shadow-sm shadow-amber-100"
-                  : "bg-slate-50 text-slate-400 ring-slate-200/50",
+                  ? "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 ring-amber-200/50 dark:ring-amber-700 shadow-sm shadow-amber-100 dark:shadow-none"
+                  : "bg-surface-alt text-text-tertiary ring-border-default/50",
               )}
             >
               {isOverdue ? "Review Due" : getRelativeTime(note.next_review_at)}
@@ -90,11 +90,11 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           <button
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-alt text-text-tertiary transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
             title="삭제"
           >
             {deleteMutation.isPending ? (
-              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-text-tertiary border-t-transparent" />
             ) : (
               <Trash2 className="h-3.5 w-3.5" />
             )}
@@ -102,31 +102,31 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
         </div>
       </div>
 
-      <p className="text-[15px] font-bold leading-relaxed text-slate-800">{note.question}</p>
+      <p className="text-[15px] font-bold leading-relaxed text-text-primary">{note.question}</p>
 
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-xl bg-red-50/50 p-3 ring-1 ring-inset ring-red-100/50">
-          <p className="text-[10px] font-black uppercase tracking-wider text-red-400 mb-1">Your Answer</p>
-          <p className="text-sm font-bold text-red-600">{note.user_answer || "(No Answer)"}</p>
+        <div className="rounded-xl bg-red-50/50 dark:bg-red-900/10 p-3 ring-1 ring-inset ring-red-100/50 dark:ring-red-800/30">
+          <p className="text-[10px] font-black uppercase tracking-wider text-red-400 dark:text-red-500 mb-1">Your Answer</p>
+          <p className="text-sm font-bold text-red-600 dark:text-red-400">{note.user_answer || "(No Answer)"}</p>
         </div>
-        <div className="rounded-xl bg-emerald-50/50 p-3 ring-1 ring-inset ring-emerald-100/50">
-          <p className="text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-1">Correct Answer</p>
-          <p className="text-sm font-bold text-emerald-600">{note.correct_answer}</p>
+        <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 p-3 ring-1 ring-inset ring-emerald-100/50 dark:ring-emerald-800/30">
+          <p className="text-[10px] font-black uppercase tracking-wider text-emerald-400 dark:text-emerald-500 mb-1">Correct Answer</p>
+          <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{note.correct_answer}</p>
         </div>
       </div>
 
       {note.wrong_reason && (
-        <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200/30 text-slate-500">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+        <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-surface-alt p-4 ring-1 ring-inset ring-border-default/30 text-text-secondary">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-text-tertiary" />
           <p className="text-xs font-medium leading-relaxed">
-            <span className="font-bold text-slate-700">분석: </span>
+            <span className="font-bold text-text-primary">분석: </span>
             {note.wrong_reason}
           </p>
         </div>
       )}
 
-      <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
-        <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+      <div className="mt-6 flex items-center justify-between border-t border-border-default pt-5">
+        <div className="flex items-center gap-4 text-[11px] font-bold text-text-tertiary uppercase tracking-widest">
           <MasteryProgress consecutiveCorrect={note.consecutive_correct} isMastered={note.is_mastered} easeFactor={note.ease_factor} />
           <div className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
@@ -137,7 +137,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
 
       {/* Review buttons (hidden for mastered notes) */}
       {note.is_mastered ? (
-        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 py-3 text-sm font-bold text-emerald-600">
+        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 py-3 text-sm font-bold text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="h-4 w-4" />
           숙달 완료
         </div>
@@ -146,7 +146,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           <button
             onClick={() => mutation.mutate(1)}
             disabled={mutation.isPending}
-            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-white border border-slate-200 py-3 text-xs font-bold text-slate-700 transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-50 active:scale-95"
+            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-surface-card border border-border-default py-3 text-xs font-bold text-text-secondary transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 active:scale-95"
           >
             <XCircle className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform" />
             모르겠어요
@@ -154,7 +154,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           <button
             onClick={() => mutation.mutate(3)}
             disabled={mutation.isPending}
-            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-white border border-slate-200 py-3 text-xs font-bold text-slate-700 transition-all hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600 disabled:opacity-50 active:scale-95"
+            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-surface-card border border-border-default py-3 text-xs font-bold text-text-secondary transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 dark:hover:border-amber-700 hover:text-amber-600 dark:hover:text-amber-400 disabled:opacity-50 active:scale-95"
           >
             <AlertCircle className="h-4 w-4 text-amber-400 group-hover:scale-110 transition-transform" />
             어려웠어요
@@ -162,7 +162,7 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
           <button
             onClick={() => mutation.mutate(5)}
             disabled={mutation.isPending}
-            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-white border border-slate-200 py-3 text-xs font-bold text-slate-700 transition-all hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+            className="group flex-1 flex flex-col items-center gap-1 rounded-xl bg-surface-card border border-border-default py-3 text-xs font-bold text-text-secondary transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-400 disabled:opacity-50 active:scale-95"
           >
             <CheckCircle2 className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
             쉬웠어요

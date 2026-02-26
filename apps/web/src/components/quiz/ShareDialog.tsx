@@ -86,16 +86,16 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
 
       <div
         ref={dialogRef}
-        className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200"
+        className="relative w-full max-w-md rounded-2xl bg-surface-card p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200"
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
               <Link2 className="h-5 w-5" />
             </div>
-            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">퀴즈 공유</h2>
+            <h2 className="text-base font-bold text-text-primary">퀴즈 공유</h2>
           </div>
-          <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+          <button onClick={onClose} className="text-text-tertiary hover:text-text-secondary transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -109,8 +109,8 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
             {/* Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">공유 활성화</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                <p className="text-sm font-semibold text-text-secondary">공유 활성화</p>
+                <p className="text-xs text-text-tertiary mt-0.5">
                   링크를 아는 누구나 이 퀴즈를 풀 수 있습니다
                 </p>
               </div>
@@ -119,7 +119,7 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
                 disabled={busy}
                 className={cn(
                   "relative h-7 w-12 rounded-full transition-colors duration-200",
-                  isShared ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-600",
+                  isShared ? "bg-indigo-600" : "bg-border-default",
                   busy && "opacity-50",
                 )}
               >
@@ -136,14 +136,14 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
             {isShared && shareInfo?.share_url && (
               <>
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">
                     공유 링크
                   </label>
                   <div className="flex gap-2">
                     <input
                       readOnly
                       value={shareInfo.share_url}
-                      className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 font-mono truncate"
+                      className="flex-1 rounded-xl border border-border-default bg-surface-alt px-3 py-2.5 text-sm text-text-secondary font-mono truncate"
                     />
                     <button
                       onClick={handleCopyLink}
@@ -156,7 +156,7 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
                 </div>
 
                 {/* Regenerate */}
-                <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+                <div className="border-t border-border-default pt-4">
                   {confirmRegen ? (
                     <div className="rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 p-3">
                       <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mb-2">
@@ -181,7 +181,7 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
                   ) : (
                     <button
                       onClick={() => setConfirmRegen(true)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary hover:text-text-secondary transition-colors"
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
                       링크 재생성

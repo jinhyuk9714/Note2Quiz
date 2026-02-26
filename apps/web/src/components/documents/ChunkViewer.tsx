@@ -33,10 +33,10 @@ export function ChunkViewer({ chunks }: ChunkViewerProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-text-primary">
           <Hash className="h-5 w-5 text-indigo-600" />
           문서 내용
-          <span className="text-sm font-medium text-slate-400">
+          <span className="text-sm font-medium text-text-tertiary">
             {chunks.length}개 섹션
           </span>
         </h3>
@@ -54,39 +54,39 @@ export function ChunkViewer({ chunks }: ChunkViewerProps) {
           return (
             <div
               key={chunk.id}
-              className="rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md"
+              className="rounded-2xl border border-border-default bg-surface-card shadow-sm transition-all hover:shadow-md"
             >
               <button
                 onClick={() => toggle(i)}
                 className="flex w-full items-center justify-between gap-3 p-4 text-left"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-500">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-alt text-xs font-black text-text-secondary">
                     {chunk.index + 1}
                   </span>
                   {!isExpanded && (
-                    <span className="truncate text-sm text-slate-500">
+                    <span className="truncate text-sm text-text-secondary">
                       {chunk.content.slice(0, 80)}
                       {chunk.content.length > 80 && "..."}
                     </span>
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-text-tertiary">
                     <Zap className="h-3 w-3" />
                     {chunk.token_count}
                   </span>
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 text-slate-400 transition-transform duration-200",
+                      "h-4 w-4 text-text-tertiary transition-transform duration-200",
                       isExpanded && "rotate-180",
                     )}
                   />
                 </div>
               </button>
               {isExpanded && (
-                <div className="border-t border-slate-100 px-4 pb-4 pt-3">
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                <div className="border-t border-border-default px-4 pb-4 pt-3">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">
                     {chunk.content}
                   </p>
                 </div>

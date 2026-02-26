@@ -41,7 +41,7 @@ export default function SharedQuizPage() {
         <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 animate-pulse">
           <BookOpenCheck className="h-8 w-8" />
         </div>
-        <p className="text-sm font-bold text-slate-400">공유 퀴즈를 불러오는 중...</p>
+        <p className="text-sm font-bold text-text-tertiary">공유 퀴즈를 불러오는 중...</p>
       </div>
     );
   }
@@ -52,13 +52,13 @@ export default function SharedQuizPage() {
         <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 text-red-500">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">퀴즈를 찾을 수 없습니다</h2>
-        <p className="mt-2 text-sm font-medium text-slate-500">
+        <h2 className="text-xl font-bold text-text-primary">퀴즈를 찾을 수 없습니다</h2>
+        <p className="mt-2 text-sm font-medium text-text-secondary">
           공유가 중단되었거나 잘못된 링크입니다.
         </p>
         <Link
           href="/quiz/history"
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200"
+          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-surface-alt px-6 py-3 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt/80"
         >
           내 퀴즈 목록으로
         </Link>
@@ -137,7 +137,7 @@ function SharedQuizTaker({
           </button>
           <Link
             href="/quiz/history"
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200"
+            className="inline-flex items-center gap-2 rounded-2xl bg-surface-alt px-6 py-3 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt/80"
           >
             내 퀴즈 목록으로
           </Link>
@@ -149,13 +149,13 @@ function SharedQuizTaker({
   return (
     <div className="mx-auto max-w-4xl space-y-6 py-8">
       {/* Header */}
-      <div className="rounded-2xl bg-white border border-slate-200 p-6">
-        <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
+      <div className="rounded-2xl bg-surface-card border border-border-default p-6">
+        <div className="flex items-center gap-2 text-xs text-text-tertiary mb-2">
           <User className="h-3.5 w-3.5" />
           <span>{quiz.owner_display_name}님이 공유한 퀴즈</span>
         </div>
-        <h1 className="text-xl font-bold text-slate-800">{quiz.title}</h1>
-        <div className="mt-2 flex items-center gap-3 text-sm text-slate-500">
+        <h1 className="text-xl font-bold text-text-primary">{quiz.title}</h1>
+        <div className="mt-2 flex items-center gap-3 text-sm text-text-secondary">
           <span>{quiz.item_count}문항</span>
           <span>·</span>
           <span>{formatDate(quiz.created_at)}</span>
@@ -164,10 +164,10 @@ function SharedQuizTaker({
 
       {/* Progress */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-sm font-bold text-slate-600">
+        <span className="text-sm font-bold text-text-secondary">
           {currentIndex + 1} / {quiz.items.length}
         </span>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-text-tertiary">
           {answeredCount}문항 답변 완료
         </span>
       </div>
@@ -187,7 +187,7 @@ function SharedQuizTaker({
         <button
           onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
           disabled={currentIndex === 0}
-          className="flex items-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-30"
+          className="flex items-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold text-text-secondary transition-colors hover:bg-surface-alt disabled:opacity-30"
         >
           <ChevronLeft className="h-4 w-4" />
           이전
@@ -201,7 +201,7 @@ function SharedQuizTaker({
               "flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold text-white transition-all",
               allAnswered
                 ? "bg-indigo-600 hover:bg-indigo-700"
-                : "bg-slate-300 cursor-not-allowed",
+                : "bg-surface-alt text-text-tertiary cursor-not-allowed",
             )}
           >
             <CheckCircle2 className="h-4 w-4" />
@@ -210,7 +210,7 @@ function SharedQuizTaker({
         ) : (
           <button
             onClick={() => setCurrentIndex((i) => Math.min(quiz.items.length - 1, i + 1))}
-            className="flex items-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100"
+            className="flex items-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold text-text-secondary transition-colors hover:bg-surface-alt"
           >
             다음
             <ChevronRight className="h-4 w-4" />
@@ -230,7 +230,7 @@ function SharedQuizTaker({
                 ? "bg-indigo-600 text-white"
                 : answers[item.id]
                   ? "bg-indigo-100 text-indigo-600"
-                  : "bg-slate-100 text-slate-400 hover:bg-slate-200",
+                  : "bg-surface-alt text-text-tertiary hover:bg-surface-alt/80",
             )}
           >
             {i + 1}
@@ -239,11 +239,11 @@ function SharedQuizTaker({
       </div>
 
       {/* Copy button */}
-      <div className="flex justify-center pt-4 border-t border-slate-100">
+      <div className="flex justify-center pt-4 border-t border-border-default">
         <button
           onClick={() => copyMutation.mutate()}
           disabled={copyMutation.isPending}
-          className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-indigo-600 transition-colors"
+          className="flex items-center gap-2 text-sm font-medium text-text-tertiary hover:text-indigo-600 transition-colors"
         >
           <Copy className="h-4 w-4" />
           {copyMutation.isPending ? "복제 중..." : "내 계정으로 복제하기"}

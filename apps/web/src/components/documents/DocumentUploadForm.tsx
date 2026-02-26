@@ -162,7 +162,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
                 "flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all",
                 mode === m
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
-                  : "text-text-tertiary hover:text-text-primary hover:bg-white dark:hover:bg-slate-800"
+                  : "text-text-tertiary hover:text-text-primary hover:bg-white dark:hover:bg-surface-card"
               )}
             >
               {m === "text" && <Type className="h-4 w-4" />}
@@ -205,7 +205,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
           >
             {file ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-card text-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none">
                   <FileText className="h-10 w-10" />
                 </div>
                 <div>
@@ -228,7 +228,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
               </div>
             ) : (
               <>
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-text-tertiary transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-600 group-hover:shadow-xl group-hover:shadow-indigo-100 dark:group-hover:shadow-none">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-card text-text-tertiary transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-600 group-hover:shadow-xl group-hover:shadow-indigo-100 dark:group-hover:shadow-none">
                   <FileUp className="h-10 w-10" />
                 </div>
                 <p className="mb-2 text-lg font-black text-text-primary tracking-tight">
@@ -268,7 +268,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
           >
             {file ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-card text-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none">
                   <ImageIcon className="h-10 w-10" />
                 </div>
                 <div>
@@ -291,7 +291,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
               </div>
             ) : (
               <>
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-text-tertiary transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-600 group-hover:shadow-xl group-hover:shadow-indigo-100 dark:group-hover:shadow-none">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-card text-text-tertiary transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-600 group-hover:shadow-xl group-hover:shadow-indigo-100 dark:group-hover:shadow-none">
                   <ImageIcon className="h-10 w-10" />
                 </div>
                 <p className="mb-2 text-lg font-black text-text-primary tracking-tight">

@@ -226,17 +226,17 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
         <div className="flex flex-col gap-1">
           <Link
             href="/quiz/history"
-            className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-indigo-600"
+            className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-text-tertiary transition-colors hover:text-indigo-600"
           >
             <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             Back to Library
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{quiz.title}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">{quiz.title}</h1>
             <Link
               href={`/quiz/${quiz.id}/edit`}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 transition-all hover:bg-amber-50 hover:text-amber-600"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-surface-alt px-3 py-1.5 text-xs font-bold text-text-tertiary transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400"
               title="편집"
             >
               <Pencil className="h-3 w-3" />
@@ -244,14 +244,14 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
             </Link>
             <button
               onClick={() => setShareOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-surface-alt px-3 py-1.5 text-xs font-bold text-text-tertiary transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400"
               title="공유"
             >
               <Link2 className="h-3 w-3" />
               공유
             </button>
           </div>
-          <p className="text-slate-500 font-medium">
+          <p className="text-text-secondary font-medium">
             {phase === "results"
               ? "퀴즈 결과 분석"
               : retryItemIds
@@ -269,10 +269,10 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
             />
             <div className="flex items-center gap-2 text-sm font-black text-indigo-600">
               <span className="text-2xl">{answeredCount}</span>
-              <span className="text-slate-300">/</span>
-              <span className="text-slate-400">{totalCount}</span>
+              <span className="text-text-tertiary">/</span>
+              <span className="text-text-tertiary">{totalCount}</span>
             </div>
-            <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/50">
+            <div className="h-2 w-32 overflow-hidden rounded-full bg-surface-alt ring-1 ring-inset ring-border-default/50">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
@@ -287,8 +287,8 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
           <QuizResults result={result} items={quiz.items} elapsedMs={finalElapsedMs} />
 
           {attempts && attempts.length > 1 && (
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
+            <div className="rounded-[2rem] border border-border-default bg-surface-card p-6 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-text-primary">
                 <History className="h-5 w-5 text-indigo-600" />
                 풀이 기록
               </h3>
@@ -300,21 +300,21 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                     className={cn(
                       "flex items-center justify-between rounded-xl px-4 py-3 transition-all hover:ring-1 hover:ring-inset hover:ring-indigo-300",
                       a.attempt_id === result.attempt_id
-                        ? "bg-indigo-50 ring-1 ring-inset ring-indigo-200"
-                        : "bg-slate-50 hover:bg-indigo-50/50",
+                        ? "bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-700"
+                        : "bg-surface-alt hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10",
                     )}
                   >
-                    <span className="text-sm font-bold text-slate-600">
+                    <span className="text-sm font-bold text-text-secondary">
                       {a.attempt_number}회차
                     </span>
-                    <span className="text-sm font-bold text-slate-800">
+                    <span className="text-sm font-bold text-text-primary">
                       {a.score}/{a.total}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-400">
+                      <span className="text-xs font-medium text-text-tertiary">
                         {formatDate(a.created_at)}
                       </span>
-                      <ChevronRight className="h-3 w-3 text-slate-300" />
+                      <ChevronRight className="h-3 w-3 text-text-tertiary" />
                     </div>
                   </Link>
                 ))}
@@ -325,7 +325,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => router.push("/wrong-notes")}
-              className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-white border border-slate-200 py-5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center gap-2 rounded-[1.5rem] bg-surface-card border border-border-default py-5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:bg-surface-alt active:scale-[0.98]"
             >
               <BookOpenCheck className="h-4 w-4 text-indigo-500" />
               오답노트로 복습하기
@@ -366,10 +366,10 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                 .finally(() => setCsvExporting(false));
             }}
             disabled={csvExporting}
-            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 active:scale-95 disabled:opacity-70"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-border-default bg-surface-card px-5 py-3 text-xs font-bold text-text-tertiary transition-all hover:bg-surface-alt hover:text-text-secondary active:scale-95 disabled:opacity-70"
           >
             {csvExporting ? (
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-text-tertiary border-t-transparent" />
             ) : (
               <Download className="h-3.5 w-3.5" />
             )}
@@ -431,7 +431,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                 ? allAnswered
                   ? "bg-indigo-600 shadow-indigo-500/30 hover:bg-indigo-700"
                   : "bg-indigo-500 shadow-indigo-400/30 hover:bg-indigo-600"
-                : "bg-slate-300 cursor-not-allowed opacity-80"
+                : "bg-surface-alt text-text-tertiary cursor-not-allowed opacity-80"
             )}
           >
             {phase === "submitting" ? (

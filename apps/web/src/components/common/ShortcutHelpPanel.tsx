@@ -31,14 +31,14 @@ export function ShortcutHelpPanel({ shortcuts }: ShortcutHelpPanelProps) {
   return (
     <div className="fixed bottom-6 right-6 z-40 hidden sm:block">
       {open && (
-        <div className="absolute bottom-14 right-0 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="absolute bottom-14 right-0 w-72 rounded-2xl border border-border-default bg-surface-card p-5 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="mb-3 flex items-center justify-between">
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">
+            <h4 className="text-xs font-black uppercase tracking-widest text-text-tertiary">
               키보드 단축키
             </h4>
             <button
               onClick={() => setOpen(false)}
-              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:text-slate-600"
+              className="flex h-5 w-5 items-center justify-center rounded text-text-tertiary hover:text-text-secondary"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -46,14 +46,14 @@ export function ShortcutHelpPanel({ shortcuts }: ShortcutHelpPanelProps) {
           <div className="space-y-2">
             {shortcuts.map((s, i) => (
               <div key={i} className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-slate-600">
+                <span className="text-xs font-medium text-text-secondary">
                   {s.description}
                 </span>
                 <div className="flex shrink-0 items-center gap-1">
                   {s.keys.map((key) => (
                     <kbd
                       key={key}
-                      className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-500 ring-1 ring-inset ring-slate-200"
+                      className="rounded bg-surface-alt px-1.5 py-0.5 text-[10px] font-mono font-bold text-text-secondary ring-1 ring-inset ring-border-default"
                     >
                       {key}
                     </kbd>
@@ -71,7 +71,7 @@ export function ShortcutHelpPanel({ shortcuts }: ShortcutHelpPanelProps) {
           "flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition-all hover:scale-110 active:scale-95",
           open
             ? "border-indigo-300 bg-indigo-600 text-white"
-            : "border-slate-200 bg-white text-slate-400 hover:text-slate-600",
+            : "border-border-default bg-surface-card text-text-tertiary hover:text-text-secondary",
         )}
         title="키보드 단축키"
       >

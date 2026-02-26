@@ -76,18 +76,18 @@ function FolderManageDialogInner({
         aria-hidden
       />
 
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200">
+      <div className="relative w-full max-w-sm rounded-2xl bg-surface-card p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200">
         <div className="flex items-center gap-3 mb-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
             <FolderIcon className="h-5 w-5" />
           </div>
-          <h2 className="text-base font-bold text-slate-800">{title}</h2>
+          <h2 className="text-base font-bold text-text-primary">{title}</h2>
         </div>
 
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">
               폴더 이름
             </label>
             <input
@@ -99,13 +99,13 @@ function FolderManageDialogInner({
               }}
               placeholder="예: 미적분학, 운영체제"
               maxLength={200}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full rounded-xl border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
             />
           </div>
 
           {/* Color */}
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">
               색상
             </label>
             <div className="flex gap-2">
@@ -117,7 +117,7 @@ function FolderManageDialogInner({
                   className={cn(
                     "h-8 w-8 rounded-lg transition-all",
                     color === c
-                      ? "ring-2 ring-offset-2 ring-slate-400 scale-110"
+                      ? "ring-2 ring-offset-2 ring-text-tertiary scale-110"
                       : "hover:scale-105",
                   )}
                   style={{ backgroundColor: c }}
@@ -128,7 +128,7 @@ function FolderManageDialogInner({
 
           {/* Emoji */}
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">
               아이콘
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -141,7 +141,7 @@ function FolderManageDialogInner({
                     "flex h-9 w-9 items-center justify-center rounded-lg text-base transition-all",
                     emoji === e
                       ? "bg-indigo-100 ring-2 ring-indigo-300"
-                      : "bg-slate-50 hover:bg-slate-100",
+                      : "bg-surface-alt hover:bg-surface-alt/80",
                   )}
                 >
                   {e}
@@ -155,7 +155,7 @@ function FolderManageDialogInner({
           <button
             onClick={onCancel}
             disabled={loading}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-xl border border-border-default bg-surface-card px-5 py-2.5 text-sm font-bold text-text-secondary transition-colors hover:bg-surface-alt disabled:opacity-50"
           >
             취소
           </button>

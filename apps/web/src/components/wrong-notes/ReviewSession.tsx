@@ -149,7 +149,7 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
         <div className="mt-6 flex gap-3">
           <button
             onClick={onExit}
-            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 active:scale-95"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-surface-card px-6 py-3.5 text-sm font-bold text-text-secondary shadow-sm ring-1 ring-inset ring-border-default transition-all hover:bg-surface-alt active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
             {backLabel ?? "오답노트로 돌아가기"}
@@ -174,12 +174,12 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={onExit}
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700"
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt hover:text-text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           나가기
         </button>
-        <span className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-slate-500 ring-1 ring-inset ring-slate-200/50">
+        <span className="rounded-full bg-surface-alt px-4 py-1.5 text-xs font-black uppercase tracking-widest text-text-secondary ring-1 ring-inset ring-border-default/50">
           {currentIndex + 1} / {notes.length}
         </span>
       </div>
@@ -187,7 +187,7 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
       {/* Card */}
       <div
         className={cn(
-          "overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition-all duration-300",
+          "overflow-hidden rounded-[2rem] border border-border-default bg-surface-card shadow-sm transition-all duration-300",
           isAnimatingOut ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100",
         )}
       >
@@ -203,7 +203,7 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
               {currentNote.concept_tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 ring-1 ring-inset ring-indigo-100"
+                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800"
                 >
                   <Tag className="h-2.5 w-2.5" />
                   {tag}
@@ -211,7 +211,7 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
               ))}
             </div>
           </div>
-          <p className="text-lg font-bold leading-relaxed text-slate-800">
+          <p className="text-lg font-bold leading-relaxed text-text-primary">
             {currentNote.question}
           </p>
         </div>
@@ -224,31 +224,31 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
           )}
         >
           <div className="overflow-hidden">
-            <div className="border-t border-slate-100 p-8 pt-6">
+            <div className="border-t border-border-default p-8 pt-6">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-xl bg-red-50/50 p-3 ring-1 ring-inset ring-red-100/50">
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-red-400">
+                <div className="rounded-xl bg-red-50/50 dark:bg-red-900/10 p-3 ring-1 ring-inset ring-red-100/50 dark:ring-red-800/30">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-red-400 dark:text-red-500">
                     Your Answer
                   </p>
-                  <p className="text-sm font-bold text-red-600">
+                  <p className="text-sm font-bold text-red-600 dark:text-red-400">
                     {currentNote.user_answer || "(No Answer)"}
                   </p>
                 </div>
-                <div className="rounded-xl bg-emerald-50/50 p-3 ring-1 ring-inset ring-emerald-100/50">
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 p-3 ring-1 ring-inset ring-emerald-100/50 dark:ring-emerald-800/30">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-emerald-400 dark:text-emerald-500">
                     Correct Answer
                   </p>
-                  <p className="text-sm font-bold text-emerald-600">
+                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                     {currentNote.correct_answer}
                   </p>
                 </div>
               </div>
 
               {currentNote.wrong_reason && (
-                <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-slate-50 p-4 text-slate-500 ring-1 ring-inset ring-slate-200/30">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-surface-alt p-4 text-text-secondary ring-1 ring-inset ring-border-default/30">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-text-tertiary" />
                   <p className="text-xs font-medium leading-relaxed">
-                    <span className="font-bold text-slate-700">분석: </span>
+                    <span className="font-bold text-text-primary">분석: </span>
                     {currentNote.wrong_reason}
                   </p>
                 </div>
@@ -273,29 +273,29 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
               <button
                 onClick={() => handleReview(1)}
                 disabled={mutation.isPending}
-                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 active:scale-95"
+                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-border-default bg-surface-card px-3 py-3 text-sm font-bold text-text-secondary transition-all hover:border-red-200 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 active:scale-95"
               >
                 <XCircle className="h-4 w-4 text-red-400 transition-transform group-hover:scale-110" />
                 <span className="text-xs">모르겠어요</span>
-                <kbd className="hidden sm:inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400">1</kbd>
+                <kbd className="hidden sm:inline-block rounded bg-surface-alt px-1.5 py-0.5 text-[9px] font-mono font-bold text-text-tertiary">1</kbd>
               </button>
               <button
                 onClick={() => handleReview(3)}
                 disabled={mutation.isPending}
-                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 transition-all hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 active:scale-95"
+                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-border-default bg-surface-card px-3 py-3 text-sm font-bold text-text-secondary transition-all hover:border-amber-200 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400 disabled:opacity-50 active:scale-95"
               >
                 <AlertCircle className="h-4 w-4 text-amber-400 transition-transform group-hover:scale-110" />
                 <span className="text-xs">어려웠어요</span>
-                <kbd className="hidden sm:inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400">3</kbd>
+                <kbd className="hidden sm:inline-block rounded bg-surface-alt px-1.5 py-0.5 text-[9px] font-mono font-bold text-text-tertiary">3</kbd>
               </button>
               <button
                 onClick={() => handleReview(5)}
                 disabled={mutation.isPending}
-                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 active:scale-95"
+                className="group flex flex-1 flex-col items-center gap-1 rounded-xl border border-border-default bg-surface-card px-3 py-3 text-sm font-bold text-text-secondary transition-all hover:border-emerald-200 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 disabled:opacity-50 active:scale-95"
               >
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 transition-transform group-hover:scale-110" />
                 <span className="text-xs">쉬웠어요</span>
-                <kbd className="hidden sm:inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400">5</kbd>
+                <kbd className="hidden sm:inline-block rounded bg-surface-alt px-1.5 py-0.5 text-[9px] font-mono font-bold text-text-tertiary">5</kbd>
               </button>
             </div>
           )}
