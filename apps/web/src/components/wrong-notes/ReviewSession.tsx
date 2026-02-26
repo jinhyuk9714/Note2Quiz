@@ -17,6 +17,8 @@ import Link from "next/link";
 import { reviewWrongNote } from "@/lib/api";
 import type { WrongNote } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { useReviewShortcuts } from "@/hooks/useReviewShortcuts";
+import { ShortcutHelpPanel } from "@/components/common/ShortcutHelpPanel";
 import { MasteryProgress } from "./MasteryProgress";
 
 interface ReviewSessionProps {
@@ -78,6 +80,14 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
       },
     );
   }
+
+  useReviewShortcuts({
+    isFlipped,
+    onFlip: () => setIsFlipped(true),
+    onRate: handleReview,
+    enabled: phase === "reviewing",
+    isPending: mutation.isPending,
+  });
 
   if (phase === "summary") {
     const correctCount = results.filter((r) => r.quality >= 3).length;
@@ -251,6 +261,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
             >
               <Eye className="h-4 w-4" />
               정답 보기
+              <kbd className="hidden sm:inline-block ml-1 rounded bg-indigo-500 px-1.5 py-0.5 text-[9px] font-mono font-bold text-indigo-200">Space</kbd>
             </button>
           ) : (
             <div className="flex gap-2">
@@ -261,6 +272,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
               >
                 <XCircle className="h-4 w-4 text-red-400 transition-transform group-hover:scale-110" />
                 <span className="text-xs">모르겠어요</span>
+                <kbd className="hidden sm:inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400">1</kbd>
               </button>
               <button
                 onClick={() => handleReview(3)}
@@ -269,6 +281,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
               >
                 <AlertCircle className="h-4 w-4 text-amber-400 transition-transform group-hover:scale-110" />
                 <span className="text-xs">어려웠어요</span>
+                <kbd className="hidden sm:inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400">3</kbd>
               </button>
               <button
                 onClick={() => handleReview(5)}
@@ -277,6 +290,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
               >
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 transition-transform group-hover:scale-110" />
                 <span className="text-xs">쉬웠어요</span>
+                <kbd className="hidden sm:inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-400">5</kbd>
               </button>
             </div>
           )}
@@ -291,6 +305,15 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
           </div>
         )}
       </div>
+
+      <ShortcutHelpPanel
+        shortcuts={[
+          { keys: ["Space"], description: "정답 보기" },
+          { keys: ["1"], description: "모르겠어요" },
+          { keys: ["3"], description: "어려웠어요" },
+          { keys: ["5"], description: "쉬웠어요" },
+        ]}
+      />
     </div>
   );
 }

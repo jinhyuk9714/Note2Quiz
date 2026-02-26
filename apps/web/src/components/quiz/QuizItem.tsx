@@ -10,6 +10,7 @@ interface QuizItemProps {
   disabled?: boolean;
   onSkip?: () => void;
   isSkipped?: boolean;
+  isFocused?: boolean;
 }
 
 const TYPE_CONFIG = {
@@ -27,6 +28,7 @@ export function QuizItem({
   disabled,
   onSkip,
   isSkipped,
+  isFocused,
 }: QuizItemProps) {
   const config = TYPE_CONFIG[item.quiz_type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.mcq;
   const Icon = config.icon;
@@ -37,6 +39,7 @@ export function QuizItem({
       className={cn(
         "overflow-hidden rounded-[2rem] border bg-white p-8 shadow-sm transition-all hover:shadow-md",
         isSkipped && !value ? "border-amber-200" : "border-slate-200",
+        isFocused && "ring-2 ring-indigo-500 ring-offset-2 border-indigo-300",
       )}
     >
       <div className="mb-6 flex items-center justify-between">

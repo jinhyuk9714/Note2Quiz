@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X } from "lucide-react";
@@ -10,6 +10,8 @@ import { QuestionNavPanel } from "@/components/quiz/QuestionNavPanel";
 import { QuizResults } from "@/components/quiz/QuizResults";
 import { QuizTimer } from "@/components/quiz/QuizTimer";
 import { loadDraftSnapshot, useQuizDraft, useDraftBanner } from "@/hooks/useQuizDraft";
+import { useQuizShortcuts } from "@/hooks/useQuizShortcuts";
+import { ShortcutHelpPanel } from "@/components/common/ShortcutHelpPanel";
 import type { Quiz, SubmitResult } from "@/types/api";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
@@ -80,6 +82,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
   );
   const [finalElapsedMs, setFinalElapsedMs] = useState<number | null>(null);
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const { saveDraft, clearDraft } = useQuizDraft(quiz.id, itemIds);
   const { wasRestored, dismissRestored } = useDraftBanner(snapshot !== null);
@@ -113,6 +116,14 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     return () => clearInterval(intervalId);
   }, [phase]);
 
+  const handleAnswer = useCallback((itemId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [itemId]: value }));
+  }, []);
+
+  const handleSkipItem = useCallback((itemId: string) => {
+    setSkippedIds((prev) => new Set(prev).add(itemId));
+  }, []);
+
   const mutation = useMutation({
     mutationFn: () =>
       submitQuiz(
@@ -142,6 +153,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     setRetryItemIds(null);
     setAnswers({});
     setSkippedIds(new Set());
+    setCurrentIndex(0);
     setResult(null);
     setElapsedSec(0);
     setFinalElapsedMs(null);
@@ -158,6 +170,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     setRetryItemIds(wrongIds);
     setAnswers({});
     setSkippedIds(new Set());
+    setCurrentIndex(0);
     setResult(null);
     setElapsedSec(0);
     setFinalElapsedMs(null);
@@ -184,6 +197,16 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
   const displayItems = retryItemIds
     ? quiz.items.filter((item) => retryItemIds.has(item.id))
     : quiz.items;
+
+  useQuizShortcuts({
+    items: displayItems,
+    currentIndex,
+    setCurrentIndex,
+    onAnswer: handleAnswer,
+    onSkip: handleSkipItem,
+    onSubmit: handleSubmit,
+    enabled: phase === "taking",
+  });
   const answeredCount = Object.keys(answers).length;
   const totalCount = displayItems.length;
   const allAnswered = answeredCount === totalCount;
@@ -321,11 +344,13 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
               items={displayItems}
               answers={answers}
               skippedIds={skippedIds}
+              currentIndex={currentIndex}
+              onNavigate={setCurrentIndex}
             />
           )}
 
           <div className="space-y-6">
-            {displayItems.map((item) => {
+            {displayItems.map((item, displayIdx) => {
               const originalIndex = quiz.items.findIndex((q) => q.id === item.id);
               return (
                 <QuizItem
@@ -339,6 +364,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                   disabled={phase !== "taking"}
                   onSkip={phase === "taking" ? () => handleSkip(item.id) : undefined}
                   isSkipped={skippedIds.has(item.id)}
+                  isFocused={displayIdx === currentIndex && phase === "taking"}
                 />
               );
             })}
@@ -381,6 +407,20 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
             </div>
           )}
         </div>
+      )}
+
+      {phase === "taking" && (
+        <ShortcutHelpPanel
+          shortcuts={[
+            { keys: ["1", "~", "9"], description: "문항으로 이동" },
+            { keys: ["↑", "↓"], description: "이전/다음 문항" },
+            { keys: ["A", "B", "C", "D"], description: "객관식 답변 선택" },
+            { keys: ["O", "X"], description: "O/X 답변 선택" },
+            { keys: ["S"], description: "건너뛰기" },
+            { keys: ["⌘", "Enter"], description: "퀴즈 제출" },
+            { keys: ["Esc"], description: "입력 해제" },
+          ]}
+        />
       )}
     </div>
   );

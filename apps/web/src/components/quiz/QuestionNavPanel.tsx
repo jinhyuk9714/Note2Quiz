@@ -6,12 +6,16 @@ interface QuestionNavPanelProps {
   items: QuizItem[];
   answers: Record<string, string>;
   skippedIds: Set<string>;
+  currentIndex?: number;
+  onNavigate?: (index: number) => void;
 }
 
 export function QuestionNavPanel({
   items,
   answers,
   skippedIds,
+  currentIndex,
+  onNavigate,
 }: QuestionNavPanelProps) {
   function scrollTo(itemId: string) {
     document
@@ -53,7 +57,10 @@ export function QuestionNavPanel({
             <button
               key={item.id}
               type="button"
-              onClick={() => scrollTo(item.id)}
+              onClick={() => {
+                scrollTo(item.id);
+                onNavigate?.(idx);
+              }}
               className={cn(
                 "relative flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black transition-all active:scale-90",
                 hasAnswer
@@ -61,6 +68,7 @@ export function QuestionNavPanel({
                   : isSkipped
                     ? "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-200"
                     : "bg-slate-50 text-slate-400 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 hover:text-slate-600",
+                idx === currentIndex && "ring-2 ring-indigo-400 ring-offset-1 scale-110",
               )}
               title={
                 hasAnswer
