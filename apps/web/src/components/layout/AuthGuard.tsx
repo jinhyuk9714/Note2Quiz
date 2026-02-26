@@ -44,11 +44,11 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
   // Authenticated layout
   return (
-    <div className="flex h-screen flex-col md:flex-row">
+    <div className="flex h-screen flex-col md:flex-row bg-surface">
       <MobileHeader onOpen={() => setDrawerOpen(true)} />
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <Sidebar />
-      <main id="main-content" className="flex-1 overflow-y-auto p-6">{children}</main>
+      <main id="main-content" className="flex-1 overflow-y-auto custom-scrollbar p-6">{children}</main>
     </div>
   );
 }

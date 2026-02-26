@@ -76,56 +76,54 @@ export function ConfirmDialog({
             aria-modal="true"
             aria-labelledby="confirm-title"
             aria-describedby="confirm-desc"
-            className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl"
+            className="relative w-full max-w-sm rounded-[2rem] bg-surface-card border border-border-default p-8 shadow-2xl"
           >
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col items-center text-center">
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                className={`mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl ${
                   isDanger
-                    ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-100 dark:ring-red-800"
-                    : "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800"
+                    ? "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
                 }`}
               >
-                <AlertTriangle className="h-5 w-5" />
+                <AlertTriangle className="h-8 w-8" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h2
-                  id="confirm-title"
-                  className="text-base font-bold text-slate-800 dark:text-slate-100"
-                >
-                  {title}
-                </h2>
-                <p
-                  id="confirm-desc"
-                  className="mt-1.5 text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400"
-                >
-                  {description}
-                </p>
-              </div>
+              <h2
+                id="confirm-title"
+                className="text-xl font-black text-text-primary tracking-tight"
+              >
+                {title}
+              </h2>
+              <p
+                id="confirm-desc"
+                className="mt-2 text-sm font-medium leading-relaxed text-text-secondary"
+              >
+                {description}
+              </p>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-8 flex gap-3">
               <button
                 ref={cancelRef}
                 onClick={onCancel}
                 disabled={loading}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+                className="flex-1 rounded-2xl border border-border-default bg-surface-alt px-5 py-3.5 text-sm font-bold text-text-secondary transition-colors hover:bg-surface hover:text-text-primary disabled:opacity-50 active:scale-95"
               >
                 {cancelLabel}
               </button>
               <button
                 onClick={onConfirm}
                 disabled={loading}
-                className={`rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 ${
+                className={`flex-1 flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-50 active:scale-95 shadow-lg ${
                   isDanger
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-indigo-600 hover:bg-indigo-700"
+                    ? "bg-red-600 hover:bg-red-700 shadow-red-200 dark:shadow-none"
+                    : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none"
                 }`}
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    처리 중...
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <span className="sr-only">처리 중</span>
                   </span>
                 ) : (
                   confirmLabel
