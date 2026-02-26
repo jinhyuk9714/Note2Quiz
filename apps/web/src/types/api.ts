@@ -93,6 +93,25 @@ export interface FlashcardQuiz {
   items: FlashcardItem[];
 }
 
+export interface QuizItemUpdatePayload {
+  question?: string;
+  correct_answer?: string;
+  explanation?: string;
+  options?: Record<string, string> | null;
+  concept_tags?: string[];
+  difficulty?: number;
+}
+
+export interface QuizItemCreatePayload {
+  quiz_type: "mcq" | "short_answer" | "true_false" | "fill_blank";
+  question: string;
+  correct_answer: string;
+  explanation: string;
+  options?: Record<string, string> | null;
+  concept_tags?: string[];
+  difficulty?: number;
+}
+
 export interface QuizListItem {
   id: string;
   title: string;

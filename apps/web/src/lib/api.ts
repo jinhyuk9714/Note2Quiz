@@ -9,10 +9,13 @@ import type {
   DeleteAccountPayload,
   Document,
   DocumentDetail,
+  FlashcardItem,
   FlashcardQuiz,
   GenerateQuizPayload,
   ListParams,
   LoginPayload,
+  QuizItemCreatePayload,
+  QuizItemUpdatePayload,
   QuizListParams,
   PaginatedResponse,
   Quiz,
@@ -362,6 +365,38 @@ export function submitQuiz(quizId: string, answers: AnswerItem[]) {
 
 export function deleteQuiz(id: string): Promise<void> {
   return apiDelete(`/api/quiz/${id}`);
+}
+
+export function updateQuiz(id: string, data: { title: string }): Promise<Quiz> {
+  return apiFetch<Quiz>(`/api/quiz/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateQuizItem(
+  quizId: string,
+  itemId: string,
+  data: QuizItemUpdatePayload,
+): Promise<FlashcardItem> {
+  return apiFetch<FlashcardItem>(`/api/quiz/${quizId}/items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteQuizItem(quizId: string, itemId: string): Promise<void> {
+  return apiDelete(`/api/quiz/${quizId}/items/${itemId}`);
+}
+
+export function createQuizItem(
+  quizId: string,
+  data: QuizItemCreatePayload,
+): Promise<FlashcardItem> {
+  return apiFetch<FlashcardItem>(`/api/quiz/${quizId}/items`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export function listQuizAttempts(quizId: string) {

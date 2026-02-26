@@ -800,3 +800,181 @@ class TestGetAttemptDetail:
         assert item_result["quiz_type"] == "mcq"
         assert item_result["options"] is not None
         assert isinstance(item_result["options"], dict)
+
+
+class TestUpdateQuiz:
+    async def test_update_quiz_title_success(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.patch(f"/api/quiz/{quiz['id']}", json={"title": "New Title"})
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "New Title"
+
+    async def test_update_quiz_title_other_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        resp = await second_client.patch(f"/api/quiz/{quiz['id']}", json={"title": "Hacked"})
+        assert resp.status_code == 404
+
+
+class TestUpdateQuizItem:
+    async def test_update_item_question_success(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        resp = await client.patch(
+            f"/api/quiz/{quiz['id']}/items/{item_id}",
+            json={"question": "Updated question?"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["question"] == "Updated question?"
+        # Other fields should remain unchanged
+        assert data["correct_answer"] == "A"
+        assert data["explanation"] == "Basic arithmetic."
+
+    async def test_update_item_mcq_correct_answer_validation(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        # Try setting correct_answer to a key that doesn't exist in options
+        resp = await client.patch(
+            f"/api/quiz/{quiz['id']}/items/{item_id}",
+            json={"correct_answer": "Z"},
+        )
+        assert resp.status_code == 422
+
+    async def test_update_item_nonexistent_returns_404(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.patch(
+            f"/api/quiz/{quiz['id']}/items/{uuid.uuid4()}",
+            json={"question": "New?"},
+        )
+        assert resp.status_code == 404
+
+    async def test_update_item_other_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        resp = await second_client.patch(
+            f"/api/quiz/{quiz['id']}/items/{item_id}",
+            json={"question": "Hacked?"},
+        )
+        assert resp.status_code == 404
+
+    async def test_update_item_partial_update(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        resp = await client.patch(
+            f"/api/quiz/{quiz['id']}/items/{item_id}",
+            json={"difficulty": 5},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["difficulty"] == 5
+        # question should remain unchanged
+        assert resp.json()["question"] == "What is 2+2?"
+
+
+class TestDeleteQuizItem:
+    async def _make_multi_item_quiz(self, client: AsyncClient) -> dict[str, Any]:
+        """Create a quiz then add a second item so we can test item deletion."""
+        quiz = await _make_quiz(client)
+        # Add a second item
+        await client.post(
+            f"/api/quiz/{quiz['id']}/items",
+            json={
+                "quiz_type": "short_answer",
+                "question": "Extra question",
+                "correct_answer": "Extra answer",
+                "explanation": "Extra explanation",
+            },
+        )
+        return quiz
+
+    async def test_delete_item_success(self, client: AsyncClient) -> None:
+        quiz = await self._make_multi_item_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        resp = await client.delete(f"/api/quiz/{quiz['id']}/items/{item_id}")
+        assert resp.status_code == 204
+
+        # Verify item_count decreased
+        quiz_resp = await client.get(f"/api/quiz/{quiz['id']}")
+        assert quiz_resp.json()["item_count"] == 1
+
+    async def test_delete_last_item_returns_422(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        resp = await client.delete(f"/api/quiz/{quiz['id']}/items/{item_id}")
+        assert resp.status_code == 422
+
+    async def test_delete_item_other_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        item_id = quiz["items"][0]["id"]
+        resp = await second_client.delete(f"/api/quiz/{quiz['id']}/items/{item_id}")
+        assert resp.status_code == 404
+
+
+class TestCreateQuizItem:
+    async def test_create_item_short_answer_success(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.post(
+            f"/api/quiz/{quiz['id']}/items",
+            json={
+                "quiz_type": "short_answer",
+                "question": "What is Python?",
+                "correct_answer": "A programming language",
+                "explanation": "Python is a high-level programming language.",
+            },
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["quiz_type"] == "short_answer"
+        assert data["question"] == "What is Python?"
+
+        # Verify item_count increased
+        quiz_resp = await client.get(f"/api/quiz/{quiz['id']}")
+        assert quiz_resp.json()["item_count"] == 2
+
+    async def test_create_item_mcq_success(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.post(
+            f"/api/quiz/{quiz['id']}/items",
+            json={
+                "quiz_type": "mcq",
+                "question": "Which is largest?",
+                "correct_answer": "A",
+                "explanation": "A is the largest.",
+                "options": {"A": "Elephant", "B": "Mouse"},
+            },
+        )
+        assert resp.status_code == 201
+        assert resp.json()["options"] == {"A": "Elephant", "B": "Mouse"}
+
+    async def test_create_item_mcq_missing_options_returns_422(self, client: AsyncClient) -> None:
+        quiz = await _make_quiz(client)
+        resp = await client.post(
+            f"/api/quiz/{quiz['id']}/items",
+            json={
+                "quiz_type": "mcq",
+                "question": "Which?",
+                "correct_answer": "A",
+                "explanation": "Because.",
+            },
+        )
+        assert resp.status_code == 422
+
+    async def test_create_item_other_user_returns_404(
+        self, client: AsyncClient, second_client: AsyncClient
+    ) -> None:
+        quiz = await _make_quiz(client)
+        resp = await second_client.post(
+            f"/api/quiz/{quiz['id']}/items",
+            json={
+                "quiz_type": "short_answer",
+                "question": "Hacked?",
+                "correct_answer": "No",
+                "explanation": "Nope.",
+            },
+        )
+        assert resp.status_code == 404

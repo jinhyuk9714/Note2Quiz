@@ -17,7 +17,7 @@ from app.core.deps import CurrentUserID, DBSession
 from app.core.rate_limit import limiter
 from app.models.attempt import QuizAttempt
 from app.models.document import Document
-from app.models.quiz import Quiz, QuizItem
+from app.models.quiz import Quiz, QuizItem, QuizType
 from app.schemas.attempt import AnswerResult, QuizSubmitRequest, QuizSubmitResponse
 from app.schemas.common import PaginatedResponse
 from app.schemas.quiz import (
@@ -25,11 +25,14 @@ from app.schemas.quiz import (
     AttemptItemResult,
     QuizAttemptSummaryResponse,
     QuizGenerateRequest,
+    QuizItemCreateRequest,
     QuizItemPublicResponse,
     QuizItemStudyResponse,
+    QuizItemUpdateRequest,
     QuizListItemResponse,
     QuizResponse,
     QuizStudyResponse,
+    QuizUpdateRequest,
 )
 from app.services.quiz_generation import (
     generate_questions_for_chunk,
@@ -340,6 +343,172 @@ async def delete_quiz(
     await db.delete(quiz)
     await db.commit()
     return Response(status_code=204)
+
+
+@router.patch("/{quiz_id}", response_model=QuizResponse)
+async def update_quiz(
+    quiz_id: uuid.UUID,
+    payload: QuizUpdateRequest,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> QuizResponse:
+    stmt = (
+        select(Quiz)
+        .join(Quiz.document)
+        .where(Quiz.id == quiz_id, Document.owner_id == user_id)
+        .options(selectinload(Quiz.items))
+    )
+    result = await db.execute(stmt)
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    quiz.title = payload.title
+    await db.commit()
+    await db.refresh(quiz)
+
+    return _quiz_to_response(quiz)
+
+
+@router.patch("/{quiz_id}/items/{item_id}", response_model=QuizItemStudyResponse)
+async def update_quiz_item(
+    quiz_id: uuid.UUID,
+    item_id: uuid.UUID,
+    payload: QuizItemUpdateRequest,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> QuizItemStudyResponse:
+    quiz_stmt = (
+        select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    )
+    quiz_result = await db.execute(quiz_stmt)
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    item_stmt = select(QuizItem).where(QuizItem.id == item_id, QuizItem.quiz_id == quiz_id)
+    item_result = await db.execute(item_stmt)
+    item = item_result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Quiz item not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+
+    # MCQ cross-validation
+    if item.quiz_type == QuizType.MCQ:
+        final_options = update_data.get("options", item.options)
+        final_answer = update_data.get("correct_answer", item.correct_answer)
+        if final_options and len(final_options) < 2:
+            raise HTTPException(status_code=422, detail="MCQ items require at least 2 options")
+        if final_options and final_answer not in final_options:
+            raise HTTPException(
+                status_code=422,
+                detail=f"correct_answer '{final_answer}' must be one of the option keys",
+            )
+
+    for field, value in update_data.items():
+        setattr(item, field, value)
+
+    await db.commit()
+    await db.refresh(item)
+
+    return QuizItemStudyResponse(
+        id=item.id,
+        quiz_type=item.quiz_type.value,
+        question=item.question,
+        correct_answer=item.correct_answer,
+        explanation=item.explanation,
+        options=item.options,  # type: ignore[arg-type]
+        concept_tags=item.concept_tags,
+        difficulty=item.difficulty,
+    )
+
+
+@router.delete("/{quiz_id}/items/{item_id}", status_code=204)
+async def delete_quiz_item(
+    quiz_id: uuid.UUID,
+    item_id: uuid.UUID,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> Response:
+    quiz_stmt = (
+        select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    )
+    quiz_result = await db.execute(quiz_stmt)
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    item_stmt = select(QuizItem).where(QuizItem.id == item_id, QuizItem.quiz_id == quiz_id)
+    item_result = await db.execute(item_stmt)
+    item = item_result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Quiz item not found")
+
+    if quiz.item_count <= 1:
+        raise HTTPException(
+            status_code=422,
+            detail="Cannot delete the last item. Delete the quiz instead.",
+        )
+
+    await db.delete(item)
+    quiz.item_count -= 1
+    await db.commit()
+
+    return Response(status_code=204)
+
+
+@router.post("/{quiz_id}/items", response_model=QuizItemStudyResponse, status_code=201)
+async def create_quiz_item(
+    quiz_id: uuid.UUID,
+    payload: QuizItemCreateRequest,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> QuizItemStudyResponse:
+    quiz_stmt = (
+        select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    )
+    quiz_result = await db.execute(quiz_stmt)
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    # MCQ validation
+    if payload.quiz_type == "mcq":
+        if not payload.options or len(payload.options) < 2:
+            raise HTTPException(status_code=422, detail="MCQ items require at least 2 options")
+        if payload.correct_answer not in payload.options:
+            raise HTTPException(
+                status_code=422,
+                detail=f"correct_answer '{payload.correct_answer}' must be one of the option keys",
+            )
+
+    item = QuizItem(
+        quiz_id=quiz_id,
+        source_chunk_id=None,
+        quiz_type=QuizType(payload.quiz_type),
+        question=payload.question,
+        correct_answer=payload.correct_answer,
+        explanation=payload.explanation,
+        options=payload.options,
+        concept_tags=payload.concept_tags,
+        difficulty=payload.difficulty,
+    )
+    db.add(item)
+    quiz.item_count += 1
+    await db.commit()
+    await db.refresh(item)
+
+    return QuizItemStudyResponse(
+        id=item.id,
+        quiz_type=item.quiz_type.value,
+        question=item.question,
+        correct_answer=item.correct_answer,
+        explanation=item.explanation,
+        options=item.options,  # type: ignore[arg-type]
+        concept_tags=item.concept_tags,
+        difficulty=item.difficulty,
+    )
 
 
 @router.get("/{quiz_id}", response_model=QuizResponse)

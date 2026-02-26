@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { downloadFile } from "@/lib/download";
@@ -229,7 +229,18 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
             <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             Back to Library
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{quiz.title}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{quiz.title}</h1>
+            <Link
+              href={`/quiz/${quiz.id}/edit`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 transition-all hover:bg-amber-50 hover:text-amber-600"
+              title="편집"
+            >
+              <Pencil className="h-3 w-3" />
+              편집
+            </Link>
+          </div>
           <p className="text-slate-500 font-medium">
             {phase === "results"
               ? "퀴즈 결과 분석"

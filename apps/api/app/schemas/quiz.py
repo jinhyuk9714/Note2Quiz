@@ -74,6 +74,57 @@ class QuizStudyResponse(BaseModel):
     items: list[QuizItemStudyResponse]
 
 
+class QuizUpdateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+
+
+class QuizItemUpdateRequest(BaseModel):
+    """Partial update — only provided fields are updated."""
+
+    question: str | None = Field(default=None, min_length=1)
+    correct_answer: str | None = Field(default=None, min_length=1)
+    explanation: str | None = Field(default=None, min_length=1)
+    options: dict[str, str] | None = None
+    concept_tags: list[str] | None = None
+    difficulty: int | None = Field(default=None, ge=1, le=5)
+
+    @field_validator("concept_tags")
+    @classmethod
+    def validate_concept_tags(cls, v: list[str] | None) -> list[str] | None:
+        if v is not None:
+            if len(v) > 5:
+                msg = "At most 5 concept tags allowed"
+                raise ValueError(msg)
+            v = [tag.strip() for tag in v if tag.strip()]
+        return v
+
+
+class QuizItemCreateRequest(BaseModel):
+    quiz_type: str
+    question: str = Field(min_length=1)
+    correct_answer: str = Field(min_length=1)
+    explanation: str = Field(min_length=1)
+    options: dict[str, str] | None = None
+    concept_tags: list[str] = Field(default_factory=list)
+    difficulty: int = Field(default=3, ge=1, le=5)
+
+    @field_validator("quiz_type")
+    @classmethod
+    def validate_quiz_type(cls, v: str) -> str:
+        if v not in _VALID_QUIZ_TYPES:
+            msg = f"Invalid quiz type '{v}'. Must be one of: {', '.join(sorted(_VALID_QUIZ_TYPES))}"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("concept_tags")
+    @classmethod
+    def validate_concept_tags(cls, v: list[str]) -> list[str]:
+        if len(v) > 5:
+            msg = "At most 5 concept tags allowed"
+            raise ValueError(msg)
+        return [tag.strip() for tag in v if tag.strip()]
+
+
 class QuizListItemResponse(BaseModel):
     id: uuid.UUID
     title: str

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { History, Trash2, ChevronRight, Calendar, Layers, Trophy, RotateCcw, FileText, FlipHorizontal } from "lucide-react";
+import { History, Trash2, ChevronRight, Calendar, Layers, Trophy, RotateCcw, FileText, FlipHorizontal, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { deleteQuiz } from "@/lib/api";
 import type { QuizListItem } from "@/types/api";
@@ -90,6 +90,16 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
           title="플래시카드"
         >
           <FlipHorizontal className="h-4 w-4" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/quiz/${quiz.id}/edit`);
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-amber-50 hover:text-amber-600"
+          title="편집"
+        >
+          <Pencil className="h-4 w-4" />
         </button>
         <button
           onClick={handleDelete}
