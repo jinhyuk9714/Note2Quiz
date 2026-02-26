@@ -66,6 +66,54 @@ class TestUploadDocument:
         )
         assert resp.status_code == 422
 
+    async def test_upload_image_jpeg_success(self, client: AsyncClient) -> None:
+        from anthropic.types import TextBlock
+
+        mock_block = MagicMock(spec=TextBlock)
+        mock_block.text = "Extracted lecture notes text here with enough content for chunking."
+
+        mock_response = MagicMock()
+        mock_response.content = [mock_block]
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch(
+            "app.services.ocr_service.anthropic.AsyncAnthropic",
+            return_value=mock_client,
+        ):
+            resp = await client.post(
+                "/api/documents/",
+                data={"title": "Image Doc"},
+                files={"file": ("slide.jpg", BytesIO(b"x" * 1000), "image/jpeg")},
+            )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["source_type"] == "image"
+        assert data["chunk_count"] >= 1
+
+    async def test_upload_image_png_success(self, client: AsyncClient) -> None:
+        from anthropic.types import TextBlock
+
+        mock_block = MagicMock(spec=TextBlock)
+        mock_block.text = "PNG image text content extracted successfully for testing."
+
+        mock_response = MagicMock()
+        mock_response.content = [mock_block]
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch(
+            "app.services.ocr_service.anthropic.AsyncAnthropic",
+            return_value=mock_client,
+        ):
+            resp = await client.post(
+                "/api/documents/",
+                data={"title": "PNG Doc"},
+                files={"file": ("slide.png", BytesIO(b"x" * 1000), "image/png")},
+            )
+        assert resp.status_code == 201
+        assert resp.json()["source_type"] == "image"
+
     async def test_upload_non_pdf_file_returns_422(self, client: AsyncClient) -> None:
         resp = await client.post(
             "/api/documents/",

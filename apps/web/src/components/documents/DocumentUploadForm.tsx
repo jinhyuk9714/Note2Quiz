@@ -2,12 +2,18 @@
 
 import React, { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, FileUp, Type, X, FileText } from "lucide-react";
+import { Upload, FileUp, Type, X, FileText, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { uploadDocument, uploadDocumentFile } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type UploadMode = "text" | "pdf";
+type UploadMode = "text" | "pdf" | "image";
+
+const IMAGE_ACCEPT_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function clearFileInput(ref: React.RefObject<HTMLInputElement | null>) {
+  if (ref.current) ref.current.value = "";
+}
 
 export function DocumentUploadForm() {
   const [mode, setMode] = useState<UploadMode>("text");
@@ -19,7 +25,7 @@ export function DocumentUploadForm() {
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (mode === "pdf" && file) {
+      if ((mode === "pdf" || mode === "image") && file) {
         return uploadDocumentFile(title, file);
       }
       return uploadDocument(title, text);
@@ -29,7 +35,7 @@ export function DocumentUploadForm() {
       setTitle("");
       setText("");
       setFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      clearFileInput(fileInputRef);
       toast.success(`업로드 완료! (${data.chunk_count}개 섹션 생성)`);
     },
     onError: (err: Error) => {
@@ -41,9 +47,23 @@ export function DocumentUploadForm() {
     title.trim().length > 0 &&
     (mode === "text" ? text.trim().length >= 10 : file !== null);
 
+  function switchMode(newMode: UploadMode) {
+    setMode(newMode);
+    setFile(null);
+    clearFileInput(fileInputRef);
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null;
-    if (selected && selected.type !== "application/pdf") {
+    if (!selected) {
+      setFile(null);
+      return;
+    }
+    if (mode === "pdf" && selected.type !== "application/pdf") {
+      setFile(null);
+      return;
+    }
+    if (mode === "image" && !IMAGE_ACCEPT_TYPES.includes(selected.type)) {
       setFile(null);
       return;
     }
@@ -53,7 +73,10 @@ export function DocumentUploadForm() {
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const dropped = e.dataTransfer.files[0];
-    if (dropped && dropped.type === "application/pdf") {
+    if (!dropped) return;
+    if (mode === "pdf" && dropped.type === "application/pdf") {
+      setFile(dropped);
+    } else if (mode === "image" && IMAGE_ACCEPT_TYPES.includes(dropped.type)) {
       setFile(dropped);
     }
   }
@@ -93,7 +116,7 @@ export function DocumentUploadForm() {
         <div className="flex p-1 gap-1 rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-200/50">
           <button
             type="button"
-            onClick={() => setMode("text")}
+            onClick={() => switchMode("text")}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all",
               mode === "text"
@@ -102,11 +125,11 @@ export function DocumentUploadForm() {
             )}
           >
             <Type className="h-4 w-4" />
-            텍스트 붙여넣기
+            텍스트
           </button>
           <button
             type="button"
-            onClick={() => setMode("pdf")}
+            onClick={() => switchMode("pdf")}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all",
               mode === "pdf"
@@ -115,7 +138,20 @@ export function DocumentUploadForm() {
             )}
           >
             <FileUp className="h-4 w-4" />
-            PDF 업로드
+            PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode("image")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all",
+              mode === "image"
+                ? "bg-white text-indigo-600 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <ImageIcon className="h-4 w-4" />
+            이미지
           </button>
         </div>
 
@@ -164,7 +200,7 @@ export function DocumentUploadForm() {
                   type="button"
                   onClick={() => {
                     setFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
+                    clearFileInput(fileInputRef);
                   }}
                   className="mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
                 >
@@ -181,7 +217,7 @@ export function DocumentUploadForm() {
                   PDF 파일을 드래그하거나 선택하세요
                 </p>
                 <p className="mb-6 text-xs font-medium text-slate-400">
-                  최대 10MB 크기의 PDF 파일만 가능합니다.
+                  최대 20MB 크기의 PDF 파일만 가능합니다.
                 </p>
                 <button
                   type="button"
@@ -194,6 +230,69 @@ export function DocumentUploadForm() {
                   ref={fileInputRef}
                   type="file"
                   accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Image mode */}
+        {mode === "image" && (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            className={cn(
+              "group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center transition-all animate-in fade-in duration-300",
+              file ? "bg-indigo-50/30 border-indigo-200" : "bg-slate-50/50 hover:border-indigo-300 hover:bg-white"
+            )}
+          >
+            {file ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 shadow-sm">
+                  <ImageIcon className="h-8 w-8" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-800">{file.name}</p>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    {(file.size / 1024 / 1024).toFixed(1)} MB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null);
+                    clearFileInput(fileInputRef);
+                  }}
+                  className="mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  파일 제거
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-500">
+                  <ImageIcon className="h-8 w-8" />
+                </div>
+                <p className="mb-1 text-sm font-bold text-slate-700">
+                  이미지 파일을 드래그하거나 선택하세요
+                </p>
+                <p className="mb-6 text-xs font-medium text-slate-400">
+                  JPG, PNG, WEBP 형식 (최대 20MB)
+                </p>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-slate-300 active:scale-95"
+                >
+                  파일 선택하기
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={handleFileChange}
                   className="hidden"
                 />

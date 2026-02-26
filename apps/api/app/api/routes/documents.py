@@ -19,6 +19,11 @@ from app.schemas.document import (
     DocumentUpdateRequest,
 )
 from app.services.document_service import create_document_with_chunks
+from app.services.ocr_service import (
+    SUPPORTED_IMAGE_TYPES,
+    ImageExtractionError,
+    extract_text_from_image,
+)
 from app.services.pdf_service import PDFExtractionError, extract_text_from_pdf
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -44,25 +49,38 @@ async def upload_document(
     if text and file:
         raise HTTPException(status_code=422, detail="Provide either 'text' or 'file', not both.")
     if not text and not file:
-        raise HTTPException(status_code=422, detail="Either 'text' or 'file' (PDF) is required.")
+        raise HTTPException(
+            status_code=422, detail="Either 'text' or 'file' (PDF/image) is required."
+        )
 
     source_type = "text"
     raw_text = text or ""
 
     if file is not None:
-        if file.content_type not in ("application/pdf",):
-            raise HTTPException(status_code=422, detail="Only PDF files are supported.")
-        pdf_bytes = await file.read()
-        if len(pdf_bytes) > _MAX_UPLOAD_BYTES:
+        file_bytes = await file.read()
+        if len(file_bytes) > _MAX_UPLOAD_BYTES:
             raise HTTPException(
                 status_code=413,
                 detail=f"File exceeds maximum size ({settings.max_upload_size_mb} MB).",
             )
-        try:
-            raw_text = extract_text_from_pdf(pdf_bytes)
-        except PDFExtractionError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-        source_type = "pdf"
+
+        if file.content_type == "application/pdf":
+            try:
+                raw_text = extract_text_from_pdf(file_bytes)
+            except PDFExtractionError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            source_type = "pdf"
+        elif file.content_type in SUPPORTED_IMAGE_TYPES:
+            try:
+                raw_text = await extract_text_from_image(file_bytes, file.content_type)
+            except ImageExtractionError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            source_type = "image"
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail="Only PDF and image files (JPEG, PNG, WEBP) are supported.",
+            )
 
     doc = await create_document_with_chunks(
         db=db,
@@ -89,7 +107,7 @@ async def list_documents(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     search: str | None = Query(default=None, min_length=1, max_length=200),
-    source_type: Literal["text", "pdf"] | None = Query(default=None),
+    source_type: Literal["text", "pdf", "image"] | None = Query(default=None),
     sort_by: Literal["created_at", "title", "char_count"] = Query(default="created_at"),
     order: Literal["asc", "desc"] = Query(default="desc"),
 ) -> PaginatedResponse[DocumentResponse]:
