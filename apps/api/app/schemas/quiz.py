@@ -51,6 +51,29 @@ class QuizItemPublicResponse(BaseModel):
     difficulty: int
 
 
+class QuizItemStudyResponse(BaseModel):
+    """Quiz item with correct_answer + explanation — for flashcard/study mode."""
+
+    id: uuid.UUID
+    quiz_type: str
+    question: str
+    correct_answer: str
+    explanation: str
+    options: dict[str, str] | None = None
+    concept_tags: list[str]
+    difficulty: int
+
+
+class QuizStudyResponse(BaseModel):
+    """Full quiz with answers exposed — for flashcard/study mode."""
+
+    id: uuid.UUID
+    title: str
+    item_count: int
+    created_at: datetime
+    items: list[QuizItemStudyResponse]
+
+
 class QuizListItemResponse(BaseModel):
     id: uuid.UUID
     title: str

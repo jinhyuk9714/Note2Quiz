@@ -8,6 +8,7 @@ import type {
   DeleteAccountPayload,
   Document,
   DocumentDetail,
+  FlashcardQuiz,
   GenerateQuizPayload,
   ListParams,
   LoginPayload,
@@ -345,6 +346,10 @@ export function generateQuizStream(
 
 export function getQuiz(id: string) {
   return apiFetch<Quiz>(`/api/quiz/${id}`);
+}
+
+export function getQuizForStudy(id: string) {
+  return apiFetch<FlashcardQuiz>(`/api/quiz/${id}/study`);
 }
 
 export function submitQuiz(quizId: string, answers: AnswerItem[]) {

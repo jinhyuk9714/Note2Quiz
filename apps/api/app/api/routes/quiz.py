@@ -24,8 +24,10 @@ from app.schemas.quiz import (
     QuizAttemptSummaryResponse,
     QuizGenerateRequest,
     QuizItemPublicResponse,
+    QuizItemStudyResponse,
     QuizListItemResponse,
     QuizResponse,
+    QuizStudyResponse,
 )
 from app.services.quiz_generation import (
     generate_questions_for_chunk,
@@ -352,6 +354,43 @@ async def get_quiz(quiz_id: uuid.UUID, db: DBSession, user_id: CurrentUserID) ->
         raise HTTPException(status_code=404, detail="Quiz not found")
 
     return _quiz_to_response(quiz)
+
+
+@router.get("/{quiz_id}/study", response_model=QuizStudyResponse)
+async def get_quiz_for_study(
+    quiz_id: uuid.UUID, db: DBSession, user_id: CurrentUserID
+) -> QuizStudyResponse:
+    """Return quiz with correct answers and explanations for flashcard/study mode."""
+    stmt = (
+        select(Quiz)
+        .join(Quiz.document)
+        .where(Quiz.id == quiz_id, Document.owner_id == user_id)
+        .options(selectinload(Quiz.items))
+    )
+    result = await db.execute(stmt)
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    return QuizStudyResponse(
+        id=quiz.id,
+        title=quiz.title,
+        item_count=quiz.item_count,
+        created_at=quiz.created_at,
+        items=[
+            QuizItemStudyResponse(
+                id=item.id,
+                quiz_type=item.quiz_type.value,
+                question=item.question,
+                correct_answer=item.correct_answer,
+                explanation=item.explanation,
+                options=item.options,  # type: ignore[arg-type]
+                concept_tags=item.concept_tags,
+                difficulty=item.difficulty,
+            )
+            for item in quiz.items
+        ],
+    )
 
 
 @router.get("/{quiz_id}/attempts", response_model=list[QuizAttemptSummaryResponse])
