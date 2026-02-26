@@ -6,6 +6,7 @@ import { LogOut, Brain } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { NAV_ITEMS } from "./nav-items";
 
 export function Sidebar() {
@@ -73,6 +74,7 @@ export function Sidebar() {
               <p className="truncate text-xs text-slate-500">{user.email}</p>
             </div>
           </Link>
+          <ThemeToggle />
           <button
             onClick={handleLogout}
             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-red-600"

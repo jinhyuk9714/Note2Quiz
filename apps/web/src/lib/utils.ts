@@ -30,8 +30,11 @@ export function getRelativeTime(iso: string): string {
   return `${days}일 후 복습`;
 }
 
-export function cn(...classes: (string | false | undefined | null)[]): string {
-  return classes.filter(Boolean).join(" ");
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }
 
 export function formatElapsedTime(ms: number): string {
