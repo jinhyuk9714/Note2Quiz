@@ -99,7 +99,7 @@ export function ReviewScheduleCard({ schedule }: ReviewScheduleCardProps) {
 
       {hasWork && (
         <Link
-          href="/wrong-notes"
+          href="/review"
           className="group mt-8 flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 active:scale-95"
         >
           복습 시작하기

@@ -39,6 +39,7 @@ describe("Sidebar", () => {
     expect(screen.getByText("대시보드")).toBeInTheDocument();
     expect(screen.getByText("문서 관리")).toBeInTheDocument();
     expect(screen.getByText("퀴즈 생성")).toBeInTheDocument();
+    expect(screen.getByText("복습")).toBeInTheDocument();
     expect(screen.getByText("오답노트")).toBeInTheDocument();
   });
 

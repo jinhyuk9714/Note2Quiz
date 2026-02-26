@@ -24,6 +24,7 @@ import { MasteryProgress } from "./MasteryProgress";
 interface ReviewSessionProps {
   notes: WrongNote[];
   onExit: () => void;
+  backLabel?: string;
 }
 
 interface ReviewResult {
@@ -34,7 +35,7 @@ interface ReviewResult {
 
 type SessionPhase = "reviewing" | "summary";
 
-export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
+export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
@@ -147,7 +148,7 @@ export function ReviewSession({ notes, onExit }: ReviewSessionProps) {
             className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
-            오답노트로 돌아가기
+            {backLabel ?? "오답노트로 돌아가기"}
           </button>
           <Link
             href="/quiz/generate"
