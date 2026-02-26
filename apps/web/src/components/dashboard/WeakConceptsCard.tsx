@@ -8,22 +8,22 @@ interface WeakConceptsCardProps {
 
 export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
             <AlertCircle className="h-5 w-5" />
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-800">취약 개념 분석</h2>
+          <h2 className="text-xl font-bold tracking-tight text-text-primary">취약 개념 분석</h2>
         </div>
       </div>
 
       {concepts.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-10">
-          <div className="rounded-full bg-slate-50 p-4">
-            <Zap className="h-8 w-8 text-slate-300" />
+          <div className="rounded-full bg-surface-alt p-4">
+            <Zap className="h-8 w-8 text-text-tertiary" />
           </div>
-          <p className="mt-4 text-sm font-medium text-slate-400">
+          <p className="mt-4 text-sm font-medium text-text-tertiary">
             아직 충분한 오답 데이터가 없습니다.
           </p>
         </div>
@@ -39,18 +39,18 @@ export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
 
             return (
               <li key={c.tag}>
-                <div className="rounded-2xl p-3 -mx-3 transition-colors hover:bg-indigo-50/50">
+                <div className="rounded-2xl p-3 -mx-3 transition-colors hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20">
                   <div className="flex items-center justify-between mb-2">
                     <Link
                       href={`/wrong-notes?concept_tag=${encodeURIComponent(c.tag)}`}
-                      className="inline-flex items-center rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition-colors hover:bg-indigo-100"
+                      className="inline-flex items-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-700/10 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
                     >
                       {c.tag}
                     </Link>
                     <div className="flex items-center gap-2 text-xs font-semibold">
-                      <span className="text-red-500">오답 {c.wrong_count}회</span>
-                      <span className="text-slate-300">|</span>
-                      <span className="text-slate-500">숙달 {masteryPercent}%</span>
+                      <span className="text-red-500 dark:text-red-400">오답 {c.wrong_count}회</span>
+                      <span className="text-text-tertiary">|</span>
+                      <span className="text-text-tertiary">숙달 {masteryPercent}%</span>
                       <Link
                         href={`/quiz/generate?focus_concept=${encodeURIComponent(c.tag)}`}
                         className="ml-1 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-95"
@@ -60,7 +60,7 @@ export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
                       </Link>
                     </div>
                   </div>
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/50">
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-surface-alt ring-1 ring-inset ring-border-default">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-500 transition-all duration-700"
                       style={{ width: `${barWidth}%` }}

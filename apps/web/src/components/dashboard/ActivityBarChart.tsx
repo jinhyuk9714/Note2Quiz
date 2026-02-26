@@ -26,15 +26,15 @@ export function ActivityBarChart({ data }: ActivityBarChartProps) {
   }));
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
           <Activity className="h-5 w-5" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-800">
+        <h2 className="text-xl font-bold tracking-tight text-text-primary">
           일별 학습량
         </h2>
-        <span className="ml-auto text-xs font-semibold text-slate-400">
+        <span className="ml-auto text-xs font-semibold text-text-tertiary">
           최근 30일
         </span>
       </div>

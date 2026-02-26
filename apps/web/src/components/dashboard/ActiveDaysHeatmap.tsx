@@ -7,10 +7,10 @@ interface ActiveDaysHeatmapProps {
 }
 
 function intensityClass(quizCount: number): string {
-  if (quizCount === 0) return "bg-slate-100";
-  if (quizCount === 1) return "bg-indigo-200";
-  if (quizCount <= 3) return "bg-indigo-400";
-  return "bg-indigo-600";
+  if (quizCount === 0) return "bg-surface-alt";
+  if (quizCount === 1) return "bg-indigo-200 dark:bg-indigo-800";
+  if (quizCount <= 3) return "bg-indigo-400 dark:bg-indigo-600";
+  return "bg-indigo-600 dark:bg-indigo-400";
 }
 
 function buildCells(data: DailyTrendPoint[], days: number) {
@@ -34,15 +34,15 @@ export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
   const activeDays = cells.filter((c) => c.count > 0).length;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
           <LayoutGrid className="h-5 w-5" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-800">
+        <h2 className="text-xl font-bold tracking-tight text-text-primary">
           활동 히트맵
         </h2>
-        <span className="ml-auto text-xs font-semibold text-slate-400">
+        <span className="ml-auto text-xs font-semibold text-text-tertiary">
           {activeDays}일 활동
         </span>
       </div>
@@ -60,10 +60,10 @@ export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
         ))}
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-xs text-slate-400 font-medium">
+      <div className="mt-4 flex items-center gap-2 text-xs text-text-tertiary font-medium">
         <span>적음</span>
         <div className="flex gap-1">
-          {["bg-slate-100", "bg-indigo-200", "bg-indigo-400", "bg-indigo-600"].map(
+          {["bg-surface-alt", "bg-indigo-200 dark:bg-indigo-800", "bg-indigo-400 dark:bg-indigo-600", "bg-indigo-600 dark:bg-indigo-400"].map(
             (c) => (
               <div key={c} className={cn("h-3 w-3 rounded-sm", c)} />
             ),
