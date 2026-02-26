@@ -23,6 +23,7 @@ Consider these as CORRECT:
 - Abbreviations that are commonly accepted
 - Extra/missing spaces, articles, particles, or trivial words
 - Trailing punctuation differences (e.g., "Don't let me down." = "Don't let me down")
+- If the correct_answer is a long explanation, the student only needs to capture the core meaning or key phrase to be considered correct
 
 Consider these as INCORRECT:
 - Factually wrong or substantially different meaning

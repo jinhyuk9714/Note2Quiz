@@ -37,7 +37,7 @@ Given the following study material, generate exactly {n_questions} quiz question
 {focus_instruction}
 Type-specific rules:
 - "mcq": Multiple choice — include "options" with keys A, B, C, D. "correct_answer" is one of "A","B","C","D".
-- "short_answer": Short answer — omit "options". "correct_answer" is a 1-2 sentence answer.
+- "short_answer": Short answer — omit "options". "correct_answer" is a concise key phrase or short sentence (NOT a full explanation). Put detailed reasoning in "explanation".
 - "true_false": True/False — omit "options". "question" is a declarative statement. "correct_answer" is "O" (true) or "X" (false).
 - "fill_blank": Fill in the blank — omit "options". "question" contains "___" for the blank. "correct_answer" is the word/phrase for the blank.
 
@@ -74,9 +74,9 @@ Type-specific rules:
   }},
   {{
     "quiz_type": "short_answer",
-    "question": "OO의 장점을 설명하시오.",
-    "correct_answer": "OO의 장점은 ...",
-    "explanation": "핵심 포인트는...",
+    "question": "OO의 주요 장점은 무엇인가?",
+    "correct_answer": "AA와 BB",
+    "explanation": "OO는 AA를 통해 효율을 높이고, BB로 안정성을 확보합니다.",
     "concept_tags": ["개념4"],
     "difficulty": 3
   }}
