@@ -38,45 +38,53 @@ def _mock_quiz_items(n: int, quiz_types: list[str]) -> list[dict[str, object]]:
     for i in range(n):
         qt = quiz_types[i % len(quiz_types)]
         if qt == "mcq":
-            items.append({
-                "quiz_type": "mcq",
-                "question": f"Mock Q{i + 1}: 다음 중 올바른 것은?",
-                "correct_answer": "A",
-                "explanation": f"A가 정답입니다. (Mock 해설 {i + 1})",
-                "options": {"A": "정답 선택지", "B": "오답 1", "C": "오답 2", "D": "오답 3"},
-                "concept_tags": ["mock-concept"],
-                "difficulty": 2,
-            })
+            items.append(
+                {
+                    "quiz_type": "mcq",
+                    "question": f"Mock Q{i + 1}: 다음 중 올바른 것은?",
+                    "correct_answer": "A",
+                    "explanation": f"A가 정답입니다. (Mock 해설 {i + 1})",
+                    "options": {"A": "정답 선택지", "B": "오답 1", "C": "오답 2", "D": "오답 3"},
+                    "concept_tags": ["mock-concept"],
+                    "difficulty": 2,
+                }
+            )
         elif qt == "true_false":
-            items.append({
-                "quiz_type": "true_false",
-                "question": f"Mock TF{i + 1}: 지구는 둥글다.",
-                "correct_answer": "O",
-                "explanation": "지구는 대략적으로 구형입니다.",
-                "options": None,
-                "concept_tags": ["mock-concept"],
-                "difficulty": 1,
-            })
+            items.append(
+                {
+                    "quiz_type": "true_false",
+                    "question": f"Mock TF{i + 1}: 지구는 둥글다.",
+                    "correct_answer": "O",
+                    "explanation": "지구는 대략적으로 구형입니다.",
+                    "options": None,
+                    "concept_tags": ["mock-concept"],
+                    "difficulty": 1,
+                }
+            )
         elif qt == "short_answer":
-            items.append({
-                "quiz_type": "short_answer",
-                "question": f"Mock SA{i + 1}: 대한민국의 수도는?",
-                "correct_answer": "서울",
-                "explanation": "대한민국의 수도는 서울입니다.",
-                "options": None,
-                "concept_tags": ["mock-concept"],
-                "difficulty": 1,
-            })
+            items.append(
+                {
+                    "quiz_type": "short_answer",
+                    "question": f"Mock SA{i + 1}: 대한민국의 수도는?",
+                    "correct_answer": "서울",
+                    "explanation": "대한민국의 수도는 서울입니다.",
+                    "options": None,
+                    "concept_tags": ["mock-concept"],
+                    "difficulty": 1,
+                }
+            )
         else:
-            items.append({
-                "quiz_type": "fill_blank",
-                "question": f"Mock FB{i + 1}: 대한민국의 수도는 ___이다.",
-                "correct_answer": "서울",
-                "explanation": "대한민국의 수도는 서울입니다.",
-                "options": None,
-                "concept_tags": ["mock-concept"],
-                "difficulty": 1,
-            })
+            items.append(
+                {
+                    "quiz_type": "fill_blank",
+                    "question": f"Mock FB{i + 1}: 대한민국의 수도는 ___이다.",
+                    "correct_answer": "서울",
+                    "explanation": "대한민국의 수도는 서울입니다.",
+                    "options": None,
+                    "concept_tags": ["mock-concept"],
+                    "difficulty": 1,
+                }
+            )
     return items
 
 
