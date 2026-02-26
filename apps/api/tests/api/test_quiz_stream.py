@@ -51,7 +51,7 @@ def _parse_sse_events(text: str) -> list[tuple[str, dict[str, object]]]:
 
 class TestGenerateQuizStream:
     async def test_stream_emits_progress_and_complete(self, client: AsyncClient) -> None:
-        mock_cls, _ = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -63,7 +63,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.api.routes.quiz.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -105,7 +105,7 @@ class TestGenerateQuizStream:
         assert resp.status_code == 404
 
     async def test_stream_creates_quiz_in_db(self, client: AsyncClient) -> None:
-        mock_cls, _ = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -117,7 +117,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.api.routes.quiz.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -156,7 +156,7 @@ class TestGenerateQuizStream:
         assert resp.status_code == 404
 
     async def test_stream_progress_message_contains_chunk_info(self, client: AsyncClient) -> None:
-        mock_cls, _ = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -168,7 +168,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.api.routes.quiz.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -185,7 +185,7 @@ class TestGenerateQuizStream:
         assert "분석 중" in str(analyzing[0][1]["message"])
 
     async def test_stream_with_focus_concepts(self, client: AsyncClient) -> None:
-        mock_cls, mock_client = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -197,7 +197,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.api.routes.quiz.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]

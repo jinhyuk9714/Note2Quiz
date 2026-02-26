@@ -27,7 +27,7 @@ def _mock_anthropic() -> MagicMock:
     mock_response.content = [mock_block]
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=mock_response)
-    return MagicMock(return_value=mock_client)
+    return MagicMock(return_value=mock_client), mock_client
 
 
 class TestDashboardStats:
@@ -49,7 +49,7 @@ class TestDashboardStats:
         assert rs["upcoming"] == []
 
     async def test_stats_after_wrong_answer(self, client: AsyncClient) -> None:
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -61,7 +61,7 @@ class TestDashboardStats:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -110,7 +110,7 @@ class TestDashboardStats:
         assert total_scheduled >= 1
 
     async def test_accuracy_with_correct_answer(self, client: AsyncClient) -> None:
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -122,7 +122,7 @@ class TestDashboardStats:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -165,7 +165,7 @@ class TestDashboardTrends:
         assert data["days"] == 30
 
     async def test_trends_after_attempt(self, client: AsyncClient) -> None:
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -177,7 +177,7 @@ class TestDashboardTrends:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]

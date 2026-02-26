@@ -28,7 +28,7 @@ def _mock_anthropic() -> MagicMock:
     mock_response.content = [mock_block]
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=mock_response)
-    return MagicMock(return_value=mock_client)
+    return MagicMock(return_value=mock_client), mock_client
 
 
 class TestListWrongNotes:
@@ -48,7 +48,7 @@ class TestListWrongNotes:
 class TestMasteredFilter:
     async def _create_and_master_note(self, client: AsyncClient) -> str:
         """Create a wrong note and review it 5 times to master it."""
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -58,7 +58,7 @@ class TestMasteredFilter:
         )
         doc_id = doc_resp.json()["id"]
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -114,7 +114,7 @@ class TestReviewWrongNote:
         assert resp.status_code == 404
 
     async def test_review_correct_increments_streak(self, client: AsyncClient) -> None:
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         # Create doc → quiz → submit wrong answer → get wrong note
         doc_resp = await client.post(
@@ -127,7 +127,7 @@ class TestReviewWrongNote:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -170,7 +170,7 @@ class TestReviewWrongNote:
 
 class TestWrongNotesSearchAndPagination:
     async def _create_wrong_note(self, client: AsyncClient) -> None:
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -180,7 +180,7 @@ class TestWrongNotesSearchAndPagination:
         )
         doc_id = doc_resp.json()["id"]
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -224,7 +224,7 @@ class TestWrongNotesSearchAndPagination:
 
 class TestConceptTagFilter:
     async def _create_wrong_note(self, client: AsyncClient) -> None:
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -234,7 +234,7 @@ class TestConceptTagFilter:
         )
         doc_id = doc_resp.json()["id"]
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -281,7 +281,7 @@ class TestConceptTagFilter:
 class TestDeleteWrongNote:
     async def _create_wrong_note(self, client: AsyncClient) -> str:
         """Create a wrong note and return its ID."""
-        mock_cls = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -291,7 +291,7 @@ class TestDeleteWrongNote:
         )
         doc_id = doc_resp.json()["id"]
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]

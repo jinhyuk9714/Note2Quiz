@@ -52,7 +52,7 @@ def _mock_anthropic(response_text: str = MOCK_QUIZ_RESPONSE) -> tuple[MagicMock,
 
 async def _make_quiz(client: AsyncClient) -> dict[str, Any]:
     """Create a document + quiz using mocked Anthropic, return quiz dict."""
-    mock_cls, _ = _mock_anthropic()
+    _, mock_client = _mock_anthropic()
     doc_resp = await client.post(
         "/api/documents/",
         data={
@@ -62,7 +62,7 @@ async def _make_quiz(client: AsyncClient) -> dict[str, Any]:
     )
     doc_id = doc_resp.json()["id"]
     with (
-        patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+        patch("app.core.llm_client.create_llm_client", return_value=mock_client),
         patch(
             "app.services.quiz_generation.isinstance",
             side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -77,7 +77,7 @@ async def _make_quiz(client: AsyncClient) -> dict[str, Any]:
 
 class TestGenerateQuiz:
     async def test_generate_quiz_success(self, client: AsyncClient) -> None:
-        mock_cls, _ = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -89,7 +89,7 @@ class TestGenerateQuiz:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -127,7 +127,7 @@ class TestQuizTitle:
         assert quiz["title"] == "QuizSource 퀴즈"
 
     async def test_custom_title(self, client: AsyncClient) -> None:
-        mock_cls, _ = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -137,7 +137,7 @@ class TestQuizTitle:
         )
         doc_id = doc_resp.json()["id"]
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -171,7 +171,7 @@ class TestGetQuiz:
 
 class TestSubmitQuiz:
     async def _create_quiz(self, client: AsyncClient) -> dict[str, Any]:
-        mock_cls, _ = _mock_anthropic()
+        _, mock_client = _mock_anthropic()
 
         doc_resp = await client.post(
             "/api/documents/",
@@ -183,7 +183,7 @@ class TestSubmitQuiz:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -495,7 +495,7 @@ async def _make_quiz_with_title(
     client: AsyncClient, title: str, doc_title: str = "Doc"
 ) -> dict[str, Any]:
     """Create a document + quiz with a specific title."""
-    mock_cls, _ = _mock_anthropic()
+    _, mock_client = _mock_anthropic()
     doc_resp = await client.post(
         "/api/documents/",
         data={
@@ -505,7 +505,7 @@ async def _make_quiz_with_title(
     )
     doc_id = doc_resp.json()["id"]
     with (
-        patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+        patch("app.core.llm_client.create_llm_client", return_value=mock_client),
         patch(
             "app.services.quiz_generation.isinstance",
             side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -619,7 +619,7 @@ class TestQuizFilters:
 
 async def _make_short_answer_quiz(client: AsyncClient) -> dict[str, Any]:
     """Create a document + short_answer quiz using mocked Anthropic."""
-    mock_cls, _ = _mock_anthropic(MOCK_SHORT_ANSWER_RESPONSE)
+    _, mock_client = _mock_anthropic(MOCK_SHORT_ANSWER_RESPONSE)
     doc_resp = await client.post(
         "/api/documents/",
         data={
@@ -629,7 +629,7 @@ async def _make_short_answer_quiz(client: AsyncClient) -> dict[str, Any]:
     )
     doc_id = doc_resp.json()["id"]
     with (
-        patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+        patch("app.core.llm_client.create_llm_client", return_value=mock_client),
         patch(
             "app.services.quiz_generation.isinstance",
             side_effect=lambda obj, cls: True,  # type: ignore[arg-type]

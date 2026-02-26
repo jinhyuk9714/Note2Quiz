@@ -78,7 +78,7 @@ class TestUploadDocument:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
 
         with patch(
-            "app.services.ocr_service.anthropic.AsyncAnthropic",
+            "app.core.llm_client.create_llm_client",
             return_value=mock_client,
         ):
             resp = await client.post(
@@ -103,7 +103,7 @@ class TestUploadDocument:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
 
         with patch(
-            "app.services.ocr_service.anthropic.AsyncAnthropic",
+            "app.core.llm_client.create_llm_client",
             return_value=mock_client,
         ):
             resp = await client.post(
@@ -256,7 +256,7 @@ class TestDocumentQuizCount:
         mock_cls = MagicMock(return_value=mock_client)
 
         with (
-            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
