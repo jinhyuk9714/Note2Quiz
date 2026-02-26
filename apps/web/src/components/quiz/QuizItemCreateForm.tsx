@@ -95,7 +95,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
       <div className="space-y-5">
         {/* Quiz type */}
         <div>
-          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">문제 유형</label>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">문제 유형</label>
           <div className="flex flex-wrap gap-2">
             {QUIZ_TYPE_OPTIONS.map((opt) => (
               <button
@@ -110,7 +110,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                   "rounded-xl px-4 py-2 text-xs font-bold transition-all",
                   quizType === opt.value
                     ? "bg-indigo-600 text-white shadow-lg"
-                    : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50",
+                    : "bg-surface-card text-text-secondary ring-1 ring-inset ring-border-default hover:bg-surface-alt",
                 )}
               >
                 {opt.label}
@@ -121,12 +121,12 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
 
         {/* Question */}
         <div>
-          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">문제</label>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">문제</label>
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={3}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
+            className="w-full rounded-xl border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
             placeholder="문제를 입력하세요"
           />
         </div>
@@ -134,7 +134,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
         {/* MCQ Options */}
         {quizType === "mcq" && (
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">보기</label>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">보기</label>
             <div className="space-y-2">
               {Object.entries(options).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => (
                 <div key={key} className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                       "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black transition-all",
                       correctAnswer === key
                         ? "bg-emerald-100 text-emerald-700 ring-2 ring-emerald-300"
-                        : "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50",
+                        : "bg-surface-card text-text-tertiary ring-1 ring-border-default hover:bg-surface-alt",
                     )}
                     title={correctAnswer === key ? "정답" : "정답으로 선택"}
                   >
@@ -154,14 +154,14 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                   <input
                     value={value}
                     onChange={(e) => handleOptionChange(key, e.target.value)}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+                    className="flex-1 rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm font-medium text-text-primary focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
                     placeholder={`보기 ${key}`}
                   />
                   {Object.keys(options).length > 2 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(key)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-tertiary hover:bg-red-50 hover:text-red-600 transition-all"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
@@ -172,7 +172,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                 <button
                   type="button"
                   onClick={handleAddOption}
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-500 hover:bg-white transition-all"
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-text-tertiary hover:bg-surface-card transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" /> 보기 추가
                 </button>
@@ -184,7 +184,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
         {/* Correct answer (non-MCQ) */}
         {quizType !== "mcq" && (
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">정답</label>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">정답</label>
             {quizType === "true_false" ? (
               <div className="flex gap-2">
                 {["O", "X"].map((v) => (
@@ -196,7 +196,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                       "flex-1 rounded-xl py-3 text-sm font-bold transition-all",
                       correctAnswer === v
                         ? "bg-indigo-600 text-white shadow-lg"
-                        : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50",
+                        : "bg-surface-card text-text-secondary ring-1 ring-inset ring-border-default hover:bg-surface-alt",
                     )}
                   >
                     {v}
@@ -207,7 +207,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
               <input
                 value={correctAnswer}
                 onChange={(e) => setCorrectAnswer(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+                className="w-full rounded-xl border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
                 placeholder="정답을 입력하세요"
               />
             )}
@@ -216,12 +216,12 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
 
         {/* Explanation */}
         <div>
-          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">해설</label>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">해설</label>
           <textarea
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             rows={2}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
+            className="w-full rounded-xl border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
             placeholder="해설을 입력하세요"
           />
         </div>
@@ -229,18 +229,18 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
         {/* Concept tags + Difficulty */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">
               개념 태그 <span className="font-medium normal-case">(쉼표 구분, 최대 5개)</span>
             </label>
             <input
               value={conceptTags}
               onChange={(e) => setConceptTags(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full rounded-xl border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
               placeholder="수학, 미적분"
             />
           </div>
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">난이도</label>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">난이도</label>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((d) => (
                 <button
@@ -251,7 +251,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                     "flex-1 rounded-lg py-2.5 text-sm font-bold transition-all",
                     d <= difficulty
                       ? "bg-amber-100 text-amber-700"
-                      : "bg-white text-slate-400 ring-1 ring-inset ring-slate-200 hover:bg-slate-50",
+                      : "bg-surface-card text-text-tertiary ring-1 ring-inset ring-border-default hover:bg-surface-alt",
                   )}
                 >
                   ★
@@ -267,7 +267,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
         <button
           onClick={onCancel}
           disabled={mutation.isPending}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />
           취소
