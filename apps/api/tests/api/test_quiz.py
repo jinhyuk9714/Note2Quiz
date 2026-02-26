@@ -62,7 +62,7 @@ async def _make_quiz(client: AsyncClient) -> dict[str, Any]:
     )
     doc_id = doc_resp.json()["id"]
     with (
-        patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+        patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
         patch(
             "app.services.quiz_generation.isinstance",
             side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -89,7 +89,7 @@ class TestGenerateQuiz:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -137,7 +137,7 @@ class TestQuizTitle:
         )
         doc_id = doc_resp.json()["id"]
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -183,7 +183,7 @@ class TestSubmitQuiz:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -505,7 +505,7 @@ async def _make_quiz_with_title(
     )
     doc_id = doc_resp.json()["id"]
     with (
-        patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+        patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
         patch(
             "app.services.quiz_generation.isinstance",
             side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -629,7 +629,7 @@ async def _make_short_answer_quiz(client: AsyncClient) -> dict[str, Any]:
     )
     doc_id = doc_resp.json()["id"]
     with (
-        patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+        patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
         patch(
             "app.services.quiz_generation.isinstance",
             side_effect=lambda obj, cls: True,  # type: ignore[arg-type]

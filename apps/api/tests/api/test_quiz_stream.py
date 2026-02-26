@@ -63,7 +63,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -117,7 +117,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -168,7 +168,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -197,7 +197,7 @@ class TestGenerateQuizStream:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]

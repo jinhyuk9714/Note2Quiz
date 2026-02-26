@@ -53,7 +53,7 @@ class TestExtractTextFromImage:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
 
         with patch(
-            "app.core.llm_client.create_llm_client",
+            "app.services.ocr_service.create_llm_client",
             return_value=mock_client,
         ):
             result = await extract_text_from_image(b"x" * 1000, "image/jpeg")
@@ -73,7 +73,7 @@ class TestExtractTextFromImage:
 
         with (
             patch(
-                "app.core.llm_client.create_llm_client",
+                "app.services.ocr_service.create_llm_client",
                 return_value=mock_client,
             ),
             pytest.raises(ImageExtractionError, match="No readable text"),
@@ -91,7 +91,7 @@ class TestExtractTextFromImage:
 
         with (
             patch(
-                "app.core.llm_client.create_llm_client",
+                "app.services.ocr_service.create_llm_client",
                 return_value=mock_client,
             ),
             pytest.raises(ImageExtractionError, match="temporarily unavailable"),
@@ -111,7 +111,7 @@ class TestExtractTextFromImage:
 
         with (
             patch(
-                "app.core.llm_client.create_llm_client",
+                "app.services.ocr_service.create_llm_client",
                 return_value=mock_client,
             ),
             pytest.raises(ImageExtractionError, match="corrupted or unreadable"),

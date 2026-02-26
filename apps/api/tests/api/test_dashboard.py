@@ -20,7 +20,7 @@ MOCK_QUIZ_RESPONSE = json.dumps(
 )
 
 
-def _mock_anthropic() -> MagicMock:
+def _mock_anthropic() -> tuple[MagicMock, AsyncMock]:
     mock_block = MagicMock()
     mock_block.text = MOCK_QUIZ_RESPONSE
     mock_response = MagicMock()
@@ -61,7 +61,7 @@ class TestDashboardStats:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -122,7 +122,7 @@ class TestDashboardStats:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
@@ -177,7 +177,7 @@ class TestDashboardTrends:
         doc_id = doc_resp.json()["id"]
 
         with (
-            patch("app.core.llm_client.create_llm_client", return_value=mock_client),
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
             patch(
                 "app.services.quiz_generation.isinstance",
                 side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
