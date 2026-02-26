@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.services.wrong_note_service import (
     SM2_INITIAL_EASE,
     SM2_MASTERY_EASE_THRESHOLD,
@@ -10,6 +12,7 @@ from app.services.wrong_note_service import (
     SM2_MIN_EASE,
     apply_sm2_review,
     compute_sm2,
+    normalize_answer,
 )
 
 
@@ -111,3 +114,56 @@ class TestApplySm2Review:
         apply_sm2_review(note, quality=3)
         assert note.consecutive_correct == 1
         assert note.ease_factor < SM2_INITIAL_EASE
+
+
+class TestNormalizeAnswer:
+    def test_trailing_period(self) -> None:
+        assert normalize_answer("Don't let me down.") == "don't let me down"
+
+    def test_trailing_exclamation(self) -> None:
+        assert normalize_answer("Hello World!") == "hello world"
+
+    def test_trailing_question_mark(self) -> None:
+        assert normalize_answer("Is this correct?") == "is this correct"
+
+    def test_trailing_multiple_punctuation(self) -> None:
+        assert normalize_answer("Really?!") == "really"
+
+    def test_whitespace_strip(self) -> None:
+        assert normalize_answer("  photosynthesis  ") == "photosynthesis"
+
+    def test_case_insensitive(self) -> None:
+        assert normalize_answer("HELLO") == "hello"
+
+    def test_korean_trailing_period(self) -> None:
+        assert normalize_answer("한국어 답변.") == "한국어 답변"
+
+    def test_korean_trailing_period_fullwidth(self) -> None:
+        assert normalize_answer("한국어 답변。") == "한국어 답변"
+
+    def test_multi_space_collapse(self) -> None:
+        assert normalize_answer("multi  space") == "multi space"
+
+    def test_identical_answers_match(self) -> None:
+        assert normalize_answer("answer") == normalize_answer("answer")
+
+    def test_period_difference_matches(self) -> None:
+        assert normalize_answer("Don't let me down.") == normalize_answer("Don't let me down")
+
+    def test_empty_string(self) -> None:
+        assert normalize_answer("") == ""
+
+    def test_only_punctuation(self) -> None:
+        assert normalize_answer("...") == ""
+
+    @pytest.mark.parametrize(
+        ("user_answer", "correct_answer"),
+        [
+            ("Don't let me down.", "Don't let me down"),
+            ("hello world!", "Hello World"),
+            ("  photosynthesis  ", "photosynthesis"),
+            ("한국어 답변。", "한국어 답변"),
+        ],
+    )
+    def test_normalized_equality(self, user_answer: str, correct_answer: str) -> None:
+        assert normalize_answer(user_answer) == normalize_answer(correct_answer)

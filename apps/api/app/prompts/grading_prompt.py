@@ -22,6 +22,7 @@ Consider these as CORRECT:
 - Different word ordering with the same meaning
 - Abbreviations that are commonly accepted
 - Extra/missing spaces, articles, particles, or trivial words
+- Trailing punctuation differences (e.g., "Don't let me down." = "Don't let me down")
 
 Consider these as INCORRECT:
 - Factually wrong or substantially different meaning

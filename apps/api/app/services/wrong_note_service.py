@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -11,6 +13,27 @@ from app.models.quiz import QuizItem, QuizType
 from app.services.semantic_grading import grade_answers_semantically
 
 _SEMANTIC_TYPES = {QuizType.SHORT_ANSWER, QuizType.FILL_BLANK}
+
+_TRAILING_PUNCT = re.compile(r"[.!?,;:。！？，；：]+$")
+_MULTI_SPACE = re.compile(r"\s+")
+
+
+def normalize_answer(text: str) -> str:
+    """Normalize an answer for lenient exact matching.
+
+    Removes differences that don't affect semantic meaning:
+    - Unicode normalization (NFC)
+    - Leading/trailing whitespace
+    - Case differences
+    - Trailing punctuation (. ! ? , ; : and Korean equivalents)
+    - Multiple spaces → single space
+    """
+    text = unicodedata.normalize("NFC", text)
+    text = text.strip().lower()
+    text = _TRAILING_PUNCT.sub("", text)
+    text = _MULTI_SPACE.sub(" ", text)
+    return text.strip()
+
 
 # SM-2 constants
 SM2_INITIAL_EASE: float = 2.5
@@ -90,7 +113,9 @@ async def create_attempt_with_wrong_notes(
         if not item:
             continue
 
-        exact_match = answer["user_answer"].strip().lower() == item.correct_answer.strip().lower()
+        exact_match = normalize_answer(answer["user_answer"]) == normalize_answer(
+            item.correct_answer
+        )
 
         if exact_match:
             graded.append(
