@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,11 +9,11 @@ const THEMES = ["system", "light", "dark"] as const;
 const ICONS = { system: Monitor, light: Sun, dark: Moon } as const;
 const LABELS = { system: "시스템", light: "라이트", dark: "다크" } as const;
 
+const emptySubscribe = () => () => {};
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   if (!mounted) {
     return (
