@@ -8,12 +8,12 @@ interface ActiveDaysHeatmapProps {
 }
 
 const INTENSITY_CLASSES = [
-  "bg-surface-alt",
-  "bg-indigo-100 dark:bg-indigo-950",
-  "bg-indigo-200 dark:bg-indigo-800",
-  "bg-indigo-400 dark:bg-indigo-600",
-  "bg-indigo-600 dark:bg-indigo-500",
-  "bg-indigo-800 dark:bg-indigo-400",
+  "bg-indigo-50 dark:bg-slate-800",
+  "bg-indigo-100 dark:bg-indigo-900",
+  "bg-indigo-200 dark:bg-indigo-700",
+  "bg-indigo-300 dark:bg-indigo-500",
+  "bg-indigo-400 dark:bg-indigo-400",
+  "bg-indigo-600 dark:bg-indigo-300",
 ] as const;
 
 function intensityClass(quizCount: number, maxCount: number): string {
