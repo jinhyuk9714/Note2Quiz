@@ -11,6 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.llm_client import (
+    PROFILE_QUIZ_GENERATION,
+    create_llm_client,
+    get_circuit_breaker,
+)
 from app.models.chunk import Chunk
 from app.models.quiz import Quiz, QuizItem, QuizType
 from app.prompts.quiz_prompt import build_quiz_generation_prompt
@@ -183,25 +188,63 @@ async def generate_quiz_from_chunks(
         len(chunks),
     )
 
-    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    client = create_llm_client(PROFILE_QUIZ_GENERATION)
     questions_per_chunk = max(1, n_questions // len(chunks))
 
     semaphore = asyncio.Semaphore(5)
+    max_attempts = settings.llm_chunk_retry_attempts + 1
 
     async def _generate_with_limit(chunk: Chunk) -> list[dict[str, object]]:
         async with semaphore:
-            return await generate_questions_for_chunk(
-                client,
-                chunk,
-                questions_per_chunk,
-                quiz_types,
-                focus_concepts=focus_concepts,
-            )
+            last_exc: Exception | None = None
+            for attempt in range(max_attempts):
+                try:
+                    result = await generate_questions_for_chunk(
+                        client,
+                        chunk,
+                        questions_per_chunk,
+                        quiz_types,
+                        focus_concepts=focus_concepts,
+                    )
+                    get_circuit_breaker().record_success()
+                    return result
+                except Exception as exc:
+                    last_exc = exc
+                    get_circuit_breaker().record_failure()
+                    if attempt < max_attempts - 1:
+                        delay = 2**attempt
+                        logger.warning(
+                            "Chunk %s generation failed (attempt %d/%d), retrying in %ds: %s",
+                            chunk.id,
+                            attempt + 1,
+                            max_attempts,
+                            delay,
+                            exc,
+                        )
+                        await asyncio.sleep(delay)
+            raise last_exc  # type: ignore[misc]
 
-    results = await asyncio.gather(*[_generate_with_limit(c) for c in chunks])
+    results = await asyncio.gather(
+        *[_generate_with_limit(c) for c in chunks], return_exceptions=True
+    )
     new_items_data: list[dict[str, object]] = []
-    for items in results:
-        new_items_data.extend(items)
+    failed_chunks = 0
+    for i, result in enumerate(results):
+        if type(result) is not list:
+            logger.error("Chunk %s failed after retries: %s", chunks[i].id, result)
+            failed_chunks += 1
+        else:
+            new_items_data.extend(result)
+
+    if failed_chunks == len(chunks):
+        raise RuntimeError("All chunks failed during quiz generation")
+    if failed_chunks > 0:
+        logger.warning(
+            "%d/%d chunks failed; proceeding with %d items",
+            failed_chunks,
+            len(chunks),
+            len(new_items_data),
+        )
 
     logger.info(
         "Quiz generation complete: %d items from %d chunks", len(new_items_data), len(chunks)

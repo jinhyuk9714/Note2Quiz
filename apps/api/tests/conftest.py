@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.database import get_db
+from app.core.llm_client import get_circuit_breaker
 from app.main import app
 from app.models import Base, User  # noqa: F401 — registers all models
 from app.services.auth_service import create_access_token, hash_password
@@ -93,6 +94,12 @@ async def client(
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def _reset_circuit_breaker() -> None:  # pyright: ignore[reportUnusedFunction]
+    """Reset the LLM circuit breaker between tests."""
+    get_circuit_breaker().reset()
 
 
 @pytest.fixture

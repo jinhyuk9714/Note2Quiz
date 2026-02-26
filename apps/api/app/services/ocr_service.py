@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import logging
 
-import anthropic
+from anthropic import APIError, BadRequestError
 from anthropic.types import (
     Base64ImageSourceParam,
     ImageBlockParam,
@@ -12,6 +12,12 @@ from anthropic.types import (
 )
 
 from app.core.config import settings
+from app.core.llm_client import (
+    PROFILE_OCR,
+    CircuitBreakerOpenError,
+    create_llm_client,
+    get_circuit_breaker,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +88,10 @@ async def extract_text_from_image(
     text_block = TextBlockParam(type="text", text=_build_ocr_prompt())
 
     try:
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        client = create_llm_client(PROFILE_OCR)
         response = await client.messages.create(
             model=settings.anthropic_model,
-            max_tokens=4096,
+            max_tokens=PROFILE_OCR.max_tokens,
             messages=[
                 {
                     "role": "user",
@@ -93,11 +99,18 @@ async def extract_text_from_image(
                 }
             ],
         )
-    except anthropic.BadRequestError as exc:
+        get_circuit_breaker().record_success()
+    except CircuitBreakerOpenError as exc:
+        raise ImageExtractionError(
+            "OCR service temporarily unavailable. Please try again later."
+        ) from exc
+    except BadRequestError as exc:
+        get_circuit_breaker().record_failure()
         raise ImageExtractionError(
             "Image could not be processed. It may be corrupted or unreadable."
         ) from exc
-    except anthropic.APIError as exc:
+    except APIError as exc:
+        get_circuit_breaker().record_failure()
         logger.exception("Claude Vision API call failed")
         raise ImageExtractionError(
             "OCR service temporarily unavailable. Please try again."

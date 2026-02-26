@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 import uuid
 from collections.abc import AsyncGenerator
 from typing import Literal
 
-import anthropic
 from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
@@ -14,6 +15,12 @@ from starlette.responses import StreamingResponse
 
 from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
+from app.core.llm_client import (
+    PROFILE_QUIZ_GENERATION,
+    CircuitBreakerOpenError,
+    create_llm_client,
+    get_circuit_breaker,
+)
 from app.core.rate_limit import limiter
 from app.models.attempt import QuizAttempt
 from app.models.document import Document
@@ -139,10 +146,13 @@ async def generate_quiz_stream(
     else:
         title = payload.title or f"{doc.title} 퀴즈"
 
+    logger = logging.getLogger(__name__)
+    max_attempts = settings.llm_chunk_retry_attempts + 1
+
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
             chunks = await load_chunks(db, payload.document_id, payload.chunk_ids)
-            client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+            client = create_llm_client(PROFILE_QUIZ_GENERATION)
             questions_per_chunk = max(1, payload.n_questions // len(chunks))
             total = len(chunks)
             all_items: list[dict[str, object]] = []
@@ -157,14 +167,39 @@ async def generate_quiz_stream(
                         "message": f"청크 {i + 1}/{total} 분석 중...",
                     },
                 )
-                items = await generate_questions_for_chunk(
-                    client,
-                    chunk,
-                    questions_per_chunk,
-                    payload.quiz_types,
-                    focus_concepts=payload.focus_concepts,
-                )
-                all_items.extend(items)
+
+                chunk_items: list[dict[str, object]] | None = None
+                for attempt in range(max_attempts):
+                    try:
+                        chunk_items = await generate_questions_for_chunk(
+                            client,
+                            chunk,
+                            questions_per_chunk,
+                            payload.quiz_types,
+                            focus_concepts=payload.focus_concepts,
+                        )
+                        get_circuit_breaker().record_success()
+                        break
+                    except Exception as exc:
+                        get_circuit_breaker().record_failure()
+                        if attempt < max_attempts - 1:
+                            await asyncio.sleep(2**attempt)
+                        else:
+                            logger.error("Stream chunk %s failed after retries: %s", chunk.id, exc)
+                            yield _sse_event(
+                                "chunk_error",
+                                {
+                                    "chunk_index": i + 1,
+                                    "message": f"청크 {i + 1} 생성 실패, 건너뜁니다.",
+                                },
+                            )
+
+                if chunk_items:
+                    all_items.extend(chunk_items)
+
+            if not all_items:
+                yield _sse_event("error", {"message": "모든 청크에서 퀴즈 생성에 실패했습니다."})
+                return
 
             yield _sse_event(
                 "progress",
@@ -185,6 +220,11 @@ async def generate_quiz_stream(
                     "quiz_id": quiz.id,
                     "item_count": quiz.item_count,
                 },
+            )
+        except CircuitBreakerOpenError:
+            yield _sse_event(
+                "error",
+                {"message": "AI 서비스가 일시적으로 사용 불가합니다. 잠시 후 다시 시도해주세요."},
             )
         except ValueError as e:
             yield _sse_event("error", {"message": str(e)})

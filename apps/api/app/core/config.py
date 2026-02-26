@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     # Logging
     slow_query_threshold_ms: float = 500.0
 
+    # LLM resilience
+    llm_timeout_quiz: float = 120.0  # seconds
+    llm_timeout_grading: float = 30.0  # seconds
+    llm_timeout_ocr: float = 120.0  # seconds
+    llm_max_retries: int = 2  # SDK-level retries (429/500/503)
+    llm_circuit_breaker_threshold: int = 5  # failures before opening
+    llm_circuit_breaker_cooldown: float = 60.0  # seconds before half-open
+    llm_chunk_retry_attempts: int = 2  # app-level per-chunk retry
+
     # Quiz generation defaults
     default_chunk_size: int = 1500  # characters
     default_chunk_overlap: int = 200  # characters

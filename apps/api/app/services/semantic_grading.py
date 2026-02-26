@@ -3,10 +3,15 @@ from __future__ import annotations
 import json
 import logging
 
-import anthropic
 from anthropic.types import TextBlock
 
 from app.core.config import settings
+from app.core.llm_client import (
+    PROFILE_SEMANTIC_GRADING,
+    CircuitBreakerOpenError,
+    create_llm_client,
+    get_circuit_breaker,
+)
 from app.prompts.grading_prompt import build_semantic_grading_prompt
 
 logger = logging.getLogger(__name__)
@@ -31,18 +36,23 @@ async def grade_answers_semantically(
     prompt = build_semantic_grading_prompt(items)
 
     try:
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        client = create_llm_client(PROFILE_SEMANTIC_GRADING)
         response = await client.messages.create(
             model=settings.anthropic_model,
-            max_tokens=1024,
+            max_tokens=PROFILE_SEMANTIC_GRADING.max_tokens,
             messages=[{"role": "user", "content": prompt}],
         )
+        get_circuit_breaker().record_success()
 
         first_block = response.content[0]
         raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
         return parse_grading_response(raw_text)
 
+    except CircuitBreakerOpenError:
+        logger.warning("Circuit breaker open; falling back to exact match")
+        return {}
     except Exception:
+        get_circuit_breaker().record_failure()
         logger.exception("Semantic grading API call failed; falling back to exact match")
         return {}
 
