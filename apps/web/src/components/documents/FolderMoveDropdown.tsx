@@ -55,6 +55,7 @@ export function FolderMoveDropdown({ documentId, currentFolderId }: FolderMoveDr
         }}
         className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-50"
         title="폴더 이동"
+        aria-label="폴더 이동"
       >
         <FolderInput className="h-4 w-4" />
       </button>

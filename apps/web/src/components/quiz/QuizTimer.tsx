@@ -17,8 +17,9 @@ export function QuizTimer({ elapsedSec, enabled, onToggle }: QuizTimerProps) {
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-alt text-text-tertiary transition-all hover:bg-surface-alt/80 hover:text-text-secondary"
+        className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-alt text-text-tertiary transition-all hover:bg-surface-alt/80 hover:text-text-secondary"
         title={enabled ? "타이머 숨기기" : "타이머 보기"}
+        aria-label={enabled ? "타이머 숨기기" : "타이머 보기"}
       >
         {enabled ? <Timer className="h-4 w-4" /> : <TimerOff className="h-4 w-4" />}
       </button>

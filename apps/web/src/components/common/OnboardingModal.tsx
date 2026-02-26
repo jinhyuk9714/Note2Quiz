@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { FileUp, Sparkles, RefreshCw } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -38,6 +39,7 @@ export function OnboardingModal({
 }: OnboardingModalProps) {
   const router = useRouter();
   const dismissRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -59,6 +61,8 @@ export function OnboardingModal({
     };
   }, [open, handleKeyDown]);
 
+  useFocusTrap(dialogRef, open);
+
   if (!open) return null;
 
   const handleStart = () => {
@@ -77,6 +81,7 @@ export function OnboardingModal({
 
       {/* Dialog */}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-title"

@@ -96,8 +96,9 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
         <button
           onClick={handleDelete}
           disabled={mutation.isPending}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
           title="삭제"
+          aria-label="문서 삭제"
         >
           {mutation.isPending ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-text-tertiary border-t-transparent" />
@@ -105,7 +106,7 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
             <Trash2 className="h-4 w-4" />
           )}
         </button>
-        <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-surface-alt text-text-tertiary group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all">
+        <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-surface-alt text-text-tertiary group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">
           <ChevronRight className="h-6 w-6" />
         </div>
       </div>

@@ -165,8 +165,12 @@ export default function SettingsPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="8자 이상"
+            aria-describedby="new-password-hint"
             className="w-full rounded-xl border border-border-default px-4 py-2.5 text-sm text-text-primary bg-surface-card transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30"
           />
+          <p id="new-password-hint" className="mt-1 text-xs text-text-tertiary">
+            비밀번호는 8자 이상이어야 합니다.
+          </p>
         </div>
 
         <div className="mb-4">

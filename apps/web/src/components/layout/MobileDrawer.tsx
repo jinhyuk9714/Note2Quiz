@@ -113,7 +113,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
               </div>
               <button
                 onClick={handleLogout}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-card border border-border-default py-3 text-xs font-black text-text-secondary transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200 active:scale-95 shadow-sm"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-card border border-border-default py-3 text-xs font-black text-text-secondary transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-700 active:scale-95 shadow-sm"
               >
                 <LogOut size={16} />
                 로그아웃

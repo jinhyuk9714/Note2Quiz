@@ -27,7 +27,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-sm text-gray-400">로딩 중...</p>
+        <p className="text-sm text-text-tertiary">로딩 중...</p>
       </div>
     );
   }

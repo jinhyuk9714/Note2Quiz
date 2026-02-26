@@ -80,10 +80,10 @@ export function QuestionNavPanel({
             >
               {idx + 1}
               {hasAnswer && (
-                <CheckCircle2 className="absolute -right-1.5 -top-1.5 h-4 w-4 rounded-full bg-white text-indigo-600 shadow-sm" />
+                <CheckCircle2 className="absolute -right-1.5 -top-1.5 h-4 w-4 rounded-full bg-surface-card text-indigo-600 shadow-sm" />
               )}
               {isSkipped && (
-                <SkipForward className="absolute -right-1.5 -top-1.5 h-4 w-4 rounded-full bg-white text-amber-500 shadow-sm" />
+                <SkipForward className="absolute -right-1.5 -top-1.5 h-4 w-4 rounded-full bg-surface-card text-amber-500 shadow-sm" />
               )}
             </button>
           );

@@ -161,7 +161,7 @@ export function QuizItemCreateForm({ quizId, onCreated, onCancel }: QuizItemCrea
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(key)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-tertiary hover:bg-red-50 hover:text-red-600 transition-all"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-tertiary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>

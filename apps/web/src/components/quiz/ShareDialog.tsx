@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getShareInfo, toggleShare, regenerateShareCode } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface ShareDialogProps {
   open: boolean;
@@ -63,6 +64,8 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  useFocusTrap(dialogRef, true);
+
   async function handleCopyLink() {
     if (!shareInfo?.share_url) return;
     try {
@@ -95,7 +98,7 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
             </div>
             <h2 className="text-base font-bold text-text-primary">퀴즈 공유</h2>
           </div>
-          <button onClick={onClose} className="text-text-tertiary hover:text-text-secondary transition-colors">
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -117,6 +120,9 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
               <button
                 onClick={() => toggleMutation.mutate(!isShared)}
                 disabled={busy}
+                role="switch"
+                aria-checked={isShared}
+                aria-label="공유 활성화"
                 className={cn(
                   "relative h-7 w-12 rounded-full transition-colors duration-200",
                   isShared ? "bg-indigo-600" : "bg-border-default",

@@ -162,7 +162,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
                 "flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all",
                 mode === m
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
-                  : "text-text-tertiary hover:text-text-primary hover:bg-white dark:hover:bg-surface-card"
+                  : "text-text-tertiary hover:text-text-primary hover:bg-surface-card"
               )}
             >
               {m === "text" && <Type className="h-4 w-4" />}
@@ -220,7 +220,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
                     setFile(null);
                     clearFileInput(fileInputRef);
                   }}
-                  className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-50"
+                  className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-red-500 dark:text-red-400 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <X className="h-4 w-4" />
                   파일 제거
@@ -283,7 +283,7 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
                     setFile(null);
                     clearFileInput(fileInputRef);
                   }}
-                  className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-50"
+                  className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-red-500 dark:text-red-400 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <X className="h-4 w-4" />
                   파일 제거

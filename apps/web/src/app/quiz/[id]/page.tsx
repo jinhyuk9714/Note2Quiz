@@ -379,7 +379,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
       ) : (
         <div className="space-y-6">
           {wasRestored && phase === "taking" && (
-            <div className="flex items-center justify-between rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm font-semibold text-indigo-700">
+            <div className="flex items-center justify-between rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 px-5 py-3 text-sm font-semibold text-indigo-700 dark:text-indigo-400">
               <span>이전에 작성하던 답안이 복원되었습니다.</span>
               <button
                 type="button"
@@ -446,7 +446,9 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
               </>
             ) : (
               <>
-                퀴즈 제출 ({answeredCount}/{totalCount} 답변)
+                <span aria-live="polite" aria-atomic="true">
+                  퀴즈 제출 ({answeredCount}/{totalCount} 답변)
+                </span>
                 <CheckCircle2 className="h-6 w-6" />
               </>
             )}

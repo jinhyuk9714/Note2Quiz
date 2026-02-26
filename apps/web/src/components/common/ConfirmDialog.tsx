@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -49,6 +51,8 @@ export function ConfirmDialog({
     };
   }, [open, handleKeyDown]);
 
+  useFocusTrap(dialogRef, open);
+
   const isDanger = variant === "danger";
 
   return (
@@ -68,6 +72,7 @@ export function ConfirmDialog({
 
           {/* Dialog */}
           <motion.div
+            ref={dialogRef}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}

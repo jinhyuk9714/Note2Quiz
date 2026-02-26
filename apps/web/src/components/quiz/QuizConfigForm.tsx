@@ -129,7 +129,7 @@ export function QuizConfigForm({
               <button
                 type="button"
                 onClick={() => setFocusConcept(null)}
-                className="rounded-full p-0.5 text-text-tertiary hover:bg-red-50 hover:text-red-500 transition-colors"
+                className="rounded-full p-0.5 text-text-tertiary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 aria-label="집중 개념 해제"
               >
                 <X className="h-4 w-4" />
@@ -382,7 +382,7 @@ export function QuizConfigForm({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-2xl border border-border-default bg-surface-alt px-8 py-5 text-base font-black text-text-secondary transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200 active:scale-[0.98]"
+              className="rounded-2xl border border-border-default bg-surface-alt px-8 py-5 text-base font-black text-text-secondary transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-700 active:scale-[0.98]"
             >
               취소
             </button>

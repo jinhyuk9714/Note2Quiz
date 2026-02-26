@@ -100,7 +100,7 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
                     <span className="text-xs font-black text-text-tertiary uppercase tracking-widest">
                       {formatRelativeTime(activity.created_at)}
                     </span>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-card border border-border-default text-text-tertiary transition-all group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-card border border-border-default text-text-tertiary transition-all group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:border-indigo-200 dark:group-hover:border-indigo-800">
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </div>
                   </div>

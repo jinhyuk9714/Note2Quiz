@@ -59,6 +59,8 @@ export function ChunkViewer({ chunks }: ChunkViewerProps) {
               <button
                 onClick={() => toggle(i)}
                 className="flex w-full items-center justify-between gap-3 p-4 text-left"
+                aria-expanded={isExpanded}
+                aria-label={`섹션 ${chunk.index + 1} ${isExpanded ? "접기" : "펼치기"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-alt text-xs font-black text-text-secondary">
