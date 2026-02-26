@@ -89,16 +89,12 @@ class TestShareToggle:
         await db_session.commit()
         await db_session.refresh(quiz)
 
-        resp = await second_client.post(
-            f"/api/quiz/{quiz.id}/share", json={"is_shared": True}
-        )
+        resp = await second_client.post(f"/api/quiz/{quiz.id}/share", json={"is_shared": True})
         assert resp.status_code == 404
 
 
 class TestShareRegenerate:
-    async def test_regenerate_changes_code(
-        self, client: AsyncClient, db_session: Any
-    ) -> None:
+    async def test_regenerate_changes_code(self, client: AsyncClient, db_session: Any) -> None:
         from app.models.quiz import Quiz
 
         doc = await _make_document(client)
@@ -121,9 +117,7 @@ class TestShareRegenerate:
 
 
 class TestShareAccess:
-    async def _shared_quiz(
-        self, client: AsyncClient, db_session: Any
-    ) -> tuple[str, str]:
+    async def _shared_quiz(self, client: AsyncClient, db_session: Any) -> tuple[str, str]:
         """Helper: create a shared quiz with items, return (quiz_id, share_code)."""
         from app.models.quiz import Quiz, QuizItem, QuizType
 
