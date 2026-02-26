@@ -72,9 +72,12 @@ describe("ConfirmDialog", () => {
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
-  it("disables buttons and shows loading text when loading", () => {
+  it("disables buttons and shows spinner when loading", () => {
     render(<ConfirmDialog {...defaultProps} loading />);
-    expect(screen.getByText("처리 중...")).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    const confirmBtn = buttons.find((btn) => btn.querySelector(".animate-spin"));
+    expect(confirmBtn).toBeTruthy();
+    expect(confirmBtn).toBeDisabled();
     const cancelBtn = screen.getByText("취소");
     expect(cancelBtn).toBeDisabled();
   });

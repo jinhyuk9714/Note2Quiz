@@ -61,7 +61,7 @@ describe("QuizItem", () => {
       />,
     );
     expect(screen.getByText(/단답형/)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("답변을 상세히 입력하세요...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("답변을 입력하세요...")).toBeInTheDocument();
   });
 
   it("renders true_false with O/X buttons", () => {

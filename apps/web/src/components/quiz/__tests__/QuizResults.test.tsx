@@ -140,12 +140,12 @@ describe("QuizResults", () => {
 
   it("shows elapsed time when provided", () => {
     render(<QuizResults result={result} items={items} elapsedMs={125000} />);
-    expect(screen.getByText(/소요시간: 2분 5초/)).toBeInTheDocument();
+    expect(screen.getByText(/Time:.*2분 5초/)).toBeInTheDocument();
   });
 
   it("hides elapsed time when not provided", () => {
     render(<QuizResults result={result} items={items} />);
-    expect(screen.queryByText(/소요시간/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Time:/)).not.toBeInTheDocument();
   });
 
   it("shows perfect score message and confetti on 100%", async () => {

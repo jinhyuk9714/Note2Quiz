@@ -26,7 +26,7 @@ describe("DocumentUploadForm", () => {
     expect(screen.getByLabelText("문서 제목")).toBeInTheDocument();
     expect(screen.getByText("텍스트")).toBeInTheDocument();
     expect(screen.getByText("PDF")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /업로드 및 분석/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /분석 및 퀴즈 생성하기/ })).toBeInTheDocument();
   });
 
   it("defaults to text mode with textarea visible", () => {
@@ -36,7 +36,7 @@ describe("DocumentUploadForm", () => {
 
   it("disables submit when title is empty", () => {
     renderWithProviders(<DocumentUploadForm />);
-    const button = screen.getByRole("button", { name: /업로드 및 분석/ });
+    const button = screen.getByRole("button", { name: /분석 및 퀴즈 생성하기/ });
     expect(button).toBeDisabled();
   });
 
@@ -44,7 +44,7 @@ describe("DocumentUploadForm", () => {
     renderWithProviders(<DocumentUploadForm />);
     await userEvent.type(screen.getByLabelText("문서 제목"), "Title");
     await userEvent.type(screen.getByLabelText("학습 자료 본문"), "short");
-    expect(screen.getByRole("button", { name: /업로드 및 분석/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /분석 및 퀴즈 생성하기/ })).toBeDisabled();
   });
 
   it("enables submit when both fields are valid", async () => {
@@ -54,7 +54,7 @@ describe("DocumentUploadForm", () => {
       screen.getByLabelText("학습 자료 본문"),
       "This is definitely longer than ten characters.",
     );
-    expect(screen.getByRole("button", { name: /업로드 및 분석/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /분석 및 퀴즈 생성하기/ })).toBeEnabled();
   });
 
   it("shows character count", async () => {
@@ -83,7 +83,7 @@ describe("DocumentUploadForm", () => {
       screen.getByLabelText("학습 자료 본문"),
       "This is definitely longer than ten characters.",
     );
-    await userEvent.click(screen.getByRole("button", { name: /업로드 및 분석/ }));
+    await userEvent.click(screen.getByRole("button", { name: /분석 및 퀴즈 생성하기/ }));
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
@@ -105,6 +105,6 @@ describe("DocumentUploadForm", () => {
     renderWithProviders(<DocumentUploadForm />);
     await userEvent.type(screen.getByLabelText("문서 제목"), "PDF Title");
     await userEvent.click(screen.getByText("PDF"));
-    expect(screen.getByRole("button", { name: /업로드 및 분석/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /분석 및 퀴즈 생성하기/ })).toBeDisabled();
   });
 });

@@ -65,7 +65,7 @@ describe("RecentActivityCard", () => {
 
   it("shows activity count badge", () => {
     render(<RecentActivityCard activities={activities} />);
-    expect(screen.getByText("2개")).toBeInTheDocument();
+    expect(screen.getByText("2 Items")).toBeInTheDocument();
   });
 
   it("shows type labels", () => {
