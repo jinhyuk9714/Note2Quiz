@@ -154,3 +154,73 @@ class TestDashboardStats:
         data = resp.json()
         assert data["learning_progress"]["accuracy_rate"] == 1.0
         assert data["weak_concepts"] == []
+
+
+class TestDashboardTrends:
+    async def test_empty_trends(self, client: AsyncClient) -> None:
+        resp = await client.get("/api/dashboard/trends")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["daily_quiz_trend"] == []
+        assert data["days"] == 30
+
+    async def test_trends_after_attempt(self, client: AsyncClient) -> None:
+        mock_cls = _mock_anthropic()
+
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Trends Test",
+                "text": "Enough text material for creating a quiz for trends testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        with (
+            patch("app.services.quiz_generation.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            quiz_resp = await client.post(
+                "/api/quiz/generate",
+                json={
+                    "document_id": doc_id,
+                    "n_questions": 1,
+                    "quiz_types": ["mcq"],
+                },
+            )
+        quiz_data = quiz_resp.json()
+
+        await client.post(
+            f"/api/quiz/{quiz_data['id']}/submit",
+            json={
+                "answers": [
+                    {
+                        "quiz_item_id": quiz_data["items"][0]["id"],
+                        "user_answer": "A",
+                    }
+                ]
+            },
+        )
+
+        resp = await client.get("/api/dashboard/trends")
+        assert resp.status_code == 200
+        data = resp.json()
+
+        trend = data["daily_quiz_trend"]
+        assert len(trend) >= 1
+        today_point = trend[-1]
+        assert today_point["quiz_count"] >= 1
+        assert today_point["questions_answered"] >= 1
+        assert today_point["accuracy_rate"] == 1.0
+
+    async def test_days_parameter(self, client: AsyncClient) -> None:
+        resp = await client.get("/api/dashboard/trends?days=7")
+        assert resp.status_code == 200
+        assert resp.json()["days"] == 7
+
+    async def test_days_validation(self, client: AsyncClient) -> None:
+        resp = await client.get("/api/dashboard/trends?days=3")
+        assert resp.status_code == 422

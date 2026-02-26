@@ -244,3 +244,15 @@ export interface DashboardStats {
   mastery_summary: MasterySummaryStats;
   recent_activity: RecentActivityItem[];
 }
+
+export interface DailyTrendPoint {
+  date: string;
+  quiz_count: number;
+  questions_answered: number;
+  accuracy_rate: number;
+}
+
+export interface DashboardTrends {
+  daily_quiz_trend: DailyTrendPoint[];
+  days: number;
+}

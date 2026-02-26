@@ -57,3 +57,15 @@ class DashboardStatsResponse(BaseModel):
     streak: StreakStats
     mastery_summary: MasterySummaryStats
     recent_activity: list[RecentActivityItem]
+
+
+class DailyTrendPoint(BaseModel):
+    date: str
+    quiz_count: int
+    questions_answered: int
+    accuracy_rate: float
+
+
+class DashboardTrendsResponse(BaseModel):
+    daily_quiz_trend: list[DailyTrendPoint]
+    days: int

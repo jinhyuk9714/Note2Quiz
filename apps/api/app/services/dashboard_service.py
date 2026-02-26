@@ -11,7 +11,9 @@ from app.models.attempt import QuizAttempt, WrongAnswerNote
 from app.models.document import Document
 from app.models.quiz import Quiz
 from app.schemas.dashboard import (
+    DailyTrendPoint,
     DashboardStatsResponse,
+    DashboardTrendsResponse,
     LearningProgressStats,
     MasterySummaryStats,
     RecentActivityItem,
@@ -316,3 +318,68 @@ async def _get_recent_activity(
 
     items.sort(key=lambda x: x.created_at, reverse=True)
     return items[:limit]
+
+
+# ──────────────────────────────────────────────────────────
+# Dashboard Trends
+# ──────────────────────────────────────────────────────────
+
+
+async def get_dashboard_trends(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    days: int = 30,
+) -> DashboardTrendsResponse:
+    daily_quiz_trend = await _get_daily_quiz_trend(db, user_id, days)
+    return DashboardTrendsResponse(
+        daily_quiz_trend=daily_quiz_trend,
+        days=days,
+    )
+
+
+async def _get_daily_quiz_trend(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    days: int,
+) -> list[DailyTrendPoint]:
+    since = datetime.now(UTC) - timedelta(days=days)
+
+    stmt = (
+        select(
+            func.date(QuizAttempt.created_at).label("day"),
+            func.count(QuizAttempt.id).label("quiz_count"),
+            func.coalesce(func.sum(QuizAttempt.total), 0).label("questions_answered"),
+            func.coalesce(func.sum(QuizAttempt.score), 0).label("total_correct"),
+        )
+        .where(
+            QuizAttempt.user_id == user_id,
+            QuizAttempt.created_at >= since,
+        )
+        .group_by(func.date(QuizAttempt.created_at))
+        .order_by(func.date(QuizAttempt.created_at).asc())
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    points: list[DailyTrendPoint] = []
+    for row in rows:
+        raw_day = row.day  # type: ignore[attr-defined]
+        day_str: str = raw_day if isinstance(raw_day, str) else raw_day.isoformat()
+
+        quiz_count: int = row.quiz_count  # type: ignore[assignment]
+        questions_answered: int = row.questions_answered  # type: ignore[assignment]
+        total_correct: int = row.total_correct  # type: ignore[assignment]
+
+        accuracy = total_correct / questions_answered if questions_answered > 0 else 0.0
+
+        points.append(
+            DailyTrendPoint(
+                date=day_str,
+                quiz_count=quiz_count,
+                questions_answered=questions_answered,
+                accuracy_rate=round(accuracy, 4),
+            )
+        )
+
+    return points

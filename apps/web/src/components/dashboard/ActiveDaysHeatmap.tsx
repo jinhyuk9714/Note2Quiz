@@ -1,0 +1,76 @@
+import { LayoutGrid } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { DailyTrendPoint } from "@/types/api";
+
+interface ActiveDaysHeatmapProps {
+  data: DailyTrendPoint[];
+}
+
+function intensityClass(quizCount: number): string {
+  if (quizCount === 0) return "bg-slate-100";
+  if (quizCount === 1) return "bg-indigo-200";
+  if (quizCount <= 3) return "bg-indigo-400";
+  return "bg-indigo-600";
+}
+
+function buildCells(data: DailyTrendPoint[], days: number) {
+  const map = new Map(data.map((d) => [d.date, d.quiz_count]));
+  const cells = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const dayLabel = new Intl.DateTimeFormat("ko-KR", {
+      month: "short",
+      day: "numeric",
+    }).format(d);
+    cells.push({ date: key, count: map.get(key) ?? 0, label: dayLabel });
+  }
+  return cells;
+}
+
+export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
+  const cells = buildCells(data, 30);
+  const activeDays = cells.filter((c) => c.count > 0).length;
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <LayoutGrid className="h-5 w-5" />
+        </div>
+        <h2 className="text-xl font-bold tracking-tight text-slate-800">
+          활동 히트맵
+        </h2>
+        <span className="ml-auto text-xs font-semibold text-slate-400">
+          {activeDays}일 활동
+        </span>
+      </div>
+
+      <div className="grid grid-cols-6 gap-1.5">
+        {cells.map(({ date, count, label }) => (
+          <div
+            key={date}
+            title={`${label}: ${count}회`}
+            className={cn(
+              "aspect-square rounded-lg transition-opacity hover:opacity-80",
+              intensityClass(count),
+            )}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 text-xs text-slate-400 font-medium">
+        <span>적음</span>
+        <div className="flex gap-1">
+          {["bg-slate-100", "bg-indigo-200", "bg-indigo-400", "bg-indigo-600"].map(
+            (c) => (
+              <div key={c} className={cn("h-3 w-3 rounded-sm", c)} />
+            ),
+          )}
+        </div>
+        <span>많음</span>
+      </div>
+    </div>
+  );
+}

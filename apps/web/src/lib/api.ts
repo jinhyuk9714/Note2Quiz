@@ -4,6 +4,7 @@ import type {
   AuthUser,
   ChangePasswordPayload,
   DashboardStats,
+  DashboardTrends,
   DeleteAccountPayload,
   Document,
   DocumentDetail,
@@ -401,4 +402,8 @@ export function deleteWrongNote(noteId: string): Promise<void> {
 // Dashboard
 export function getDashboardStats() {
   return apiFetch<DashboardStats>("/api/dashboard/stats");
+}
+
+export function getDashboardTrends(days = 30) {
+  return apiFetch<DashboardTrends>(`/api/dashboard/trends?days=${days}`);
 }

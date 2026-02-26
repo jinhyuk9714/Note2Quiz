@@ -4,13 +4,16 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle, Sparkles, ArrowUpRight } from "lucide-react";
 
-import { getDashboardStats } from "@/lib/api";
+import { getDashboardStats, getDashboardTrends } from "@/lib/api";
 import { LearningProgressCard } from "@/components/dashboard/LearningProgressCard";
 import { LearningStreakCard } from "@/components/dashboard/LearningStreakCard";
 import { MasterySummaryCard } from "@/components/dashboard/MasterySummaryCard";
 import { WeakConceptsCard } from "@/components/dashboard/WeakConceptsCard";
 import { ReviewScheduleCard } from "@/components/dashboard/ReviewScheduleCard";
 import { RecentActivityCard } from "@/components/dashboard/RecentActivityCard";
+import { DailyAccuracyChart } from "@/components/dashboard/DailyAccuracyChart";
+import { ActivityBarChart } from "@/components/dashboard/ActivityBarChart";
+import { ActiveDaysHeatmap } from "@/components/dashboard/ActiveDaysHeatmap";
 
 export default function DashboardPage() {
   const {
@@ -20,6 +23,11 @@ export default function DashboardPage() {
   } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: getDashboardStats,
+  });
+
+  const { data: trends, isLoading: isTrendsLoading } = useQuery({
+    queryKey: ["dashboard-trends", 30],
+    queryFn: () => getDashboardTrends(30),
   });
 
   return (
@@ -56,7 +64,39 @@ export default function DashboardPage() {
             <div className="lg:col-span-12">
               <LearningProgressCard stats={stats.learning_progress} />
             </div>
+          </div>
 
+          {/* Trends section */}
+          <div className="mt-8 space-y-4">
+            <h2 className="px-1 text-xl font-bold tracking-tight text-slate-800">
+              학습 트렌드{" "}
+              <span className="text-sm font-medium text-slate-400 ml-2">
+                최근 30일
+              </span>
+            </h2>
+
+            {isTrendsLoading && (
+              <div className="flex h-48 items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/50">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+              </div>
+            )}
+
+            {trends && (
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                <div className="lg:col-span-7">
+                  <DailyAccuracyChart data={trends.daily_quiz_trend} />
+                </div>
+                <div className="lg:col-span-5">
+                  <ActiveDaysHeatmap data={trends.daily_quiz_trend} />
+                </div>
+                <div className="lg:col-span-12">
+                  <ActivityBarChart data={trends.daily_quiz_trend} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="lg:col-span-5">
               <LearningStreakCard streak={stats.streak} />
             </div>
