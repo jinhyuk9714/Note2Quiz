@@ -8,9 +8,9 @@ interface ActiveDaysHeatmapProps {
 }
 
 const INTENSITY_CLASSES = [
-  "bg-indigo-50 dark:bg-slate-800",
-  "bg-indigo-100 dark:bg-indigo-900",
-  "bg-indigo-200 dark:bg-indigo-700",
+  "bg-surface-alt ring-1 ring-inset ring-border-default/50 dark:bg-slate-700 dark:ring-slate-600/40",
+  "bg-indigo-100 dark:bg-indigo-800",
+  "bg-indigo-200 dark:bg-indigo-600",
   "bg-indigo-300 dark:bg-indigo-500",
   "bg-indigo-400 dark:bg-indigo-400",
   "bg-indigo-600 dark:bg-indigo-300",
@@ -44,7 +44,7 @@ export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
   const activeDays = useMemo(() => cells.filter((c) => c.count > 0).length, [cells]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="bento-card flex h-full flex-col overflow-hidden p-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
           <LayoutGrid className="h-5 w-5" />
