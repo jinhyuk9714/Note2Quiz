@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { PlusCircle, Sparkles, ArrowUpRight } from "lucide-react";
+import { PlusCircle, Sparkles, ArrowUpRight, BookOpen } from "lucide-react";
 
 import { getDashboardStats, getDashboardTrends } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { OnboardingModal } from "@/components/common/OnboardingModal";
 import { LearningProgressCard } from "@/components/dashboard/LearningProgressCard";
 import { LearningStreakCard } from "@/components/dashboard/LearningStreakCard";
 import { MasterySummaryCard } from "@/components/dashboard/MasterySummaryCard";
@@ -16,6 +19,7 @@ import { ActivityBarChart } from "@/components/dashboard/ActivityBarChart";
 import { ActiveDaysHeatmap } from "@/components/dashboard/ActiveDaysHeatmap";
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const {
     data: stats,
     isLoading,
@@ -29,6 +33,21 @@ export default function DashboardPage() {
     queryKey: ["dashboard-trends", 30],
     queryFn: () => getDashboardTrends(30),
   });
+
+  const [onboardingDismissed, setOnboardingDismissed] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("quiznote_onboarding_dismissed") !== null;
+  });
+
+  const handleDismissOnboarding = useCallback(() => {
+    localStorage.setItem("quiznote_onboarding_dismissed", "1");
+    setOnboardingDismissed(true);
+  }, []);
+
+  const isNewUser =
+    stats !== undefined && stats.learning_progress.documents_studied === 0;
+
+  const showOnboarding = isNewUser && !onboardingDismissed;
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 pb-12">
@@ -58,7 +77,31 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {stats && (
+      {stats && isNewUser && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="flex flex-col items-center gap-4 rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 px-8 py-16 text-center backdrop-blur-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <BookOpen className="h-8 w-8" />
+            </div>
+            <h2 className="text-xl font-extrabold tracking-tight text-slate-800">
+              아직 학습 데이터가 없어요
+            </h2>
+            <p className="max-w-sm text-sm font-medium leading-relaxed text-slate-500">
+              문서를 업로드하고 첫 번째 퀴즈를 만들어보세요! AI가 여러분의 학습
+              자료를 분석하여 맞춤형 문제를 생성합니다.
+            </p>
+            <Link
+              href="/documents"
+              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
+            >
+              <PlusCircle className="h-4 w-4" />
+              문서 업로드하기
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {stats && !isNewUser && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="lg:col-span-12">
@@ -161,6 +204,12 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      <OnboardingModal
+        open={showOnboarding}
+        onDismiss={handleDismissOnboarding}
+        userName={user?.display_name ?? ""}
+      />
     </div>
   );
 }
