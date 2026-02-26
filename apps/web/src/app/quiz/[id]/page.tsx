@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X } from "lucide-react";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { QuizItem } from "@/components/quiz/QuizItem";
+import { QuestionNavPanel } from "@/components/quiz/QuestionNavPanel";
 import { QuizResults } from "@/components/quiz/QuizResults";
 import { QuizTimer } from "@/components/quiz/QuizTimer";
 import { loadDraftSnapshot, useQuizDraft, useDraftBanner } from "@/hooks/useQuizDraft";
@@ -68,6 +69,9 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
   const [answers, setAnswers] = useState<Record<string, string>>(
     () => snapshot?.answers ?? {},
   );
+  const [skippedIds, setSkippedIds] = useState<Set<string>>(
+    () => snapshot?.skippedIds ?? new Set(),
+  );
   const [phase, setPhase] = useState<Phase>("taking");
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [retryItemIds, setRetryItemIds] = useState<Set<string> | null>(null);
@@ -88,19 +92,19 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
 
   // Auto-save answers to localStorage on change
   useEffect(() => {
-    if (phase !== "taking" || Object.keys(answers).length === 0) return;
-    saveDraft(answers, elapsedSec);
-  }, [answers, phase, saveDraft, elapsedSec]);
+    if (phase !== "taking" || (Object.keys(answers).length === 0 && skippedIds.size === 0)) return;
+    saveDraft(answers, elapsedSec, skippedIds);
+  }, [answers, skippedIds, phase, saveDraft, elapsedSec]);
 
   // Warn before leaving with unsaved answers
   useEffect(() => {
-    if (phase !== "taking" || Object.keys(answers).length === 0) return;
+    if (phase !== "taking" || (Object.keys(answers).length === 0 && skippedIds.size === 0)) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [phase, answers]);
+  }, [phase, answers, skippedIds]);
 
   // Timer: count up every second while taking
   useEffect(() => {
@@ -137,6 +141,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     clearDraft();
     setRetryItemIds(null);
     setAnswers({});
+    setSkippedIds(new Set());
     setResult(null);
     setElapsedSec(0);
     setFinalElapsedMs(null);
@@ -152,11 +157,28 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     );
     setRetryItemIds(wrongIds);
     setAnswers({});
+    setSkippedIds(new Set());
     setResult(null);
     setElapsedSec(0);
     setFinalElapsedMs(null);
     setPhase("taking");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleSkip(itemId: string) {
+    setSkippedIds((prev) => new Set(prev).add(itemId));
+  }
+
+  function handleSubmit() {
+    if (answeredCount === 0) return;
+    const unanswered = totalCount - answeredCount;
+    if (unanswered > 0) {
+      const confirmed = window.confirm(
+        `${unanswered}개 문항이 미답변입니다. 그래도 제출하시겠습니까?`,
+      );
+      if (!confirmed) return;
+    }
+    mutation.mutate();
   }
 
   const displayItems = retryItemIds
@@ -293,6 +315,15 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
               </button>
             </div>
           )}
+
+          {phase === "taking" && displayItems.length > 1 && (
+            <QuestionNavPanel
+              items={displayItems}
+              answers={answers}
+              skippedIds={skippedIds}
+            />
+          )}
+
           <div className="space-y-6">
             {displayItems.map((item) => {
               const originalIndex = quiz.items.findIndex((q) => q.id === item.id);
@@ -306,18 +337,22 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                     setAnswers((prev) => ({ ...prev, [item.id]: val }))
                   }
                   disabled={phase !== "taking"}
+                  onSkip={phase === "taking" ? () => handleSkip(item.id) : undefined}
+                  isSkipped={skippedIds.has(item.id)}
                 />
               );
             })}
           </div>
 
           <button
-            onClick={() => mutation.mutate()}
-            disabled={!allAnswered || phase === "submitting"}
+            onClick={handleSubmit}
+            disabled={answeredCount === 0 || phase === "submitting"}
             className={cn(
               "group sticky bottom-6 z-20 w-full flex items-center justify-center gap-3 rounded-[2rem] py-6 text-lg font-black text-white shadow-2xl transition-all active:scale-[0.98]",
-              allAnswered
-                ? "bg-indigo-600 shadow-indigo-500/30 hover:bg-indigo-700"
+              answeredCount > 0
+                ? allAnswered
+                  ? "bg-indigo-600 shadow-indigo-500/30 hover:bg-indigo-700"
+                  : "bg-indigo-500 shadow-indigo-400/30 hover:bg-indigo-600"
                 : "bg-slate-300 cursor-not-allowed opacity-80"
             )}
           >
@@ -326,10 +361,15 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                 <div className="h-6 w-6 animate-spin rounded-full border-4 border-white/30 border-t-white" />
                 채점 분석 중...
               </>
-            ) : (
+            ) : allAnswered ? (
               <>
                 퀴즈 제출하고 점수 확인
-                <CheckCircle2 className={cn("h-6 w-6 transition-transform", allAnswered && "group-hover:scale-125")} />
+                <CheckCircle2 className="h-6 w-6 transition-transform group-hover:scale-125" />
+              </>
+            ) : (
+              <>
+                퀴즈 제출 ({answeredCount}/{totalCount} 답변)
+                <CheckCircle2 className="h-6 w-6" />
               </>
             )}
           </button>

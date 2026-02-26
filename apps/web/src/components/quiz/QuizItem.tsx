@@ -1,6 +1,6 @@
 import type { QuizItem as QuizItemType } from "@/types/api";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle, HelpCircle, ListOrdered, CheckSquare, PenTool } from "lucide-react";
+import { CheckCircle2, Circle, HelpCircle, ListOrdered, CheckSquare, PenTool, SkipForward } from "lucide-react";
 
 interface QuizItemProps {
   item: QuizItemType;
@@ -8,6 +8,8 @@ interface QuizItemProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  onSkip?: () => void;
+  isSkipped?: boolean;
 }
 
 const TYPE_CONFIG = {
@@ -23,12 +25,20 @@ export function QuizItem({
   value,
   onChange,
   disabled,
+  onSkip,
+  isSkipped,
 }: QuizItemProps) {
   const config = TYPE_CONFIG[item.quiz_type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.mcq;
   const Icon = config.icon;
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+    <div
+      id={`quiz-item-${item.id}`}
+      className={cn(
+        "overflow-hidden rounded-[2rem] border bg-white p-8 shadow-sm transition-all hover:shadow-md",
+        isSkipped && !value ? "border-amber-200" : "border-slate-200",
+      )}
+    >
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-[13px] font-black text-white shadow-sm">
@@ -128,6 +138,22 @@ export function QuizItem({
             <PenTool className="h-4 w-4" />
           </div>
         </div>
+      )}
+
+      {!disabled && onSkip && !value && (
+        <button
+          type="button"
+          onClick={onSkip}
+          className={cn(
+            "mt-6 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95",
+            isSkipped
+              ? "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-200"
+              : "text-slate-400 hover:bg-slate-50 hover:text-slate-600",
+          )}
+        >
+          <SkipForward className="h-3.5 w-3.5" />
+          {isSkipped ? "건너뛴 문제" : "건너뛰기"}
+        </button>
       )}
     </div>
   );

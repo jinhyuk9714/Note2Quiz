@@ -36,6 +36,7 @@ describe("loadDraftSnapshot", () => {
     expect(snapshot).toEqual({
       answers: { "item-a": "A", "item-b": "O" },
       elapsedSec: 42,
+      skippedIds: new Set(),
     });
   });
 

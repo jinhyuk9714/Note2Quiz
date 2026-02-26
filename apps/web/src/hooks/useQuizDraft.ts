@@ -8,16 +8,18 @@ interface QuizDraft {
   itemIds: string[];
   elapsedSec: number;
   savedAt: number;
+  skippedIds?: string[];
 }
 
 interface UseQuizDraftReturn {
-  saveDraft: (answers: Record<string, string>, elapsedSec: number) => void;
+  saveDraft: (answers: Record<string, string>, elapsedSec: number, skippedIds?: Set<string>) => void;
   clearDraft: () => void;
 }
 
 export interface DraftSnapshot {
   answers: Record<string, string>;
   elapsedSec: number;
+  skippedIds: Set<string>;
 }
 
 function getDraftKey(quizId: string): string {
@@ -60,7 +62,12 @@ export function loadDraftSnapshot(
   }
 
   if (Object.keys(validAnswers).length === 0) return null;
-  return { answers: validAnswers, elapsedSec: draft.elapsedSec };
+
+  const skippedIds = new Set(
+    (draft.skippedIds ?? []).filter((id) => idSet.has(id)),
+  );
+
+  return { answers: validAnswers, elapsedSec: draft.elapsedSec, skippedIds };
 }
 
 /** Hook providing save/clear operations for quiz draft. */
@@ -71,13 +78,14 @@ export function useQuizDraft(
   const sortedIds = useMemo(() => itemIds.slice().sort(), [itemIds]);
 
   const saveDraft = useCallback(
-    (answers: Record<string, string>, elapsedSec: number) => {
+    (answers: Record<string, string>, elapsedSec: number, skippedIds?: Set<string>) => {
       if (typeof window === "undefined") return;
       const draft: QuizDraft = {
         answers,
         itemIds: sortedIds,
         elapsedSec,
         savedAt: Date.now(),
+        skippedIds: skippedIds ? [...skippedIds] : undefined,
       };
       try {
         localStorage.setItem(getDraftKey(quizId), JSON.stringify(draft));
