@@ -27,6 +27,7 @@ async def grade_answers_semantically(
     if not items:
         return {}
 
+    logger.info("Semantic grading batch: %d items", len(items))
     prompt = build_semantic_grading_prompt(items)
 
     try:

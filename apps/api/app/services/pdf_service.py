@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import logging
+
 import fitz  # pyright: ignore[reportMissingTypeStubs]
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class PDFExtractionError(Exception):
@@ -33,6 +37,7 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
             f"PDF exceeds maximum page limit ({settings.max_pdf_pages} pages)."
         )
 
+    logger.info("Extracting text from PDF: %d pages", len(doc))
     pages: list[str] = []
     for page in doc:
         text: str = page.get_text("text")  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAssignmentType]

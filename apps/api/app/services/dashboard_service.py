@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import cast
@@ -23,11 +24,14 @@ from app.schemas.dashboard import (
     WeakConceptItem,
 )
 
+logger = logging.getLogger(__name__)
+
 
 async def get_dashboard_stats(
     db: AsyncSession,
     user_id: uuid.UUID,
 ) -> DashboardStatsResponse:
+    logger.debug("Fetching dashboard stats for user=%s", user_id)
     learning_progress = await _get_learning_progress(db, user_id)
     weak_concepts = await _get_weak_concepts(db, user_id)
     review_schedule = await _get_review_schedule(db, user_id)

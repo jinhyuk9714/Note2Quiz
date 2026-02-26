@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import uuid
 
 import anthropic
@@ -13,6 +14,8 @@ from app.core.config import settings
 from app.models.chunk import Chunk
 from app.models.quiz import Quiz, QuizItem, QuizType
 from app.prompts.quiz_prompt import build_quiz_generation_prompt
+
+logger = logging.getLogger(__name__)
 
 
 async def load_chunks(
@@ -172,6 +175,13 @@ async def generate_quiz_from_chunks(
     focus_concepts: list[str] | None = None,
 ) -> Quiz:
     chunks = await load_chunks(db, document_id, chunk_ids)
+    logger.info(
+        "Starting quiz generation: document=%s, n_questions=%d, types=%s, chunks=%d",
+        document_id,
+        n_questions,
+        quiz_types,
+        len(chunks),
+    )
 
     client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     questions_per_chunk = max(1, n_questions // len(chunks))
@@ -193,6 +203,9 @@ async def generate_quiz_from_chunks(
     for items in results:
         new_items_data.extend(items)
 
+    logger.info(
+        "Quiz generation complete: %d items from %d chunks", len(new_items_data), len(chunks)
+    )
     return await save_quiz_to_db(db, document_id, title, new_items_data, n_questions, quiz_types)
 
 

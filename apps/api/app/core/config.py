@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     rate_limit_auth: str = "5/minute"
     rate_limit_quiz_gen: str = "10/minute"
 
+    # Logging
+    slow_query_threshold_ms: float = 500.0
+
     # Quiz generation defaults
     default_chunk_size: int = 1500  # characters
     default_chunk_overlap: int = 200  # characters

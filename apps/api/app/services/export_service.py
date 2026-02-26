@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import uuid
 from datetime import UTC, datetime
 
@@ -13,6 +14,8 @@ from sqlalchemy.orm import selectinload
 from app.models.attempt import QuizAttempt, WrongAnswerNote
 from app.models.document import Document
 from app.models.quiz import Quiz, QuizItem
+
+logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────────────────
 # Wrong Notes CSV
@@ -74,6 +77,7 @@ async def generate_wrong_notes_csv(
     search: str | None = None,
 ) -> str:
     """Generate UTF-8 CSV string with BOM for wrong notes."""
+    logger.info("Generating wrong notes CSV for user=%s", user_id)
     notes = await _fetch_wrong_notes(
         db, user_id, is_mastered=is_mastered, concept_tag=concept_tag, search=search
     )
@@ -137,6 +141,7 @@ async def generate_wrong_notes_pdf(
     search: str | None = None,
 ) -> bytes:
     """Generate a PDF byte string of wrong notes."""
+    logger.info("Generating wrong notes PDF for user=%s", user_id)
     notes = await _fetch_wrong_notes(
         db, user_id, is_mastered=is_mastered, concept_tag=concept_tag, search=search
     )

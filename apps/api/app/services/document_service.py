@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import uuid
 
@@ -9,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.chunk import Chunk
 from app.models.document import Document
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_text(raw: str) -> str:
@@ -80,6 +83,7 @@ async def create_document_with_chunks(
     source_type: str = "text",
     folder_id: uuid.UUID | None = None,
 ) -> Document:
+    logger.info("Creating document: owner=%s, title=%.50s, source=%s", owner_id, title, source_type)
     normalized = normalize_text(raw_text)
     chunk_texts = split_into_chunks(
         normalized,

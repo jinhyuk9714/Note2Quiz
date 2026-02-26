@@ -66,6 +66,9 @@ async def extract_text_from_image(
     """
     validate_image(image_bytes, media_type)
 
+    logger.info(
+        "Starting OCR extraction: media_type=%s, size=%d bytes", media_type, len(image_bytes)
+    )
     image_b64 = base64.standard_b64encode(image_bytes).decode("ascii")
 
     image_block = ImageBlockParam(

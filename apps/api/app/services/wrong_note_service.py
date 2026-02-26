@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 import uuid
@@ -11,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.attempt import QuizAttempt, WrongAnswerNote
 from app.models.quiz import QuizItem, QuizType
 from app.services.semantic_grading import grade_answers_semantically
+
+logger = logging.getLogger(__name__)
 
 _SEMANTIC_TYPES = {QuizType.SHORT_ANSWER, QuizType.FILL_BLANK}
 
@@ -250,4 +253,13 @@ async def create_attempt_with_wrong_notes(
             db.add(note)
             new_notes.append(note)
 
+    logger.info(
+        "Quiz submitted: quiz=%s, user=%s, score=%d/%d, new_wrong=%d, updated=%d",
+        quiz_id,
+        user_id,
+        score,
+        len(graded),
+        len(new_notes),
+        updated_count,
+    )
     return attempt, new_notes, updated_count

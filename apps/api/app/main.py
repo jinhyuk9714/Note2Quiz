@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -12,21 +13,37 @@ from slowapi.middleware import SlowAPIMiddleware  # type: ignore[import-untyped]
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import engine
+from app.core.logging_config import setup_logging
 from app.core.rate_limit import limiter
+from app.middleware.logging_middleware import (
+    RequestLoggingMiddleware,
+    register_exception_handler,
+)
+
+setup_logging()
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+    logger.info("Application starting up")
     yield
+    logger.info("Application shutting down")
     await engine.dispose()
 
 
 app = FastAPI(title="Note2Quiz API", lifespan=lifespan)
 
+# Exception handlers
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
-app.add_middleware(SlowAPIMiddleware)
+register_exception_handler(app)
 
+# Middleware stack (last added = outermost)
+# Request flow: CORS -> RequestLogging -> SlowAPI -> Route
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

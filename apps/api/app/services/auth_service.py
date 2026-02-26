@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def hash_password(plain: str) -> str:
@@ -17,6 +20,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(user_id: str) -> str:
+    logger.debug("Creating access token for user=%s", user_id)
     expire = datetime.now(UTC) + timedelta(minutes=settings.jwt_expire_minutes)
     payload: dict[str, str | float] = {
         "sub": user_id,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import secrets
 import string
 import uuid
@@ -10,6 +11,8 @@ from sqlalchemy.orm import selectinload
 
 from app.models.document import Document
 from app.models.quiz import Quiz, QuizItem
+
+logger = logging.getLogger(__name__)
 
 _SHARE_CODE_ALPHABET = string.ascii_letters + string.digits
 _SHARE_CODE_LENGTH = 8
@@ -49,6 +52,7 @@ async def duplicate_quiz_for_user(
     target_user_id: uuid.UUID,
 ) -> tuple[Document, Quiz]:
     """Create a copy of the quiz under a new Document owned by target_user_id."""
+    logger.info("Duplicating quiz=%s for user=%s", source_quiz.id, target_user_id)
     doc_title = source_quiz.document.title if source_quiz.document else source_quiz.title
     new_doc = Document(
         owner_id=target_user_id,
