@@ -50,12 +50,30 @@ export default function WrongNotesPage() {
       }),
   });
 
+  const {
+    data: reviewData,
+    isLoading: isReviewLoading,
+  } = useQuery({
+    queryKey: ["wrong-notes-review", { conceptTag }],
+    queryFn: () =>
+      listWrongNotes({
+        due_only: true,
+        limit: 200,
+        offset: 0,
+        concept_tag: conceptTag || undefined,
+      }),
+    enabled: reviewMode,
+    staleTime: 0,
+  });
+
   const notes = data?.notes ?? [];
   const total = data?.total ?? 0;
+  const reviewNotes = reviewData?.notes ?? [];
 
   function handleExitReview() {
     setReviewMode(false);
     void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
+    void queryClient.invalidateQueries({ queryKey: ["wrong-notes-review"] });
   }
 
   function handleSearchChange(v: string) {
@@ -153,20 +171,25 @@ export default function WrongNotesPage() {
               onChange={handleSearchChange}
               placeholder="문제 검색..."
             />
-            {dueOnly && notes.length > 0 && !reviewMode && (
+            {dueOnly && total > 0 && !reviewMode && (
               <button
                 onClick={() => setReviewMode(true)}
-                className="flex shrink-0 items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95"
+                disabled={isReviewLoading}
+                className="flex shrink-0 items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-70"
               >
-                <PlayCircle className="h-4 w-4" />
-                복습 ({notes.length})
+                {isReviewLoading ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <PlayCircle className="h-4 w-4" />
+                )}
+                복습 ({total})
               </button>
             )}
           </div>
         </div>
 
-        {reviewMode && notes.length > 0 ? (
-          <ReviewSession notes={notes} onExit={handleExitReview} />
+        {reviewMode && reviewNotes.length > 0 ? (
+          <ReviewSession notes={reviewNotes} onExit={handleExitReview} />
         ) : isLoading ? (
           <div className="grid grid-cols-1 gap-6">
             {[1, 2, 3].map((i) => (
