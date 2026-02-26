@@ -286,7 +286,9 @@ async def generate_quiz_results_csv(
         qi_id = str(answer["quiz_item_id"])
         item = items_map.get(qi_id)
         question = item.question if item else ""
-        quiz_type = _TYPE_LABELS.get(item.quiz_type.value if item else "", "")
+        qt = item.quiz_type if item else None
+        raw_type = qt.value if qt is not None and hasattr(qt, "value") else (str(qt) if qt else "")
+        quiz_type = _TYPE_LABELS.get(raw_type, "")
         correct_answer = item.correct_answer if item else ""
         explanation = item.explanation if item else ""
         tags = ", ".join(item.concept_tags) if item and item.concept_tags else ""
