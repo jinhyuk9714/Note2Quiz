@@ -50,8 +50,14 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
     return Array.from(map.values());
   }, [result.results, items]);
 
-  const correctResults = result.results.filter((r) => r.is_correct);
-  const incorrectResults = result.results.filter((r) => !r.is_correct);
+  const correctResults = useMemo(
+    () => result.results.filter((r) => r.is_correct),
+    [result.results],
+  );
+  const incorrectResults = useMemo(
+    () => result.results.filter((r) => !r.is_correct),
+    [result.results],
+  );
 
   function toResultCard(r: AnswerResult) {
     const item = items.find((q) => q.id === r.quiz_item_id);

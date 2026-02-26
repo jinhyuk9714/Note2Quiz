@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,6 +17,9 @@ if TYPE_CHECKING:
 
 class QuizAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "quiz_attempts"
+    __table_args__ = (
+        Index("ix_quiz_attempts_user_quiz_created", "user_id", "quiz_id", "created_at"),
+    )
 
     quiz_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("quizzes.id", ondelete="CASCADE"), index=True
@@ -38,7 +41,10 @@ class QuizAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
 class WrongAnswerNote(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "wrong_answer_notes"
-    __table_args__ = (UniqueConstraint("user_id", "quiz_item_id", name="uq_wrong_note_user_item"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "quiz_item_id", name="uq_wrong_note_user_item"),
+        Index("ix_wrong_notes_user_mastered_review", "user_id", "is_mastered", "next_review_at"),
+    )
 
     attempt_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("quiz_attempts.id", ondelete="CASCADE"), index=True

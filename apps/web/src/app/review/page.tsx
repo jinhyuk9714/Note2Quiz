@@ -58,7 +58,6 @@ export default function ReviewPage() {
         concept_tag: selectedTag ?? undefined,
       }),
     enabled: reviewMode,
-    staleTime: 0,
   });
 
   const schedule = stats?.review_schedule;

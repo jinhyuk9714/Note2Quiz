@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { CheckCircle2, XCircle, Info, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +23,7 @@ interface ResultCardProps {
   index: number;
 }
 
-export function ResultCard({ data, index }: ResultCardProps) {
+export const ResultCard = memo(function ResultCard({ data, index }: ResultCardProps) {
   return (
     <div
       className={cn(
@@ -102,4 +103,4 @@ export function ResultCard({ data, index }: ResultCardProps) {
       </div>
     </div>
   );
-}
+});

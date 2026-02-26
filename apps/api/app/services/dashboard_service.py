@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime, timedelta
-from typing import cast
-
-from sqlalchemy import distinct, func, select
+from sqlalchemy import distinct, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attempt import QuizAttempt, WrongAnswerNote
@@ -86,17 +84,47 @@ async def _get_weak_concepts(
     user_id: uuid.UUID,
     limit: int = 10,
 ) -> list[WeakConceptItem]:
-    stmt = select(
+    # Detect dialect: use PostgreSQL jsonb_array_elements_text for DB-side
+    # aggregation; fall back to Python-side processing for SQLite (tests).
+    dialect_name = db.bind.dialect.name if db.bind else "unknown"  # type: ignore[union-attr]
+
+    if dialect_name == "postgresql":
+        stmt = text("""
+            SELECT
+                tag,
+                COUNT(*) AS wrong_count,
+                COUNT(*) FILTER (WHERE is_mastered = TRUE) AS mastered_count
+            FROM wrong_answer_notes,
+                 jsonb_array_elements_text(concept_tags) AS tag
+            WHERE user_id = :user_id
+            GROUP BY tag
+            ORDER BY wrong_count DESC
+            LIMIT :limit
+        """)
+        result = await db.execute(stmt, {"user_id": user_id, "limit": limit})
+        rows = result.all()
+        return [
+            WeakConceptItem(
+                tag=row[0],
+                wrong_count=row[1],
+                mastered_count=row[2],
+                total_count=row[1],
+            )
+            for row in rows
+        ]
+
+    # Fallback for SQLite / other dialects
+    orm_stmt = select(
         WrongAnswerNote.concept_tags,
         WrongAnswerNote.is_mastered,
     ).where(WrongAnswerNote.user_id == user_id)
 
-    result = await db.execute(stmt)
-    rows = result.all()
+    result = await db.execute(orm_stmt)
+    orm_rows = result.all()
 
     tag_stats: dict[str, dict[str, int]] = {}
-    for concept_tags, is_mastered in rows:
-        tags = cast(list[str], concept_tags) if isinstance(concept_tags, list) else []
+    for concept_tags, is_mastered in orm_rows:
+        tags: list[str] = concept_tags if isinstance(concept_tags, list) else []
         for tag in tags:
             if tag not in tag_stats:
                 tag_stats[tag] = {"wrong": 0, "mastered": 0}

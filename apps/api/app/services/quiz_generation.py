@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 
@@ -112,15 +113,21 @@ async def generate_quiz_from_chunks(
     client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     questions_per_chunk = max(1, n_questions // len(chunks))
 
+    semaphore = asyncio.Semaphore(5)
+
+    async def _generate_with_limit(chunk: Chunk) -> list[dict[str, object]]:
+        async with semaphore:
+            return await generate_questions_for_chunk(
+                client,
+                chunk,
+                questions_per_chunk,
+                quiz_types,
+                focus_concepts=focus_concepts,
+            )
+
+    results = await asyncio.gather(*[_generate_with_limit(c) for c in chunks])
     new_items_data: list[dict[str, object]] = []
-    for chunk in chunks:
-        items = await generate_questions_for_chunk(
-            client,
-            chunk,
-            questions_per_chunk,
-            quiz_types,
-            focus_concepts=focus_concepts,
-        )
+    for items in results:
         new_items_data.extend(items)
 
     return await save_quiz_to_db(db, document_id, title, new_items_data, n_questions, quiz_types)

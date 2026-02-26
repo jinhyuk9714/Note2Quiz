@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Literal
 
@@ -69,7 +70,7 @@ async def upload_document(
 
         if file.content_type == "application/pdf":
             try:
-                raw_text = extract_text_from_pdf(file_bytes)
+                raw_text = await asyncio.to_thread(extract_text_from_pdf, file_bytes)
             except PDFExtractionError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
             source_type = "pdf"

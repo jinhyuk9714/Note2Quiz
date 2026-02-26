@@ -217,23 +217,16 @@ async def list_quizzes(
     ),
     order: Literal["asc", "desc"] = Query(default="desc"),
 ) -> PaginatedResponse[QuizListItemResponse]:
-    # Attempt count subquery
-    attempt_count_sq = (
-        select(
-            QuizAttempt.quiz_id,
-            func.count(QuizAttempt.id).label("attempt_count"),
-        )
-        .where(QuizAttempt.user_id == user_id)
-        .group_by(QuizAttempt.quiz_id)
-        .subquery()
-    )
-
-    # Latest attempt subquery (window function)
-    latest_numbered = (
+    # Combined attempt stats subquery — single scan of QuizAttempt table
+    # Uses window functions for both attempt_count and latest score
+    attempt_numbered = (
         select(
             QuizAttempt.quiz_id,
             QuizAttempt.score,
             QuizAttempt.total,
+            func.count(QuizAttempt.id)
+            .over(partition_by=QuizAttempt.quiz_id)
+            .label("attempt_count"),
             func.row_number()
             .over(
                 partition_by=QuizAttempt.quiz_id,
@@ -244,27 +237,27 @@ async def list_quizzes(
         .where(QuizAttempt.user_id == user_id)
         .subquery()
     )
-    latest_sq = (
+    attempt_stats_sq = (
         select(
-            latest_numbered.c.quiz_id,
-            latest_numbered.c.score,
-            latest_numbered.c.total,
+            attempt_numbered.c.quiz_id,
+            attempt_numbered.c.attempt_count,
+            attempt_numbered.c.score,
+            attempt_numbered.c.total,
         )
-        .where(latest_numbered.c.rn == 1)
+        .where(attempt_numbered.c.rn == 1)
         .subquery()
     )
 
-    # Main query with joins
+    # Main query with single join
     base = (
         select(
             Quiz,
-            func.coalesce(attempt_count_sq.c.attempt_count, 0).label("attempt_count"),
-            latest_sq.c.score.label("latest_score"),
-            latest_sq.c.total.label("latest_total"),
+            func.coalesce(attempt_stats_sq.c.attempt_count, 0).label("attempt_count"),
+            attempt_stats_sq.c.score.label("latest_score"),
+            attempt_stats_sq.c.total.label("latest_total"),
         )
         .join(Quiz.document)
-        .outerjoin(attempt_count_sq, Quiz.id == attempt_count_sq.c.quiz_id)
-        .outerjoin(latest_sq, Quiz.id == latest_sq.c.quiz_id)
+        .outerjoin(attempt_stats_sq, Quiz.id == attempt_stats_sq.c.quiz_id)
         .where(Document.owner_id == user_id)
     )
 
@@ -275,20 +268,20 @@ async def list_quizzes(
 
     # Attempt status filter
     if attempt_status == "not_attempted":
-        base = base.where(func.coalesce(attempt_count_sq.c.attempt_count, 0) == 0)
+        base = base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) == 0)
     elif attempt_status == "attempted":
-        base = base.where(func.coalesce(attempt_count_sq.c.attempt_count, 0) > 0)
+        base = base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) > 0)
 
     # Score filter (percentage-based)
     if score_min is not None:
         base = base.where(
-            latest_sq.c.total > 0,
-            (latest_sq.c.score * 100.0 / latest_sq.c.total) >= score_min,
+            attempt_stats_sq.c.total > 0,
+            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) >= score_min,
         )
     if score_max is not None:
         base = base.where(
-            latest_sq.c.total > 0,
-            (latest_sq.c.score * 100.0 / latest_sq.c.total) < score_max,
+            attempt_stats_sq.c.total > 0,
+            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) < score_max,
         )
 
     # Total count
@@ -300,7 +293,7 @@ async def list_quizzes(
         "created_at": Quiz.created_at,
         "title": Quiz.title,
         "item_count": Quiz.item_count,
-        "latest_score": func.coalesce(latest_sq.c.score, -1),
+        "latest_score": func.coalesce(attempt_stats_sq.c.score, -1),
     }
     sort_col = sort_map[sort_by]
     base = base.order_by(sort_col.asc() if order == "asc" else sort_col.desc())

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DailyTrendPoint } from "@/types/api";
@@ -30,8 +31,8 @@ function buildCells(data: DailyTrendPoint[], days: number) {
 }
 
 export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
-  const cells = buildCells(data, 30);
-  const activeDays = cells.filter((c) => c.count > 0).length;
+  const cells = useMemo(() => buildCells(data, 30), [data]);
+  const activeDays = useMemo(() => cells.filter((c) => c.count > 0).length, [cells]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">

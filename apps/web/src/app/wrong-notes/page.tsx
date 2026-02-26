@@ -68,7 +68,6 @@ export default function WrongNotesPage() {
         concept_tag: conceptTag || undefined,
       }),
     enabled: reviewMode,
-    staleTime: 0,
   });
 
   const notes = data?.notes ?? [];

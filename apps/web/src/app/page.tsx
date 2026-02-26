@@ -2,21 +2,39 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle, Sparkles, ArrowUpRight, BookOpen } from "lucide-react";
 
 import { getDashboardStats, getDashboardTrends } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { OnboardingModal } from "@/components/common/OnboardingModal";
 import { LearningProgressCard } from "@/components/dashboard/LearningProgressCard";
 import { LearningStreakCard } from "@/components/dashboard/LearningStreakCard";
 import { MasterySummaryCard } from "@/components/dashboard/MasterySummaryCard";
 import { WeakConceptsCard } from "@/components/dashboard/WeakConceptsCard";
 import { ReviewScheduleCard } from "@/components/dashboard/ReviewScheduleCard";
 import { RecentActivityCard } from "@/components/dashboard/RecentActivityCard";
-import { DailyAccuracyChart } from "@/components/dashboard/DailyAccuracyChart";
-import { ActivityBarChart } from "@/components/dashboard/ActivityBarChart";
-import { ActiveDaysHeatmap } from "@/components/dashboard/ActiveDaysHeatmap";
+
+const ChartSkeleton = () => (
+  <div className="h-64 animate-pulse rounded-[2rem] bg-surface-alt" />
+);
+
+const DailyAccuracyChart = dynamic(
+  () => import("@/components/dashboard/DailyAccuracyChart").then((m) => ({ default: m.DailyAccuracyChart })),
+  { ssr: false, loading: ChartSkeleton },
+);
+const ActivityBarChart = dynamic(
+  () => import("@/components/dashboard/ActivityBarChart").then((m) => ({ default: m.ActivityBarChart })),
+  { ssr: false, loading: ChartSkeleton },
+);
+const ActiveDaysHeatmap = dynamic(
+  () => import("@/components/dashboard/ActiveDaysHeatmap").then((m) => ({ default: m.ActiveDaysHeatmap })),
+  { ssr: false, loading: ChartSkeleton },
+);
+const OnboardingModal = dynamic(
+  () => import("@/components/common/OnboardingModal").then((m) => ({ default: m.OnboardingModal })),
+  { ssr: false },
+);
 
 export default function DashboardPage() {
   const { user } = useAuth();
