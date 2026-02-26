@@ -150,11 +150,11 @@ export default function WrongNotesPage() {
     <div className="mx-auto max-w-4xl space-y-10 pb-12">
       {conceptTag && (
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">필터:</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-bold text-indigo-600 ring-1 ring-inset ring-indigo-200">
+          <span className="text-sm font-medium text-text-secondary">필터:</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 text-sm font-bold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-700">
             <Tag className="h-3.5 w-3.5" />
             {conceptTag}
-            <Link href="/wrong-notes" className="ml-1 rounded-full p-0.5 hover:bg-indigo-100 transition-colors">
+            <Link href="/wrong-notes" className="ml-1 rounded-full p-0.5 hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors">
               <X className="h-3.5 w-3.5" />
             </Link>
           </span>
@@ -163,15 +163,15 @@ export default function WrongNotesPage() {
 
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
             오답노트
           </h1>
-          <p className="text-slate-500 font-medium">
+          <p className="text-text-secondary font-medium">
             틀린 문제를 다시 복습하고 개념을 완벽히 이해하세요.
           </p>
         </div>
 
-        <div className="flex p-1.5 gap-1.5 rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-200/50 shadow-sm transition-all duration-200">
+        <div className="flex p-1.5 gap-1.5 rounded-2xl bg-surface-alt ring-1 ring-inset ring-border-default/50 shadow-sm transition-all duration-200">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -180,9 +180,9 @@ export default function WrongNotesPage() {
                 "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
                 filter === tab.key
                   ? tab.key === "mastered"
-                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-inset ring-emerald-200"
-                    : "bg-white text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-200"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50/50",
+                    ? "bg-surface-card text-emerald-700 dark:text-emerald-400 shadow-sm ring-1 ring-inset ring-emerald-200 dark:ring-emerald-700"
+                    : "bg-surface-card text-indigo-700 dark:text-indigo-400 shadow-sm ring-1 ring-inset ring-indigo-200 dark:ring-indigo-700"
+                  : "text-text-secondary hover:text-text-primary hover:bg-surface-alt/50",
               )}
             >
               {tab.icon}
@@ -195,12 +195,12 @@ export default function WrongNotesPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
           <div className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-xl font-bold tracking-tight text-slate-800">
+            <LayoutGrid className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <h2 className="text-xl font-bold tracking-tight text-text-primary">
               {subHeading}
             </h2>
             {data && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+              <span className="rounded-full bg-surface-alt px-3 py-1 text-xs font-bold text-text-secondary ring-1 ring-inset ring-border-default/50">
                 {total}개
               </span>
             )}
@@ -219,31 +219,31 @@ export default function WrongNotesPage() {
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all active:scale-95 disabled:opacity-70",
                     exportOpen
-                      ? "bg-slate-200 text-slate-700"
-                      : "bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-700",
+                      ? "bg-surface-alt text-text-primary"
+                      : "bg-surface-card text-text-secondary ring-1 ring-inset ring-border-default hover:bg-surface-alt hover:text-text-primary",
                   )}
                 >
                   {exporting ? (
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-text-tertiary border-t-transparent" />
                   ) : (
                     <Download className="h-3.5 w-3.5" />
                   )}
                   내보내기
                 </button>
                 {exportOpen && (
-                  <div className="absolute right-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="absolute right-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-border-default bg-surface-card p-1.5 shadow-lg dark:shadow-black/20 animate-in fade-in slide-in-from-top-1 duration-150">
                     <button
                       onClick={() => void handleExport("csv")}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition-colors hover:bg-surface-alt hover:text-text-primary"
                     >
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
                       CSV 다운로드
                     </button>
                     <button
                       onClick={() => void handleExport("pdf")}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition-colors hover:bg-surface-alt hover:text-text-primary"
                     >
-                      <FileText className="h-3.5 w-3.5 text-red-500" />
+                      <FileText className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                       PDF 다운로드
                     </button>
                   </div>

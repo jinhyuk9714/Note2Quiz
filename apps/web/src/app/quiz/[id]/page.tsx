@@ -33,10 +33,10 @@ export default function QuizPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl py-20 text-center">
-        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 animate-pulse">
+        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 dark:text-indigo-400 animate-pulse">
           <BookOpenCheck className="h-8 w-8" />
         </div>
-        <p className="text-sm font-bold text-slate-400">퀴즈 문항을 불러오는 중...</p>
+        <p className="text-sm font-bold text-text-tertiary">퀴즈 문항을 불러오는 중...</p>
       </div>
     );
   }
@@ -44,16 +44,16 @@ export default function QuizPage() {
   if (error || !quiz) {
     return (
       <div className="mx-auto max-w-4xl py-20 text-center">
-        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 text-red-500">
+        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">퀴즈를 찾을 수 없습니다</h2>
-        <p className="mt-2 text-sm font-medium text-slate-500">
+        <h2 className="text-xl font-bold text-text-primary">퀴즈를 찾을 수 없습니다</h2>
+        <p className="mt-2 text-sm font-medium text-text-secondary">
           {error instanceof Error ? error.message : "존재하지 않거나 삭제된 퀴즈입니다."}
         </p>
         <Link
           href="/quiz/history"
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200"
+          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-surface-alt px-6 py-3 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt/80"
         >
           목록으로 돌아가기
         </Link>

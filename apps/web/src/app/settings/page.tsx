@@ -76,37 +76,37 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-10 pb-12">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
           설정
         </h1>
-        <p className="text-sm font-medium text-slate-500">
+        <p className="text-sm font-medium text-text-secondary">
           프로필 정보와 계정을 관리하세요.
         </p>
       </div>
 
       {/* Profile Info */}
-      <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+      <section className="rounded-2xl bg-surface-card p-6 shadow-sm ring-1 ring-border-default/60">
         <div className="mb-6 flex items-center gap-2">
-          <User className="h-5 w-5 text-indigo-600" />
-          <h2 className="text-lg font-bold text-slate-800">프로필 정보</h2>
+          <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h2 className="text-lg font-bold text-text-primary">프로필 정보</h2>
         </div>
 
         <div className="mb-4">
-          <label className="mb-1 block text-sm font-semibold text-slate-700">
+          <label className="mb-1 block text-sm font-semibold text-text-primary">
             이메일
           </label>
           <input
             type="email"
             value={user?.email ?? ""}
             disabled
-            className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-500"
+            className="w-full cursor-not-allowed rounded-xl border border-border-default bg-surface-alt px-4 py-2.5 text-sm text-text-secondary"
           />
         </div>
 
         <div className="mb-4">
           <label
             htmlFor="display_name"
-            className="mb-1 block text-sm font-semibold text-slate-700"
+            className="mb-1 block text-sm font-semibold text-text-primary"
           >
             표시 이름
           </label>
@@ -116,7 +116,7 @@ export default function SettingsPage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             maxLength={100}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="w-full rounded-xl border border-border-default px-4 py-2.5 text-sm text-text-primary bg-surface-card transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30"
           />
         </div>
 
@@ -130,16 +130,16 @@ export default function SettingsPage() {
       </section>
 
       {/* Password Change */}
-      <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+      <section className="rounded-2xl bg-surface-card p-6 shadow-sm ring-1 ring-border-default/60">
         <div className="mb-6 flex items-center gap-2">
-          <Lock className="h-5 w-5 text-indigo-600" />
-          <h2 className="text-lg font-bold text-slate-800">비밀번호 변경</h2>
+          <Lock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h2 className="text-lg font-bold text-text-primary">비밀번호 변경</h2>
         </div>
 
         <div className="mb-4">
           <label
             htmlFor="current_password"
-            className="mb-1 block text-sm font-semibold text-slate-700"
+            className="mb-1 block text-sm font-semibold text-text-primary"
           >
             현재 비밀번호
           </label>
@@ -148,14 +148,14 @@ export default function SettingsPage() {
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="w-full rounded-xl border border-border-default px-4 py-2.5 text-sm text-text-primary bg-surface-card transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30"
           />
         </div>
 
         <div className="mb-4">
           <label
             htmlFor="new_password"
-            className="mb-1 block text-sm font-semibold text-slate-700"
+            className="mb-1 block text-sm font-semibold text-text-primary"
           >
             새 비밀번호
           </label>
@@ -165,14 +165,14 @@ export default function SettingsPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="8자 이상"
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="w-full rounded-xl border border-border-default px-4 py-2.5 text-sm text-text-primary bg-surface-card transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30"
           />
         </div>
 
         <div className="mb-4">
           <label
             htmlFor="confirm_password"
-            className="mb-1 block text-sm font-semibold text-slate-700"
+            className="mb-1 block text-sm font-semibold text-text-primary"
           >
             새 비밀번호 확인
           </label>
@@ -181,14 +181,14 @@ export default function SettingsPage() {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800 transition-colors focus:outline-none focus:ring-2 ${
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-text-primary bg-surface-card transition-colors focus:outline-none focus:ring-2 ${
               passwordMismatch
-                ? "border-red-300 focus:border-red-300 focus:ring-red-100"
-                : "border-slate-200 focus:border-indigo-300 focus:ring-indigo-100"
+                ? "border-red-300 focus:border-red-300 focus:ring-red-100 dark:focus:ring-red-900/30"
+                : "border-border-default focus:border-indigo-300 focus:ring-indigo-100 dark:focus:ring-indigo-900/30"
             }`}
           />
           {passwordMismatch && (
-            <p className="mt-1 text-xs font-medium text-red-600">
+            <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
               비밀번호가 일치하지 않습니다.
             </p>
           )}
@@ -204,12 +204,12 @@ export default function SettingsPage() {
       </section>
 
       {/* Danger Zone */}
-      <section className="rounded-2xl bg-red-50/50 p-6 ring-1 ring-red-200/60">
+      <section className="rounded-2xl bg-red-50/50 dark:bg-red-900/20 p-6 ring-1 ring-red-200/60 dark:ring-red-800/40">
         <div className="mb-4 flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-600" />
-          <h2 className="text-lg font-bold text-red-800">위험 구역</h2>
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+          <h2 className="text-lg font-bold text-red-800 dark:text-red-300">위험 구역</h2>
         </div>
-        <p className="mb-4 text-sm text-red-700/80">
+        <p className="mb-4 text-sm text-red-700/80 dark:text-red-400/80">
           계정을 삭제하면 모든 문서, 퀴즈, 오답노트가 영구적으로 삭제됩니다. 이
           작업은 되돌릴 수 없습니다.
         </p>
@@ -217,7 +217,7 @@ export default function SettingsPage() {
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="rounded-xl border border-red-300 bg-white px-5 py-2.5 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+            className="rounded-xl border border-red-300 dark:border-red-700 bg-surface-card px-5 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             계정 삭제
           </button>
@@ -226,7 +226,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="delete_password"
-                className="mb-1 block text-sm font-semibold text-red-700"
+                className="mb-1 block text-sm font-semibold text-red-700 dark:text-red-400"
               >
                 비밀번호를 입력하세요
               </label>
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                 type="password"
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
-                className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-100"
+                className="w-full rounded-xl border border-red-200 dark:border-red-800 bg-surface-card px-4 py-2.5 text-sm text-text-primary transition-colors focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900/30"
               />
             </div>
             <div className="flex gap-2">
@@ -251,7 +251,7 @@ export default function SettingsPage() {
                   setShowDeleteConfirm(false);
                   setDeletePassword("");
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
+                className="rounded-xl border border-border-default bg-surface-card px-5 py-2.5 text-sm font-bold text-text-secondary transition-colors hover:bg-surface-alt"
               >
                 취소
               </button>

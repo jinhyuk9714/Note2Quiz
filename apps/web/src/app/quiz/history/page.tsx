@@ -132,15 +132,15 @@ export default function QuizHistoryPage() {
     <div className="mx-auto max-w-4xl space-y-10 pb-12">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
             퀴즈 기록
           </h1>
-          <p className="text-slate-500 font-medium">
+          <p className="text-text-secondary font-medium">
             지금까지 풀었던 모든 퀴즈 목록을 확인하고 복습하세요.
           </p>
         </div>
 
-        <div className="flex p-1.5 gap-1.5 rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-200/50 shadow-sm transition-all duration-200">
+        <div className="flex p-1.5 gap-1.5 rounded-2xl bg-surface-alt ring-1 ring-inset ring-border-default/50 shadow-sm transition-all duration-200">
           {ATTEMPT_TABS.map((tab) => (
             <button
               key={tab.key}
@@ -148,8 +148,8 @@ export default function QuizHistoryPage() {
               className={cn(
                 "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
                 attemptStatus === tab.key
-                  ? "bg-white text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-200"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50/50",
+                  ? "bg-surface-card text-indigo-700 dark:text-indigo-400 shadow-sm ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800"
+                  : "text-text-secondary hover:text-text-primary hover:bg-surface-alt/50",
               )}
             >
               {tab.icon}
@@ -162,10 +162,10 @@ export default function QuizHistoryPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
           <div className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-xl font-bold tracking-tight text-slate-800">내 퀴즈 보관함</h2>
+            <LayoutGrid className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <h2 className="text-xl font-bold tracking-tight text-text-primary">내 퀴즈 보관함</h2>
             {data && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+              <span className="rounded-full bg-surface-alt px-3 py-1 text-xs font-bold text-text-secondary ring-1 ring-inset ring-border-default/50">
                 {total}개
               </span>
             )}
@@ -173,11 +173,11 @@ export default function QuizHistoryPage() {
           <div className="flex flex-wrap items-center gap-2">
             {docsData && docsData.items.length > 0 && (
               <div className="relative">
-                <FileText className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <FileText className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
                 <select
                   value={documentId ?? ""}
                   onChange={(e) => handleDocumentChange(e.target.value)}
-                  className="h-11 appearance-none rounded-2xl border border-slate-200 bg-slate-50/50 pl-9 pr-8 text-xs font-bold text-slate-600 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                  className="h-11 appearance-none rounded-2xl border border-border-default bg-surface-alt/50 pl-9 pr-8 text-xs font-bold text-text-secondary transition-all focus:border-indigo-500 focus:bg-surface-card focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                 >
                   <option value="">모든 문서</option>
                   {docsData.items.map((doc) => (
@@ -209,42 +209,42 @@ export default function QuizHistoryPage() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-28 animate-pulse rounded-[2rem] bg-slate-100" />
+              <div key={i} className="h-28 animate-pulse rounded-[2rem] bg-surface-alt" />
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-[2rem] border border-red-100 bg-red-50 p-8 text-center text-sm font-bold text-red-600">
+          <div className="rounded-[2rem] border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-8 text-center text-sm font-bold text-red-600 dark:text-red-400">
             {error instanceof Error ? error.message : "오류가 발생했습니다"}
           </div>
         ) : quizzes && quizzes.length === 0 ? (
           hasActiveFilter ? (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-20 text-center backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-slate-800">
+            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-border-default bg-surface-card/50 p-20 text-center backdrop-blur-sm">
+              <h3 className="text-lg font-bold text-text-primary">
                 필터 조건에 맞는 퀴즈가 없습니다
               </h3>
-              <p className="mt-2 text-sm font-medium text-slate-500">
+              <p className="mt-2 text-sm font-medium text-text-secondary">
                 다른 필터 조건으로 다시 시도해보세요.
               </p>
               <button
                 onClick={resetFilters}
-                className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-200 active:scale-95"
+                className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-surface-alt px-6 py-3 text-sm font-bold text-text-secondary ring-1 ring-inset ring-border-default transition-all hover:bg-surface-alt/80 active:scale-95"
               >
                 <RotateCcw className="h-4 w-4" />
                 필터 초기화
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-20 text-center backdrop-blur-sm">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-slate-300">
+            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-border-default bg-surface-card/50 p-20 text-center backdrop-blur-sm">
+              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-alt text-text-tertiary">
                 <History className="h-10 w-10" />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">생성된 퀴즈가 없습니다</h3>
-              <p className="mt-2 text-sm font-medium text-slate-500 max-w-xs mx-auto">
+              <h3 className="text-lg font-bold text-text-primary">생성된 퀴즈가 없습니다</h3>
+              <p className="mt-2 text-sm font-medium text-text-secondary max-w-xs mx-auto">
                 아직 도전한 퀴즈가 없네요! 학습 문서를 업로드하고 첫 번째 퀴즈를 생성해보세요.
               </p>
               <Link
                 href="/quiz/generate"
-                className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95"
+                className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30 transition-all hover:bg-indigo-700 active:scale-95"
               >
                 <Sparkles className="h-4 w-4" />
                 첫 퀴즈 생성하기

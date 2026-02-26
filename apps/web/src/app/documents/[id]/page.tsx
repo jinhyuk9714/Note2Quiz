@@ -91,10 +91,10 @@ export default function DocumentDetailPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl py-20 text-center">
-        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 animate-pulse">
+        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 dark:text-indigo-400 animate-pulse">
           <FileText className="h-8 w-8" />
         </div>
-        <p className="text-sm font-bold text-slate-400">
+        <p className="text-sm font-bold text-text-tertiary">
           문서를 불러오는 중...
         </p>
       </div>
@@ -104,20 +104,20 @@ export default function DocumentDetailPage() {
   if (error || !doc) {
     return (
       <div className="mx-auto max-w-4xl py-20 text-center">
-        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 text-red-500">
+        <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">
+        <h2 className="text-xl font-bold text-text-primary">
           문서를 찾을 수 없습니다
         </h2>
-        <p className="mt-2 text-sm font-medium text-slate-500">
+        <p className="mt-2 text-sm font-medium text-text-secondary">
           {error instanceof Error
             ? error.message
             : "존재하지 않거나 삭제된 문서입니다."}
         </p>
         <Link
           href="/documents"
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200"
+          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-surface-alt px-6 py-3 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt/80"
         >
           목록으로 돌아가기
         </Link>
@@ -134,7 +134,7 @@ export default function DocumentDetailPage() {
         <div className="flex flex-col gap-1">
           <Link
             href="/documents"
-            className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-indigo-600"
+            className="group mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-text-tertiary transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
           >
             <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             Back to Documents
@@ -151,16 +151,16 @@ export default function DocumentDetailPage() {
               onBlur={handleRenameSubmit}
               maxLength={500}
               disabled={renameMutation.isPending}
-              className="w-full rounded-2xl border border-indigo-300 bg-white px-4 py-2 text-2xl font-extrabold tracking-tight text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50"
+              className="w-full rounded-2xl border border-indigo-300 dark:border-indigo-700 bg-surface-card px-4 py-2 text-2xl font-extrabold tracking-tight text-text-primary focus:outline-none focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50"
             />
           ) : (
             <div className="group/title flex items-center gap-2">
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
                 {doc.title}
               </h1>
               <button
                 onClick={startEditing}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-500 group-hover/title:opacity-100"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary opacity-0 transition-all hover:bg-surface-alt hover:text-text-secondary group-hover/title:opacity-100"
                 title="이름 변경"
               >
                 <Pencil className="h-4 w-4" />
@@ -168,10 +168,10 @@ export default function DocumentDetailPage() {
             </div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-alt px-2.5 py-1 text-xs font-bold text-text-secondary ring-1 ring-inset ring-border-default/50">
               {doc.source_type === "pdf" ? "PDF" : "텍스트"}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
               <Hash className="h-3.5 w-3.5" />
               {doc.char_count.toLocaleString()}자
             </div>
