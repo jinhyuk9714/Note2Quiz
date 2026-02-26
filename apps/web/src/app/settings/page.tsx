@@ -204,7 +204,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Danger Zone */}
-      <section className="rounded-2xl bg-red-50/50 dark:bg-red-900/20 p-6 ring-1 ring-red-200/60 dark:ring-red-800/40">
+      <section className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-6 ring-1 ring-red-200 dark:ring-red-800/40">
         <div className="mb-4 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
           <h2 className="text-lg font-bold text-red-800 dark:text-red-300">위험 구역</h2>
