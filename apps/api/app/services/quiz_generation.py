@@ -32,6 +32,54 @@ async def load_chunks(
     return chunks
 
 
+def _mock_quiz_items(n: int, quiz_types: list[str]) -> list[dict[str, object]]:
+    """Return deterministic quiz items for E2E testing."""
+    items: list[dict[str, object]] = []
+    for i in range(n):
+        qt = quiz_types[i % len(quiz_types)]
+        if qt == "mcq":
+            items.append({
+                "quiz_type": "mcq",
+                "question": f"Mock Q{i + 1}: 다음 중 올바른 것은?",
+                "correct_answer": "A",
+                "explanation": f"A가 정답입니다. (Mock 해설 {i + 1})",
+                "options": {"A": "정답 선택지", "B": "오답 1", "C": "오답 2", "D": "오답 3"},
+                "concept_tags": ["mock-concept"],
+                "difficulty": 2,
+            })
+        elif qt == "true_false":
+            items.append({
+                "quiz_type": "true_false",
+                "question": f"Mock TF{i + 1}: 지구는 둥글다.",
+                "correct_answer": "O",
+                "explanation": "지구는 대략적으로 구형입니다.",
+                "options": None,
+                "concept_tags": ["mock-concept"],
+                "difficulty": 1,
+            })
+        elif qt == "short_answer":
+            items.append({
+                "quiz_type": "short_answer",
+                "question": f"Mock SA{i + 1}: 대한민국의 수도는?",
+                "correct_answer": "서울",
+                "explanation": "대한민국의 수도는 서울입니다.",
+                "options": None,
+                "concept_tags": ["mock-concept"],
+                "difficulty": 1,
+            })
+        else:
+            items.append({
+                "quiz_type": "fill_blank",
+                "question": f"Mock FB{i + 1}: 대한민국의 수도는 ___이다.",
+                "correct_answer": "서울",
+                "explanation": "대한민국의 수도는 서울입니다.",
+                "options": None,
+                "concept_tags": ["mock-concept"],
+                "difficulty": 1,
+            })
+    return items
+
+
 async def generate_questions_for_chunk(
     client: anthropic.AsyncAnthropic,
     chunk: Chunk,
@@ -40,6 +88,13 @@ async def generate_questions_for_chunk(
     focus_concepts: list[str] | None = None,
 ) -> list[dict[str, object]]:
     """Call LLM for a single chunk and return parsed quiz items."""
+    # E2E test mock: return deterministic items when using a test API key
+    if settings.anthropic_api_key.startswith("test-"):
+        items = _mock_quiz_items(questions_per_chunk, quiz_types)
+        for item in items:
+            item["source_chunk_id"] = str(chunk.id)
+        return items
+
     prompt = build_quiz_generation_prompt(
         chunk_text=chunk.content,
         n_questions=questions_per_chunk,
