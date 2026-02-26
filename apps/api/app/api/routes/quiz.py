@@ -73,7 +73,11 @@ async def generate_quiz(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    title = payload.title or f"{doc.title} 퀴즈"
+    if payload.focus_concepts:
+        concept_label = ", ".join(payload.focus_concepts[:2])
+        title = payload.title or f"{doc.title} - {concept_label} 집중 퀴즈"
+    else:
+        title = payload.title or f"{doc.title} 퀴즈"
 
     try:
         quiz = await generate_quiz_from_chunks(
@@ -83,6 +87,7 @@ async def generate_quiz(
             n_questions=payload.n_questions,
             quiz_types=payload.quiz_types,
             title=title,
+            focus_concepts=payload.focus_concepts,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -117,7 +122,11 @@ async def generate_quiz_stream(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    title = payload.title or f"{doc.title} 퀴즈"
+    if payload.focus_concepts:
+        concept_label = ", ".join(payload.focus_concepts[:2])
+        title = payload.title or f"{doc.title} - {concept_label} 집중 퀴즈"
+    else:
+        title = payload.title or f"{doc.title} 퀴즈"
 
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
@@ -138,7 +147,11 @@ async def generate_quiz_stream(
                     },
                 )
                 items = await generate_questions_for_chunk(
-                    client, chunk, questions_per_chunk, payload.quiz_types
+                    client,
+                    chunk,
+                    questions_per_chunk,
+                    payload.quiz_types,
+                    focus_concepts=payload.focus_concepts,
                 )
                 all_items.extend(items)
 

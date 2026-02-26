@@ -36,12 +36,14 @@ async def generate_questions_for_chunk(
     chunk: Chunk,
     questions_per_chunk: int,
     quiz_types: list[str],
+    focus_concepts: list[str] | None = None,
 ) -> list[dict[str, object]]:
     """Call LLM for a single chunk and return parsed quiz items."""
     prompt = build_quiz_generation_prompt(
         chunk_text=chunk.content,
         n_questions=questions_per_chunk,
         quiz_types=quiz_types,
+        focus_concepts=focus_concepts,
     )
     response = await client.messages.create(
         model=settings.anthropic_model,
@@ -103,6 +105,7 @@ async def generate_quiz_from_chunks(
     n_questions: int,
     quiz_types: list[str],
     title: str,
+    focus_concepts: list[str] | None = None,
 ) -> Quiz:
     chunks = await load_chunks(db, document_id, chunk_ids)
 
@@ -111,7 +114,13 @@ async def generate_quiz_from_chunks(
 
     new_items_data: list[dict[str, object]] = []
     for chunk in chunks:
-        items = await generate_questions_for_chunk(client, chunk, questions_per_chunk, quiz_types)
+        items = await generate_questions_for_chunk(
+            client,
+            chunk,
+            questions_per_chunk,
+            quiz_types,
+            focus_concepts=focus_concepts,
+        )
         new_items_data.extend(items)
 
     return await save_quiz_to_db(db, document_id, title, new_items_data, n_questions, quiz_types)

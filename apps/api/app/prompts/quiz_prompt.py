@@ -5,6 +5,7 @@ def build_quiz_generation_prompt(
     chunk_text: str,
     n_questions: int,
     quiz_types: list[str],
+    focus_concepts: list[str] | None = None,
 ) -> str:
     types_str = ", ".join(quiz_types)
 
@@ -15,6 +16,16 @@ def build_quiz_generation_prompt(
     if remainder:
         distribution += f" (assign the extra {remainder} to any type)"
 
+    focus_instruction = ""
+    if focus_concepts:
+        concepts_str = ", ".join(focus_concepts)
+        focus_instruction = f"""
+**FOCUS CONCEPTS**: You MUST prioritize generating questions about the following concepts: [{concepts_str}].
+- At least 70% of the questions should directly test these concepts.
+- Each generated question's concept_tags should include the relevant focus concept when applicable.
+- If the study material does not cover these concepts, generate questions from whatever is available.
+"""
+
     return f"""You are an expert educational quiz generator for university students.
 
 Given the following study material, generate exactly {n_questions} quiz questions.
@@ -23,7 +34,7 @@ Given the following study material, generate exactly {n_questions} quiz question
 {distribution}
 
 **IMPORTANT**: You MUST use ALL of the allowed question types listed above. Do NOT generate only one type.
-
+{focus_instruction}
 Type-specific rules:
 - "mcq": Multiple choice — include "options" with keys A, B, C, D. "correct_answer" is one of "A","B","C","D".
 - "short_answer": Short answer — omit "options". "correct_answer" is a 1-2 sentence answer.

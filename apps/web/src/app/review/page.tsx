@@ -198,24 +198,37 @@ export default function ReviewPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             {weakConcepts.map((c) => (
-              <button
-                key={c.tag}
-                onClick={() =>
-                  setSelectedTag((prev) =>
-                    prev === c.tag ? null : c.tag,
-                  )
-                }
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95",
-                  selectedTag === c.tag
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                    : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-800",
-                )}
-              >
-                <Tag className="h-3 w-3" />
-                {c.tag}
-                {selectedTag === c.tag && <X className="h-3 w-3" />}
-              </button>
+              <div key={c.tag} className="inline-flex items-center gap-0.5">
+                <button
+                  onClick={() =>
+                    setSelectedTag((prev) =>
+                      prev === c.tag ? null : c.tag,
+                    )
+                  }
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-l-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95",
+                    selectedTag === c.tag
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                      : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-800",
+                  )}
+                >
+                  <Tag className="h-3 w-3" />
+                  {c.tag}
+                  {selectedTag === c.tag && <X className="h-3 w-3" />}
+                </button>
+                <Link
+                  href={`/quiz/generate?focus_concept=${encodeURIComponent(c.tag)}`}
+                  className={cn(
+                    "inline-flex items-center rounded-r-full px-2 py-1.5 text-xs transition-all hover:bg-indigo-50 active:scale-95",
+                    selectedTag === c.tag
+                      ? "bg-indigo-500 text-white hover:bg-indigo-400"
+                      : "bg-white text-indigo-600 ring-1 ring-inset ring-slate-200 hover:text-indigo-700",
+                  )}
+                  title={`${c.tag} 집중 퀴즈 생성`}
+                >
+                  <Sparkles className="h-3 w-3" />
+                </Link>
+              </div>
             ))}
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight, Type, Layers, Zap, ChevronDown } from "lucide-react";
+import { Sparkles, FileText, ListOrdered, CheckSquare, HelpCircle, PenTool, AlertCircle, ArrowRight, Type, Layers, Zap, ChevronDown, Target, X } from "lucide-react";
 import { listDocuments, getDocument } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -16,12 +16,14 @@ const QUIZ_TYPE_OPTIONS = [
 
 interface QuizConfigFormProps {
   defaultDocumentId?: string;
+  defaultFocusConcept?: string;
   onSubmit: (config: {
     documentId: string;
     nQuestions: number;
     quizTypes: string[];
     title: string;
     chunkIds?: string[];
+    focusConcepts?: string[];
   }) => void;
   isPending: boolean;
   onCancel?: () => void;
@@ -29,6 +31,7 @@ interface QuizConfigFormProps {
 
 export function QuizConfigForm({
   defaultDocumentId,
+  defaultFocusConcept,
   onSubmit,
   isPending,
   onCancel,
@@ -42,6 +45,7 @@ export function QuizConfigForm({
   ]);
   const [selectedChunkIds, setSelectedChunkIds] = useState<Set<string>>(new Set());
   const [chunkSectionOpen, setChunkSectionOpen] = useState(false);
+  const [focusConcept, setFocusConcept] = useState<string | null>(defaultFocusConcept ?? null);
 
   const { data: docsData, isLoading: docsLoading } = useQuery({
     queryKey: ["documents"],
@@ -90,7 +94,8 @@ export function QuizConfigForm({
   const handleSubmit = () => {
     if (!canSubmit) return;
     const chunkIds = selectedChunkIds.size > 0 ? [...selectedChunkIds] : undefined;
-    onSubmit({ documentId, nQuestions, quizTypes, title, chunkIds });
+    const focusConcepts = focusConcept ? [focusConcept] : undefined;
+    onSubmit({ documentId, nQuestions, quizTypes, title, chunkIds, focusConcepts });
   };
 
   return (
@@ -109,6 +114,27 @@ export function QuizConfigForm({
       </div>
 
       <div className="space-y-8">
+        {/* Focus Concept Badge */}
+        {focusConcept && (
+          <div className="flex items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
+            <Target className="h-4 w-4 text-indigo-600" />
+            <span className="text-sm font-bold text-indigo-700">
+              집중 개념:
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-100 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+              {focusConcept}
+              <button
+                type="button"
+                onClick={() => setFocusConcept(null)}
+                className="rounded-full p-0.5 hover:bg-indigo-200 transition-colors"
+                aria-label="집중 개념 해제"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          </div>
+        )}
+
         {/* Document Selection */}
         <div className="space-y-3">
           <label htmlFor="doc-select" className="ml-1 flex items-center gap-2 text-sm font-bold text-slate-700">

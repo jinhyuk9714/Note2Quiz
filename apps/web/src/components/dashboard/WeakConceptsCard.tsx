@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertCircle, ArrowRight, Zap } from "lucide-react";
+import { AlertCircle, Sparkles, Zap } from "lucide-react";
 import type { WeakConceptItem } from "@/types/api";
 
 interface WeakConceptsCardProps {
@@ -39,19 +39,25 @@ export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
 
             return (
               <li key={c.tag}>
-                <Link
-                  href={`/wrong-notes?concept_tag=${encodeURIComponent(c.tag)}`}
-                  className="group block rounded-2xl p-3 -mx-3 transition-colors hover:bg-indigo-50/50"
-                >
+                <div className="rounded-2xl p-3 -mx-3 transition-colors hover:bg-indigo-50/50">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="inline-flex items-center rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition-colors group-hover:bg-indigo-100">
+                    <Link
+                      href={`/wrong-notes?concept_tag=${encodeURIComponent(c.tag)}`}
+                      className="inline-flex items-center rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition-colors hover:bg-indigo-100"
+                    >
                       {c.tag}
-                    </span>
+                    </Link>
                     <div className="flex items-center gap-2 text-xs font-semibold">
                       <span className="text-red-500">오답 {c.wrong_count}회</span>
-                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-300">|</span>
                       <span className="text-slate-500">숙달 {masteryPercent}%</span>
-                      <ArrowRight className="h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+                      <Link
+                        href={`/quiz/generate?focus_concept=${encodeURIComponent(c.tag)}`}
+                        className="ml-1 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-95"
+                      >
+                        <Sparkles className="h-2.5 w-2.5" />
+                        퀴즈
+                      </Link>
                     </div>
                   </div>
                   <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/50">
@@ -60,7 +66,7 @@ export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
-                </Link>
+                </div>
               </li>
             );
           })}

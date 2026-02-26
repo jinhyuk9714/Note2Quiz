@@ -122,4 +122,26 @@ describe("ReviewPage", () => {
       expect(screen.getByText("확률")).toBeInTheDocument();
     });
   });
+
+  it("renders quiz generation links for concept pills", async () => {
+    mockGetDashboardStats.mockResolvedValue({
+      ...EMPTY_STATS,
+      weak_concepts: [
+        { tag: "미적분", wrong_count: 5, mastered_count: 0, total_count: 5 },
+      ],
+    });
+    mockListWrongNotes.mockResolvedValue({ notes: [], total: 0 });
+
+    renderWithProviders(<ReviewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("미적분")).toBeInTheDocument();
+    });
+
+    const quizLink = screen.getByTitle("미적분 집중 퀴즈 생성");
+    expect(quizLink).toHaveAttribute(
+      "href",
+      "/quiz/generate?focus_concept=%EB%AF%B8%EC%A0%81%EB%B6%84",
+    );
+  });
 });

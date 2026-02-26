@@ -9,6 +9,7 @@ import { useQuizGenerateStream } from "@/hooks/useQuizGenerateStream";
 function QuizGenerateContent() {
   const searchParams = useSearchParams();
   const defaultDocumentId = searchParams.get("document_id") ?? undefined;
+  const defaultFocusConcept = searchParams.get("focus_concept") ?? undefined;
 
   const { state, startGeneration, cancel } = useQuizGenerateStream();
   const isStreaming = state.status === "streaming";
@@ -17,6 +18,7 @@ function QuizGenerateContent() {
     <div className="space-y-6">
       <QuizConfigForm
         defaultDocumentId={defaultDocumentId}
+        defaultFocusConcept={defaultFocusConcept}
         onSubmit={(config) =>
           startGeneration({
             document_id: config.documentId,
@@ -24,6 +26,7 @@ function QuizGenerateContent() {
             n_questions: config.nQuestions,
             quiz_types: config.quizTypes,
             title: config.title || undefined,
+            focus_concepts: config.focusConcepts,
           })
         }
         isPending={isStreaming}

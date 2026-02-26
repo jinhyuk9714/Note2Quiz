@@ -39,6 +39,17 @@ describe("WeakConceptsCard", () => {
     expect(algebraLink).toHaveAttribute("href", "/wrong-notes?concept_tag=algebra");
   });
 
+  it("links to quiz generation with focus_concept param", () => {
+    render(<WeakConceptsCard concepts={concepts} />);
+    const links = screen.getAllByRole("link");
+    const quizLinks = links.filter((l) =>
+      l.getAttribute("href")?.startsWith("/quiz/generate"),
+    );
+    expect(quizLinks).toHaveLength(2);
+    expect(quizLinks[0]).toHaveAttribute("href", "/quiz/generate?focus_concept=calculus");
+    expect(quizLinks[1]).toHaveAttribute("href", "/quiz/generate?focus_concept=algebra");
+  });
+
   it("has no links when empty", () => {
     render(<WeakConceptsCard concepts={[]} />);
     expect(screen.queryAllByRole("link")).toHaveLength(0);

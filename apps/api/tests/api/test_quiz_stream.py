@@ -183,3 +183,51 @@ class TestGenerateQuizStream:
         analyzing = [e for e in events if e[0] == "progress" and e[1]["step"] == "analyzing"]
         assert len(analyzing) >= 1
         assert "분석 중" in str(analyzing[0][1]["message"])
+
+    async def test_stream_with_focus_concepts(self, client: AsyncClient) -> None:
+        mock_cls, mock_client = _mock_anthropic()
+
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Focus Test",
+                "text": "Long enough material for quiz generation testing purposes.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        with (
+            patch("app.api.routes.quiz.anthropic.AsyncAnthropic", mock_cls),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            resp = await client.post(
+                "/api/quiz/generate-stream",
+                json={
+                    "document_id": doc_id,
+                    "n_questions": 1,
+                    "quiz_types": ["mcq"],
+                    "focus_concepts": ["미적분"],
+                },
+            )
+
+        assert resp.status_code == 200
+
+        # Verify LLM prompt contained focus concepts
+        call_args = mock_client.messages.create.call_args
+        prompt_content = call_args.kwargs["messages"][0]["content"]
+        assert "FOCUS CONCEPTS" in prompt_content
+        assert "미적분" in prompt_content
+
+        events = _parse_sse_events(resp.text)
+        complete_events = [e for e in events if e[0] == "complete"]
+        assert len(complete_events) == 1
+
+        # Verify title includes focus concept
+        quiz_id = complete_events[0][1]["quiz_id"]
+        get_resp = await client.get(f"/api/quiz/{quiz_id}")
+        assert get_resp.status_code == 200
+        assert "미적분" in get_resp.json()["title"]
+        assert "집중 퀴즈" in get_resp.json()["title"]

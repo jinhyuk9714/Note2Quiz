@@ -92,6 +92,7 @@ export interface GenerateQuizPayload {
   n_questions: number;
   quiz_types: string[];
   title?: string;
+  focus_concepts?: string[];
 }
 
 // SSE streaming events for quiz generation

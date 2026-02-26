@@ -16,6 +16,7 @@ class QuizGenerateRequest(BaseModel):
     n_questions: int = Field(default=5, ge=1, le=20)
     quiz_types: list[str] = Field(default=["mcq", "short_answer"])
     title: str | None = Field(default=None, max_length=500)
+    focus_concepts: list[str] | None = Field(default=None)
 
     @field_validator("quiz_types")
     @classmethod
@@ -24,6 +25,18 @@ class QuizGenerateRequest(BaseModel):
             if qt not in _VALID_QUIZ_TYPES:
                 msg = f"Invalid quiz type '{qt}'. Must be one of: {', '.join(sorted(_VALID_QUIZ_TYPES))}"
                 raise ValueError(msg)
+        return v
+
+    @field_validator("focus_concepts")
+    @classmethod
+    def validate_focus_concepts(cls, v: list[str] | None) -> list[str] | None:
+        if v is not None:
+            if len(v) > 5:
+                msg = "At most 5 focus concepts allowed"
+                raise ValueError(msg)
+            v = [tag.strip() for tag in v if tag.strip()]
+            if not v:
+                return None
         return v
 
 
