@@ -86,7 +86,7 @@ async def _get_weak_concepts(
     user_id: uuid.UUID,
     limit: int = 10,
 ) -> list[WeakConceptItem]:
-    # Detect dialect: use PostgreSQL jsonb_array_elements_text for DB-side
+    # Detect dialect: use PostgreSQL json_array_elements_text for DB-side
     # aggregation; fall back to Python-side processing for SQLite (tests).
     dialect_name = db.bind.dialect.name if db.bind else "unknown"  # type: ignore[union-attr]
 
@@ -97,7 +97,7 @@ async def _get_weak_concepts(
                 COUNT(*) AS wrong_count,
                 COUNT(*) FILTER (WHERE is_mastered = TRUE) AS mastered_count
             FROM wrong_answer_notes,
-                 jsonb_array_elements_text(concept_tags) AS tag
+                 json_array_elements_text(concept_tags) AS tag
             WHERE user_id = :user_id
             GROUP BY tag
             ORDER BY wrong_count DESC
