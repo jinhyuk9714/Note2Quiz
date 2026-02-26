@@ -10,7 +10,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp } from "lucide-react";
+import { useTheme } from "next-themes";
 import { fillDateGaps, formatShortDate } from "@/lib/chartUtils";
+import { CHART_COLORS } from "@/lib/chartTheme";
 import type { DailyTrendPoint } from "@/types/api";
 
 interface DailyAccuracyChartProps {
@@ -18,6 +20,9 @@ interface DailyAccuracyChartProps {
 }
 
 export function DailyAccuracyChart({ data }: DailyAccuracyChartProps) {
+  const { resolvedTheme } = useTheme();
+  const colors = CHART_COLORS[resolvedTheme === "dark" ? "dark" : "light"];
+
   const filled = fillDateGaps(data, 30);
   const chartData = filled.map((d) => ({
     date: formatShortDate(d.date),
@@ -25,7 +30,7 @@ export function DailyAccuracyChart({ data }: DailyAccuracyChartProps) {
   }));
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="bento-card flex h-full flex-col overflow-hidden p-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
           <TrendingUp className="h-5 w-5" />
@@ -51,19 +56,20 @@ export function DailyAccuracyChart({ data }: DailyAccuracyChartProps) {
             </defs>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#f1f5f9"
+              stroke={colors.grid}
               vertical={false}
+              syncWithTicks
             />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11, fill: "#94a3b8" }}
+              tick={{ fontSize: 11, fill: colors.tick }}
               tickLine={false}
               axisLine={false}
               interval={6}
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fontSize: 11, fill: "#94a3b8" }}
+              tick={{ fontSize: 11, fill: colors.tick }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v}%`}
@@ -72,7 +78,9 @@ export function DailyAccuracyChart({ data }: DailyAccuracyChartProps) {
               formatter={(value) => [`${value}%`, "정답률"]}
               contentStyle={{
                 borderRadius: "0.75rem",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.tooltipBorder}`,
+                backgroundColor: colors.tooltipBg,
+                color: colors.tooltipText,
                 fontSize: "0.75rem",
               }}
             />

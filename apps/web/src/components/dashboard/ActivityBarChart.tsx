@@ -12,20 +12,16 @@ import {
 import { Activity } from "lucide-react";
 import { useTheme } from "next-themes";
 import { fillDateGaps, formatShortDate } from "@/lib/chartUtils";
+import { CHART_COLORS } from "@/lib/chartTheme";
 import type { DailyTrendPoint } from "@/types/api";
 
 interface ActivityBarChartProps {
   data: DailyTrendPoint[];
 }
 
-const PALETTE = {
-  light: { grid: "#e2e8f0", tick: "#94a3b8", tooltipBg: "#ffffff", tooltipBorder: "#e2e8f0" },
-  dark: { grid: "#334155", tick: "#94a3b8", tooltipBg: "#1e293b", tooltipBorder: "#475569" },
-} as const;
-
 export function ActivityBarChart({ data }: ActivityBarChartProps) {
   const { resolvedTheme } = useTheme();
-  const colors = PALETTE[resolvedTheme === "dark" ? "dark" : "light"];
+  const colors = CHART_COLORS[resolvedTheme === "dark" ? "dark" : "light"];
 
   const filled = fillDateGaps(data, 30);
   const chartData = filled.map((d) => ({
@@ -78,7 +74,7 @@ export function ActivityBarChart({ data }: ActivityBarChartProps) {
                 borderRadius: "0.75rem",
                 border: `1px solid ${colors.tooltipBorder}`,
                 backgroundColor: colors.tooltipBg,
-                color: colors.tick,
+                color: colors.tooltipText,
                 fontSize: "0.75rem",
               }}
             />
