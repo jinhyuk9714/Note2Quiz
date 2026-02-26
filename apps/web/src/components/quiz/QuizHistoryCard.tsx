@@ -95,6 +95,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             router.push(`/quiz/${quiz.id}/flashcard`);
           }}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400"
+          aria-label="플래시카드"
           title="플래시카드"
         >
           <FlipHorizontal className="h-4 w-4" />
@@ -105,6 +106,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             router.push(`/quiz/${quiz.id}/edit`);
           }}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400"
+          aria-label="편집"
           title="편집"
         >
           <Pencil className="h-4 w-4" />
@@ -115,6 +117,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             setShareOpen(true);
           }}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
+          aria-label="공유"
           title="공유"
         >
           <Link2 className="h-4 w-4" />
@@ -123,6 +126,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
           onClick={handleDelete}
           disabled={mutation.isPending}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+          aria-label="삭제"
           title="삭제"
         >
           {mutation.isPending ? (

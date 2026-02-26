@@ -42,6 +42,7 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
@@ -78,6 +79,7 @@ export function Sidebar() {
           <button
             onClick={handleLogout}
             className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-red-600 dark:hover:text-red-400"
+            aria-label="로그아웃"
             title="로그아웃"
           >
             <LogOut className="h-4 w-4" />

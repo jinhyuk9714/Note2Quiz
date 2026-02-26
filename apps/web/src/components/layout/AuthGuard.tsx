@@ -48,7 +48,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
       <MobileHeader onOpen={() => setDrawerOpen(true)} />
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <main id="main-content" className="flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

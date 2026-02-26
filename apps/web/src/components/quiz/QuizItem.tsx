@@ -59,7 +59,7 @@ export function QuizItem({
       </p>
 
       {item.quiz_type === "mcq" && item.options ? (
-        <div className="grid grid-cols-1 gap-3">
+        <div role="radiogroup" aria-label={`문제 ${index + 1} 선택지`} className="grid grid-cols-1 gap-3">
           {Object.entries(item.options)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([key, text]) => {
@@ -102,13 +102,15 @@ export function QuizItem({
             })}
         </div>
       ) : item.quiz_type === "true_false" ? (
-        <div className="flex gap-4">
+        <div role="radiogroup" aria-label={`문제 ${index + 1} O/X 선택`} className="flex gap-4">
           {["O", "X"].map((opt) => {
             const isSelected = value === opt;
             return (
               <button
                 key={opt}
                 type="button"
+                role="radio"
+                aria-checked={isSelected}
                 onClick={() => !disabled && onChange(opt)}
                 disabled={disabled}
                 className={cn(
