@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload, FileUp, Type, X, FileText, Image as ImageIcon } from "lucide-react";
+import { Upload, FileUp, Type, X, FileText, Image as ImageIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { listFolders, uploadDocument, uploadDocumentFile } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -99,100 +99,84 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
         e.preventDefault();
         if (canSubmit) mutation.mutate();
       }}
-      className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md"
+      className="bento-card overflow-hidden p-10 hover:border-indigo-400/50"
     >
-      <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-          <Upload className="h-5 w-5" />
+      <div className="mb-10 flex items-center gap-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+          <Upload className="h-6 w-6" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-800">문서 업로드</h2>
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-text-primary">문서 업로드</h2>
+          <p className="text-sm font-medium text-text-tertiary">새로운 학습 자료를 분석하여 퀴즈를 생성합니다.</p>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="doc-title" className="ml-1 text-sm font-bold text-slate-700">
-            문서 제목
-          </label>
-          <input
-            id="doc-title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="강의 제목 또는 노트 이름"
-            maxLength={500}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400"
-          />
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div className="space-y-3">
+            <label htmlFor="doc-title" className="ml-1 text-xs font-black uppercase tracking-widest text-text-tertiary">
+              문서 제목
+            </label>
+            <input
+              id="doc-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="강의 제목 또는 노트 이름"
+              maxLength={500}
+              className="w-full rounded-2xl border border-border-default bg-surface-alt px-5 py-4 text-sm font-bold transition-all focus:border-indigo-600 focus:bg-surface-card focus:outline-none focus:ring-4 focus:ring-indigo-600/10 placeholder:text-text-tertiary text-text-primary"
+            />
+          </div>
+
+          {/* Folder selector */}
+          {folders && folders.length > 0 && (
+            <div className="space-y-3">
+              <label htmlFor="doc-folder" className="ml-1 text-xs font-black uppercase tracking-widest text-text-tertiary">
+                폴더 <span className="font-medium opacity-50">(선택)</span>
+              </label>
+              <select
+                id="doc-folder"
+                value={folderId}
+                onChange={(e) => setFolderId(e.target.value)}
+                className="w-full rounded-2xl border border-border-default bg-surface-alt px-5 py-4 text-sm font-bold transition-all focus:border-indigo-600 focus:bg-surface-card focus:outline-none focus:ring-4 focus:ring-indigo-600/10 text-text-primary appearance-none cursor-pointer"
+              >
+                <option value="">미분류</option>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.emoji ? `${f.emoji} ` : ""}{f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
-        {/* Folder selector */}
-        {folders && folders.length > 0 && (
-          <div className="space-y-2">
-            <label htmlFor="doc-folder" className="ml-1 text-sm font-bold text-slate-700">
-              폴더 <span className="font-medium text-slate-400">(선택)</span>
-            </label>
-            <select
-              id="doc-folder"
-              value={folderId}
-              onChange={(e) => setFolderId(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 text-slate-700"
-            >
-              <option value="">미분류</option>
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.emoji ? `${f.emoji} ` : ""}{f.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         {/* Mode tabs */}
-        <div className="flex p-1 gap-1 rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-200/50">
-          <button
-            type="button"
-            onClick={() => switchMode("text")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all",
-              mode === "text"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            )}
-          >
-            <Type className="h-4 w-4" />
-            텍스트
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode("pdf")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all",
-              mode === "pdf"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            )}
-          >
-            <FileUp className="h-4 w-4" />
-            PDF
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode("image")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all",
-              mode === "image"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            )}
-          >
-            <ImageIcon className="h-4 w-4" />
-            이미지
-          </button>
+        <div className="flex p-1.5 gap-2 rounded-2xl bg-surface-alt ring-1 ring-inset ring-border-default max-w-md">
+          {(["text", "pdf", "image"] as UploadMode[]).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => switchMode(m)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all",
+                mode === m
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
+                  : "text-text-tertiary hover:text-text-primary hover:bg-white dark:hover:bg-slate-800"
+              )}
+            >
+              {m === "text" && <Type className="h-4 w-4" />}
+              {m === "pdf" && <FileUp className="h-4 w-4" />}
+              {m === "image" && <ImageIcon className="h-4 w-4" />}
+              {m === "text" ? "텍스트" : m.toUpperCase()}
+            </button>
+          ))}
         </div>
 
         {/* Text mode */}
         {mode === "text" && (
-          <div className="space-y-2 animate-in fade-in duration-300">
-            <label htmlFor="doc-text" className="ml-1 text-sm font-bold text-slate-700">
+          <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <label htmlFor="doc-text" className="ml-1 text-xs font-black uppercase tracking-widest text-text-tertiary">
               학습 자료 본문
             </label>
             <textarea
@@ -200,11 +184,11 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="강의 노트 또는 학습 자료 텍스트를 붙여넣으세요 (최소 10자)"
-              rows={10}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400"
+              rows={12}
+              className="w-full rounded-3xl border border-border-default bg-surface-alt px-6 py-6 text-base font-medium transition-all focus:border-indigo-600 focus:bg-surface-card focus:outline-none focus:ring-4 focus:ring-indigo-600/10 placeholder:text-text-tertiary text-text-primary leading-relaxed"
             />
-            <div className="flex justify-end pr-2">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{text.length} characters</p>
+            <div className="flex justify-end pr-4">
+              <p className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{text.length} characters</p>
             </div>
           </div>
         )}
@@ -215,19 +199,19 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             className={cn(
-              "group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center transition-all animate-in fade-in duration-300",
-              file ? "bg-indigo-50/30 border-indigo-200" : "bg-slate-50/50 hover:border-indigo-300 hover:bg-white"
+              "group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border-default p-16 text-center transition-all animate-in fade-in slide-in-from-top-2 duration-300",
+              file ? "bg-indigo-50/50 border-indigo-400 dark:bg-indigo-900/10" : "bg-surface-alt hover:border-indigo-400 hover:bg-surface-card"
             )}
           >
             {file ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 shadow-sm">
-                  <FileText className="h-8 w-8" />
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none">
+                  <FileText className="h-10 w-10" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800">{file.name}</p>
-                  <p className="text-xs font-medium text-slate-500 mt-1">
-                    {(file.size / 1024 / 1024).toFixed(1)} MB
+                  <p className="text-lg font-black text-text-primary">{file.name}</p>
+                  <p className="text-xs font-bold text-text-tertiary mt-1 uppercase tracking-widest">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
                 <button
@@ -236,27 +220,27 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
                     setFile(null);
                     clearFileInput(fileInputRef);
                   }}
-                  className="mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
+                  className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-50"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                   파일 제거
                 </button>
               </div>
             ) : (
               <>
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-500">
-                  <FileUp className="h-8 w-8" />
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-text-tertiary transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-600 group-hover:shadow-xl group-hover:shadow-indigo-100 dark:group-hover:shadow-none">
+                  <FileUp className="h-10 w-10" />
                 </div>
-                <p className="mb-1 text-sm font-bold text-slate-700">
+                <p className="mb-2 text-lg font-black text-text-primary tracking-tight">
                   PDF 파일을 드래그하거나 선택하세요
                 </p>
-                <p className="mb-6 text-xs font-medium text-slate-400">
-                  최대 20MB 크기의 PDF 파일만 가능합니다.
+                <p className="mb-8 text-sm font-medium text-text-tertiary uppercase tracking-widest">
+                  Maximum 20MB
                 </p>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-slate-300 active:scale-95"
+                  className="rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-black text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-700 hover:-translate-y-1 dark:shadow-none active:scale-95"
                 >
                   파일 선택하기
                 </button>
@@ -278,19 +262,19 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             className={cn(
-              "group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center transition-all animate-in fade-in duration-300",
-              file ? "bg-indigo-50/30 border-indigo-200" : "bg-slate-50/50 hover:border-indigo-300 hover:bg-white"
+              "group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border-default p-16 text-center transition-all animate-in fade-in slide-in-from-top-2 duration-300",
+              file ? "bg-indigo-50/50 border-indigo-400 dark:bg-indigo-900/10" : "bg-surface-alt hover:border-indigo-400 hover:bg-surface-card"
             )}
           >
             {file ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 shadow-sm">
-                  <ImageIcon className="h-8 w-8" />
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none">
+                  <ImageIcon className="h-10 w-10" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800">{file.name}</p>
-                  <p className="text-xs font-medium text-slate-500 mt-1">
-                    {(file.size / 1024 / 1024).toFixed(1)} MB
+                  <p className="text-lg font-black text-text-primary">{file.name}</p>
+                  <p className="text-xs font-bold text-text-tertiary mt-1 uppercase tracking-widest">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
                 <button
@@ -299,27 +283,27 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
                     setFile(null);
                     clearFileInput(fileInputRef);
                   }}
-                  className="mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
+                  className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-50"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                   파일 제거
                 </button>
               </div>
             ) : (
               <>
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-500">
-                  <ImageIcon className="h-8 w-8" />
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-800 text-text-tertiary transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-600 group-hover:shadow-xl group-hover:shadow-indigo-100 dark:group-hover:shadow-none">
+                  <ImageIcon className="h-10 w-10" />
                 </div>
-                <p className="mb-1 text-sm font-bold text-slate-700">
+                <p className="mb-2 text-lg font-black text-text-primary tracking-tight">
                   이미지 파일을 드래그하거나 선택하세요
                 </p>
-                <p className="mb-6 text-xs font-medium text-slate-400">
-                  JPG, PNG, WEBP 형식 (최대 20MB)
+                <p className="mb-8 text-sm font-medium text-text-tertiary uppercase tracking-widest">
+                  JPG, PNG, WEBP (Max 20MB)
                 </p>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-50 hover:ring-slate-300 active:scale-95"
+                  className="rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-black text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-700 hover:-translate-y-1 dark:shadow-none active:scale-95"
                 >
                   파일 선택하기
                 </button>
@@ -338,14 +322,14 @@ export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps)
         <button
           type="submit"
           disabled={!canSubmit || mutation.isPending}
-          className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 disabled:opacity-50 active:scale-[0.98]"
+          className="group relative flex w-full items-center justify-center gap-3 rounded-2xl bg-indigo-600 py-5 text-lg font-black text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-700 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-300 disabled:opacity-50 dark:shadow-none active:scale-[0.98]"
         >
           {mutation.isPending ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-white/30 border-t-white" />
           ) : (
             <>
-              업로드 및 분석 시작
-              <Upload className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
+              분석 및 퀴즈 생성하기
+              <Sparkles className="h-5 w-5 transition-transform group-hover:rotate-12 group-hover:scale-125" />
             </>
           )}
         </button>

@@ -20,20 +20,20 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl md:flex md:flex-col">
-      <div className="flex h-16 items-center px-6">
+    <aside className="hidden w-72 shrink-0 border-r border-border-default glass-effect md:flex md:flex-col">
+      <div className="flex h-20 items-center px-8">
         <Link 
           href="/" 
-          className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100 transition-transform hover:scale-[1.02] active:scale-95"
+          className="flex items-center gap-3 text-2xl font-black tracking-tighter text-text-primary transition-transform hover:scale-[1.02] active:scale-95"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm ring-1 ring-black/5">
-            <Brain className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+            <Brain className="h-6 w-6" />
           </div>
           Note2Quiz
         </Link>
       </div>
 
-      <nav className="mt-6 flex flex-1 flex-col gap-1.5 px-3">
+      <nav className="mt-8 flex flex-1 flex-col gap-2 px-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -44,16 +44,16 @@ export function Sidebar() {
               href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-200",
                 isActive
-                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 shadow-sm ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800"
-                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100",
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40"
+                  : "text-text-secondary hover:bg-surface-alt hover:text-text-primary",
               )}
             >
               <Icon
                 className={cn(
                   "h-5 w-5 transition-colors",
-                  isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                  isActive ? "text-white" : "text-text-tertiary group-hover:text-text-primary"
                 )}
               />
               {label}
@@ -63,27 +63,31 @@ export function Sidebar() {
       </nav>
 
       {user && (
-        <div className="m-3 mt-auto flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-slate-900 p-3 ring-1 ring-inset ring-slate-200/50 dark:ring-slate-700/50 transition-colors hover:bg-slate-100/50 dark:hover:bg-slate-700/50">
-          <Link href="/settings" className="flex flex-1 items-center gap-3 overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-800 dark:to-purple-800 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm ring-1 ring-black/5">
-              {user.display_name.charAt(0).toUpperCase()}
+        <div className="p-4">
+          <div className="flex items-center gap-3 rounded-3xl bg-surface-alt p-4 ring-1 ring-border-default transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/10">
+            <Link href="/settings" className="flex flex-1 items-center gap-3 overflow-hidden">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-indigo-600 font-black shadow-sm ring-1 ring-black/5">
+                {user.display_name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <p className="truncate text-sm font-black text-text-primary">
+                  {user.display_name}
+                </p>
+                <p className="truncate text-xs font-medium text-text-tertiary">{user.email}</p>
+              </div>
+            </Link>
+            <div className="flex flex-col gap-1">
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="rounded-xl p-2 text-text-tertiary transition-colors hover:bg-white dark:hover:bg-slate-800 hover:text-red-600"
+                aria-label="로그아웃"
+                title="로그아웃"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {user.display_name}
-              </p>
-              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
-            </div>
-          </Link>
-          <ThemeToggle />
-          <button
-            onClick={handleLogout}
-            className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-red-600 dark:hover:text-red-400"
-            aria-label="로그아웃"
-            title="로그아웃"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          </div>
         </div>
       )}
     </aside>

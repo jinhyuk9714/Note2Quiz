@@ -9,19 +9,19 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ onOpen }: MobileHeaderProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-200/60 bg-white/80 backdrop-blur-md px-4 md:hidden sticky top-0 z-30">
-      <Link href="/" className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-slate-800">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm ring-1 ring-black/5">
-          <Brain className="h-4 w-4" />
+    <header className="flex h-16 items-center justify-between border-b border-border-default glass-effect px-5 md:hidden sticky top-0 z-30">
+      <Link href="/" className="flex items-center gap-3 text-xl font-black tracking-tighter text-text-primary">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none">
+          <Brain className="h-5 w-5" />
         </div>
         Note2Quiz
       </Link>
       <button
         onClick={onOpen}
         aria-label="메뉴 열기"
-        className="rounded-xl p-2.5 text-slate-600 transition-colors hover:bg-slate-100 active:scale-90"
+        className="rounded-xl p-2.5 text-text-secondary transition-colors hover:bg-surface-alt active:scale-95"
       >
-        <Menu size={20} />
+        <Menu size={24} />
       </button>
     </header>
   );

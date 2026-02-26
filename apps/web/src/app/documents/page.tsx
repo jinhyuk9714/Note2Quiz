@@ -72,40 +72,44 @@ export default function DocumentsPage() {
     selectedFolderId && selectedFolderId !== "none" ? selectedFolderId : undefined;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 pb-12">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+    <div className="mx-auto max-w-6xl space-y-12 pb-20 pt-8 px-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-black tracking-tighter text-text-primary">
           문서 관리
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-lg text-text-secondary font-medium tracking-tight">
           강의 노트를 업로드하고 학습용 퀴즈를 생성하세요.
         </p>
       </div>
 
       <DocumentUploadForm defaultFolderId={uploadDefaultFolderId} />
 
-      <div className="flex gap-8">
-        <FolderSidebar
-          folders={folders}
-          selectedFolderId={selectedFolderId}
-          onSelect={handleFolderSelect}
-          totalDocCount={folderDocSum}
-          uncategorizedCount={0}
-        />
+      <div className="flex flex-col lg:flex-row gap-10">
+        <aside className="lg:w-64 shrink-0">
+          <FolderSidebar
+            folders={folders}
+            selectedFolderId={selectedFolderId}
+            onSelect={handleFolderSelect}
+            totalDocCount={folderDocSum}
+            uncategorizedCount={0}
+          />
+        </aside>
 
         {/* Main content area */}
-        <div className="min-w-0 flex-1 space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
-            <div className="flex items-center gap-2">
-              <LayoutGrid className="h-5 w-5 text-indigo-600" />
-              <h2 className="text-xl font-bold tracking-tight text-slate-800">내 학습 문서</h2>
+        <div className="min-w-0 flex-1 space-y-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between px-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30">
+                <LayoutGrid className="h-5 w-5" />
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-text-primary">내 학습 문서</h2>
               {data && (
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
-                  {total}개
+                <span className="rounded-full bg-indigo-600 px-3 py-1 text-[10px] font-black text-white uppercase tracking-widest">
+                  {total} Items
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <SearchInput
                 value={search}
                 onChange={handleSearchChange}
@@ -120,14 +124,14 @@ export default function DocumentsPage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 animate-pulse rounded-[2rem] bg-slate-100" />
+                <div key={i} className="h-40 animate-pulse rounded-3xl bg-surface-alt" />
               ))}
             </div>
           ) : documents && documents.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 {documents.map((doc) => (
                   <DocumentCard
                     key={doc.id}
@@ -136,38 +140,42 @@ export default function DocumentsPage() {
                   />
                 ))}
               </div>
-              <Pagination
-                total={total}
-                limit={PAGE_SIZE}
-                offset={offset}
-                onChange={setOffset}
-              />
+              <div className="pt-4">
+                <Pagination
+                  total={total}
+                  limit={PAGE_SIZE}
+                  offset={offset}
+                  onChange={setOffset}
+                />
+              </div>
             </>
           ) : search ? (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-16 text-center backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-slate-800">&ldquo;{search}&rdquo; 검색 결과가 없습니다</h3>
-              <p className="mt-2 text-sm font-medium text-slate-500">
+            <div className="flex flex-col items-center justify-center bento-card border-dashed p-20 text-center">
+              <h3 className="text-xl font-black text-text-primary">&ldquo;{search}&rdquo; 검색 결과가 없습니다</h3>
+              <p className="mt-2 text-base font-medium text-text-secondary">
                 다른 검색어로 다시 시도해보세요.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 p-16 text-center backdrop-blur-sm">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-slate-300">
-                <Files className="h-10 w-10" />
+            <div className="flex flex-col items-center justify-center bento-card border-dashed p-20 text-center">
+              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-surface-alt text-text-tertiary">
+                <Files className="h-12 w-12" />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">업로드된 문서가 없습니다</h3>
-              <p className="mt-2 text-sm font-medium text-slate-500">
+              <h3 className="text-xl font-black text-text-primary">업로드된 문서가 없습니다</h3>
+              <p className="mt-2 text-base font-medium text-text-secondary">
                 상단의 업로드 폼을 통해 첫 번째 학습 문서를 추가해보세요.
               </p>
             </div>
           )}
 
-          <div className="flex items-start gap-3 rounded-2xl bg-indigo-50/50 p-5 ring-1 ring-inset ring-indigo-100/50">
-            <Info className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500" />
-            <div className="text-xs font-medium leading-relaxed text-indigo-700/80">
-              <p className="font-bold text-indigo-800 mb-1">문서 분석 안내</p>
-              업로드된 문서는 AI가 내용의 핵심을 파악하기 위해 여러 개의 청크(Chunk)로 나뉩니다.
-              너무 짧은 문서보다는 최소 200자 이상의 본문이 포함된 자료가 퀴즈 생성 품질에 더 좋습니다.
+          <div className="flex items-start gap-4 rounded-3xl bg-indigo-600 p-8 text-white shadow-xl shadow-indigo-100 dark:shadow-none">
+            <Info className="mt-1 h-6 w-6 shrink-0 text-indigo-200" />
+            <div className="space-y-2">
+              <p className="text-lg font-black tracking-tight">문서 분석 안내</p>
+              <p className="text-sm font-medium leading-relaxed text-indigo-100/90">
+                업로드된 문서는 AI가 내용의 핵심을 파악하기 위해 여러 개의 섹션으로 나뉩니다.
+                최소 200자 이상의 본문이 포함된 자료가 퀴즈 생성 품질에 더 좋습니다.
+              </p>
             </div>
           </div>
         </div>

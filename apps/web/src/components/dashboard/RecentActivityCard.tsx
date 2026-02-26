@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, FileText, Sparkles, ArrowRight } from "lucide-react";
+import { Clock, FileText, Sparkles, ArrowRight, BookMarked } from "lucide-react";
 
 import type { RecentActivityItem } from "@/types/api";
 
@@ -12,19 +12,19 @@ interface RecentActivityCardProps {
 const TYPE_CONFIG = {
   document_uploaded: {
     icon: FileText,
-    color: "bg-blue-50 text-blue-600",
+    color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
     href: (id: string) => `/documents/${id}`,
     label: "문서 업로드",
   },
   quiz_attempted: {
     icon: Sparkles,
-    color: "bg-indigo-50 text-indigo-600",
+    color: "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
     href: (id: string) => `/quiz/${id}`,
     label: "퀴즈 풀기",
   },
   wrong_note_created: {
-    icon: FileText,
-    color: "bg-amber-50 text-amber-600",
+    icon: BookMarked,
+    color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
     href: () => "/wrong-notes",
     label: "오답노트",
   },
@@ -47,23 +47,28 @@ function formatRelativeTime(iso: string): string {
 
 export function RecentActivityCard({ activities }: RecentActivityCardProps) {
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-          <Clock className="h-5 w-5" />
+    <div className="bento-card p-10 hover:border-indigo-400/50">
+      <div className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+            <Clock className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black tracking-tight text-text-primary">
+              최근 활동
+            </h2>
+            <p className="text-sm font-medium text-text-tertiary">나의 최근 학습 내역을 확인하세요.</p>
+          </div>
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-800">
-          최근 활동
-        </h2>
         {activities.length > 0 && (
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-200/50">
-            {activities.length}개
+          <span className="rounded-xl bg-surface-alt px-4 py-2 text-xs font-black uppercase tracking-widest text-text-secondary border border-border-default shadow-sm">
+            {activities.length} Items
           </span>
         )}
       </div>
 
       {activities.length > 0 ? (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {activities.map((activity, idx) => {
             const config =
               TYPE_CONFIG[activity.type] ?? TYPE_CONFIG.document_uploaded;
@@ -74,28 +79,30 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
               <li key={`${activity.type}-${activity.entity_id}-${idx}`}>
                 <Link
                   href={href}
-                  className="group flex items-center gap-4 rounded-xl border border-transparent px-4 py-3 transition-all hover:border-slate-200 hover:bg-slate-50"
+                  className="group flex items-center gap-5 rounded-2xl border border-border-default bg-surface-alt px-6 py-5 transition-all hover:border-indigo-300 hover:bg-surface-card hover:shadow-md"
                 >
                   <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${config.color}`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${config.color} shadow-sm`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-slate-700 group-hover:text-slate-900">
+                    <p className="truncate text-base font-black text-text-primary group-hover:text-indigo-600 transition-colors">
                       {activity.title}
                     </p>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
-                      <span className="font-medium">{config.label}</span>
+                    <div className="mt-1 flex items-center gap-2 text-xs font-bold text-text-tertiary uppercase tracking-wider">
+                      <span className="text-indigo-500">{config.label}</span>
                       <span>·</span>
-                      <span>{activity.description}</span>
+                      <span className="truncate normal-case tracking-normal font-medium">{activity.description}</span>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-xs font-medium text-slate-400">
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="text-xs font-black text-text-tertiary uppercase tracking-widest">
                       {formatRelativeTime(activity.created_at)}
                     </span>
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-card border border-border-default text-text-tertiary transition-all group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200">
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </div>
                   </div>
                 </Link>
               </li>
@@ -103,14 +110,14 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
           })}
         </ul>
       ) : (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
-            <Clock className="h-7 w-7" />
+        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border-default rounded-3xl bg-surface-alt">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-card text-text-tertiary shadow-sm">
+            <Clock className="h-8 w-8" />
           </div>
-          <p className="text-sm font-bold text-slate-400">
+          <p className="text-lg font-black text-text-primary">
             아직 활동이 없습니다
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-400">
+          <p className="mt-2 text-sm font-medium text-text-secondary">
             문서를 업로드하거나 퀴즈를 풀어보세요.
           </p>
         </div>

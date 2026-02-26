@@ -66,38 +66,38 @@ function QuizGenerateContent() {
 
 export default function QuizGeneratePage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-10 pb-12">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+    <div className="mx-auto max-w-5xl space-y-12 pb-20 pt-8 px-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-black tracking-tighter text-text-primary">
           AI 퀴즈 생성
         </h1>
-        <p className="text-slate-500 font-medium">
+        <p className="text-lg text-text-secondary font-medium tracking-tight">
           문서를 분석하여 나에게 꼭 맞는 맞춤형 퀴즈를 생성합니다.
         </p>
       </div>
 
       <Suspense
         fallback={
-          <div className="h-96 w-full animate-pulse rounded-[2rem] bg-slate-100" />
+          <div className="h-[32rem] w-full animate-pulse rounded-3xl bg-surface-alt border border-border-default" />
         }
       >
         <QuizGenerateContent />
       </Suspense>
 
-      <div className="rounded-[2rem] bg-slate-900 p-8 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-indigo-400">
+      <div className="bento-card bg-indigo-600 p-10 text-white shadow-xl shadow-indigo-200 dark:shadow-none border-none">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-indigo-200">
               <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-black uppercase tracking-[0.2em]">Quiz Generation Tips</span>
+              <span className="text-xs font-black uppercase tracking-[0.2em]">Generation Tips</span>
             </div>
-            <h3 className="text-xl font-bold">더 정확한 퀴즈를 만들고 싶나요?</h3>
-            <p className="max-w-md text-sm font-medium text-slate-400 leading-relaxed">
+            <h3 className="text-2xl font-black tracking-tight">더 정확한 퀴즈를 만들고 싶나요?</h3>
+            <p className="max-w-xl text-base font-medium text-indigo-100/90 leading-relaxed">
               다양한 문제 유형을 섞어서 선택하면 AI가 본문의 내용을 더 다각도로 분석하여 고차원적인 문항을 생성할 확률이 높아집니다.
             </p>
           </div>
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white backdrop-blur-md">
-            <Sparkles className="h-8 w-8 text-indigo-300" />
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-white/10 text-white backdrop-blur-md shadow-inner">
+            <Sparkles className="h-10 w-10 text-indigo-200" />
           </div>
         </div>
       </div>
