@@ -7,11 +7,19 @@ interface ActiveDaysHeatmapProps {
   data: DailyTrendPoint[];
 }
 
-function intensityClass(quizCount: number): string {
-  if (quizCount === 0) return "bg-surface-alt";
-  if (quizCount === 1) return "bg-indigo-200 dark:bg-indigo-800";
-  if (quizCount <= 3) return "bg-indigo-400 dark:bg-indigo-600";
-  return "bg-indigo-600 dark:bg-indigo-400";
+const INTENSITY_CLASSES = [
+  "bg-surface-alt",
+  "bg-indigo-100 dark:bg-indigo-900",
+  "bg-indigo-200 dark:bg-indigo-800",
+  "bg-indigo-400 dark:bg-indigo-600",
+  "bg-indigo-600 dark:bg-indigo-400",
+  "bg-indigo-800 dark:bg-indigo-200",
+] as const;
+
+function intensityClass(quizCount: number, maxCount: number): string {
+  if (quizCount === 0 || maxCount === 0) return INTENSITY_CLASSES[0];
+  const level = Math.ceil((quizCount / maxCount) * 5);
+  return INTENSITY_CLASSES[Math.min(level, 5)];
 }
 
 function buildCells(data: DailyTrendPoint[], days: number) {
@@ -32,6 +40,7 @@ function buildCells(data: DailyTrendPoint[], days: number) {
 
 export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
   const cells = useMemo(() => buildCells(data, 30), [data]);
+  const maxCount = useMemo(() => Math.max(...cells.map((c) => c.count), 0), [cells]);
   const activeDays = useMemo(() => cells.filter((c) => c.count > 0).length, [cells]);
 
   return (
@@ -55,7 +64,7 @@ export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
             title={`${label}: ${count}회`}
             className={cn(
               "aspect-square rounded-lg transition-opacity hover:opacity-80",
-              intensityClass(count),
+              intensityClass(count, maxCount),
             )}
           />
         ))}
@@ -64,11 +73,9 @@ export function ActiveDaysHeatmap({ data }: ActiveDaysHeatmapProps) {
       <div className="mt-4 flex items-center gap-2 text-xs text-text-tertiary font-medium">
         <span>적음</span>
         <div className="flex gap-1">
-          {["bg-surface-alt", "bg-indigo-200 dark:bg-indigo-800", "bg-indigo-400 dark:bg-indigo-600", "bg-indigo-600 dark:bg-indigo-400"].map(
-            (c) => (
-              <div key={c} className={cn("h-3 w-3 rounded-sm", c)} />
-            ),
-          )}
+          {INTENSITY_CLASSES.map((c) => (
+            <div key={c} className={cn("h-3 w-3 rounded-sm", c)} />
+          ))}
         </div>
         <span>많음</span>
       </div>
