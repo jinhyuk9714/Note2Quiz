@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Activity } from "lucide-react";
+import { useTheme } from "next-themes";
 import { fillDateGaps, formatShortDate } from "@/lib/chartUtils";
 import type { DailyTrendPoint } from "@/types/api";
 
@@ -17,16 +18,23 @@ interface ActivityBarChartProps {
   data: DailyTrendPoint[];
 }
 
+const PALETTE = {
+  light: { grid: "#e2e8f0", tick: "#94a3b8", tooltipBg: "#ffffff", tooltipBorder: "#e2e8f0" },
+  dark: { grid: "#334155", tick: "#94a3b8", tooltipBg: "#1e293b", tooltipBorder: "#475569" },
+} as const;
+
 export function ActivityBarChart({ data }: ActivityBarChartProps) {
+  const { resolvedTheme } = useTheme();
+  const colors = PALETTE[resolvedTheme === "dark" ? "dark" : "light"];
+
   const filled = fillDateGaps(data, 30);
   const chartData = filled.map((d) => ({
     date: formatShortDate(d.date),
     quizzes: d.quiz_count,
-    fill: d.quiz_count > 0 ? "#818cf8" : "#e2e8f0",
   }));
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="bento-card flex h-full flex-col overflow-hidden p-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
           <Activity className="h-5 w-5" />
@@ -46,19 +54,19 @@ export function ActivityBarChart({ data }: ActivityBarChartProps) {
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#f1f5f9"
+              stroke={colors.grid}
               vertical={false}
             />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11, fill: "#94a3b8" }}
+              tick={{ fontSize: 11, fill: colors.tick }}
               tickLine={false}
               axisLine={false}
               interval={6}
             />
             <YAxis
               allowDecimals={false}
-              tick={{ fontSize: 11, fill: "#94a3b8" }}
+              tick={{ fontSize: 11, fill: colors.tick }}
               tickLine={false}
               axisLine={false}
             />
@@ -66,7 +74,9 @@ export function ActivityBarChart({ data }: ActivityBarChartProps) {
               formatter={(value) => [value, "퀴즈 수"]}
               contentStyle={{
                 borderRadius: "0.75rem",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.tooltipBorder}`,
+                backgroundColor: colors.tooltipBg,
+                color: colors.tick,
                 fontSize: "0.75rem",
               }}
             />
