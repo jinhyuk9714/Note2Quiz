@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, CheckCircle2, Sparkles, PlayCircle, Tag, X } from "lucide-react";
+import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, CheckCircle2, Sparkles, PlayCircle, Tag, X, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { listWrongNotes } from "@/lib/api";
+import { downloadFile } from "@/lib/download";
 import { WrongNoteCard } from "@/components/wrong-notes/WrongNoteCard";
 import { ReviewSession } from "@/components/wrong-notes/ReviewSession";
 import { SearchInput } from "@/components/common/SearchInput";
@@ -30,6 +31,9 @@ export default function WrongNotesPage() {
   const [reviewMode, setReviewMode] = useState(false);
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const conceptTag = searchParams.get("concept_tag");
   const isMastered = filter === "mastered";
@@ -84,6 +88,41 @@ export default function WrongNotesPage() {
   function handleFilterChange(tab: FilterTab) {
     setFilter(tab);
     setOffset(0);
+  }
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    if (!exportOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [exportOpen]);
+
+  const buildExportQuery = useCallback(() => {
+    const params = new URLSearchParams();
+    if (isMastered) params.set("is_mastered", "true");
+    if (conceptTag) params.set("concept_tag", conceptTag);
+    if (search) params.set("search", search);
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }, [isMastered, conceptTag, search]);
+
+  async function handleExport(format: "csv" | "pdf") {
+    setExportOpen(false);
+    setExporting(true);
+    try {
+      const qs = buildExportQuery();
+      const ext = format === "csv" ? "csv" : "pdf";
+      await downloadFile(`/api/export/wrong-notes/${format}${qs}`, `오답노트.${ext}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "내보내기 실패");
+    } finally {
+      setExporting(false);
+    }
   }
 
   const tabs: { key: FilterTab; label: string; icon: React.ReactNode }[] = [
@@ -171,6 +210,45 @@ export default function WrongNotesPage() {
               onChange={handleSearchChange}
               placeholder="문제 검색..."
             />
+            {total > 0 && !reviewMode && (
+              <div ref={exportRef} className="relative">
+                <button
+                  onClick={() => setExportOpen((p) => !p)}
+                  disabled={exporting}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all active:scale-95 disabled:opacity-70",
+                    exportOpen
+                      ? "bg-slate-200 text-slate-700"
+                      : "bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-700",
+                  )}
+                >
+                  {exporting ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  내보내기
+                </button>
+                {exportOpen && (
+                  <div className="absolute right-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
+                    <button
+                      onClick={() => void handleExport("csv")}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+                      CSV 다운로드
+                    </button>
+                    <button
+                      onClick={() => void handleExport("pdf")}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-red-500" />
+                      PDF 다운로드
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             {dueOnly && total > 0 && !reviewMode && (
               <button
                 onClick={() => setReviewMode(true)}

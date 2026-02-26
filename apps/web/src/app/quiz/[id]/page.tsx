@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X } from "lucide-react";
+import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download } from "lucide-react";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
+import { downloadFile } from "@/lib/download";
 import { QuizItem } from "@/components/quiz/QuizItem";
 import { QuestionNavPanel } from "@/components/quiz/QuestionNavPanel";
 import { QuizResults } from "@/components/quiz/QuizResults";
@@ -83,6 +84,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
   const [finalElapsedMs, setFinalElapsedMs] = useState<number | null>(null);
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [csvExporting, setCsvExporting] = useState(false);
 
   const { saveDraft, clearDraft } = useQuizDraft(quiz.id, itemIds);
   const { wasRestored, dismissRestored } = useDraftBanner(snapshot !== null);
@@ -323,6 +325,27 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
               새로운 퀴즈 생성
             </button>
           </div>
+
+          <button
+            onClick={() => {
+              setCsvExporting(true);
+              void downloadFile(
+                `/api/export/quiz/${quiz.id}/attempts/${result.attempt_id}/csv`,
+                `${quiz.title}-결과.csv`,
+              )
+                .catch(() => {/* handled by downloadFile */})
+                .finally(() => setCsvExporting(false));
+            }}
+            disabled={csvExporting}
+            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 active:scale-95 disabled:opacity-70"
+          >
+            {csvExporting ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            결과 CSV 다운로드
+          </button>
         </div>
       ) : (
         <div className="space-y-6">
