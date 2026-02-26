@@ -23,10 +23,10 @@ import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 const TYPE_CONFIG: Record<string, { label: string; icon: typeof ListOrdered; color: string; bg: string }> = {
-  mcq: { label: "객관식", icon: ListOrdered, color: "text-blue-500", bg: "bg-blue-50" },
-  true_false: { label: "O/X", icon: CheckSquare, color: "text-emerald-500", bg: "bg-emerald-50" },
-  fill_blank: { label: "빈칸 채우기", icon: PenTool, color: "text-purple-500", bg: "bg-purple-50" },
-  short_answer: { label: "단답형", icon: HelpCircle, color: "text-amber-500", bg: "bg-amber-50" },
+  mcq: { label: "객관식", icon: ListOrdered, color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20" },
+  true_false: { label: "O/X", icon: CheckSquare, color: "text-emerald-500 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  fill_blank: { label: "빈칸 채우기", icon: PenTool, color: "text-purple-500 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-900/20" },
+  short_answer: { label: "단답형", icon: HelpCircle, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/20" },
 };
 
 interface QuizItemEditCardProps {
@@ -151,9 +151,9 @@ export function QuizItemEditCard({
   // View mode
   if (!isEditing) {
     return (
-      <div className="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 transition-all hover:border-slate-300">
+      <div className="group overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-6 transition-all hover:border-border-default">
         <div className="flex items-start gap-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 text-xs font-black">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-alt text-text-tertiary text-xs font-black">
             {index}
           </div>
           <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export function QuizItemEditCard({
                 </span>
               )}
             </div>
-            <p className="text-sm font-bold text-slate-800 leading-relaxed">{item.question}</p>
+            <p className="text-sm font-bold text-text-primary leading-relaxed">{item.question}</p>
 
             {item.options && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -178,8 +178,8 @@ export function QuizItemEditCard({
                     className={cn(
                       "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ring-1 ring-inset",
                       k === item.correct_answer
-                        ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                        : "bg-slate-50 text-slate-600 ring-slate-200",
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:ring-emerald-800"
+                        : "bg-surface-alt text-text-secondary ring-border-default",
                     )}
                   >
                     <span className="font-bold">{k}.</span> {v}
@@ -190,15 +190,15 @@ export function QuizItemEditCard({
             )}
 
             {!item.options && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 정답: {item.correct_answer}
               </div>
             )}
 
             {item.explanation && (
-              <div className="mt-3 flex items-start gap-1.5 text-xs text-slate-500">
-                <Info className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
+              <div className="mt-3 flex items-start gap-1.5 text-xs text-text-tertiary">
+                <Info className="mt-0.5 h-3 w-3 shrink-0 text-text-tertiary" />
                 <span className="leading-relaxed">{item.explanation}</span>
               </div>
             )}
@@ -206,7 +206,7 @@ export function QuizItemEditCard({
             {item.concept_tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {item.concept_tags.map((tag) => (
-                  <span key={tag} className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                  <span key={tag} className="rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] font-bold text-text-tertiary">
                     {tag}
                   </span>
                 ))}
@@ -217,7 +217,7 @@ export function QuizItemEditCard({
           <div className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={onStartEdit}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-amber-50 hover:text-amber-600"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary transition-all hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
               title="편집"
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -225,7 +225,7 @@ export function QuizItemEditCard({
             {canDelete && (
               <button
                 onClick={() => setConfirmDeleteOpen(true)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-red-50 hover:text-red-600"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                 title="삭제"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -248,10 +248,10 @@ export function QuizItemEditCard({
 
   // Edit mode
   return (
-    <div className="overflow-hidden rounded-[2rem] border-2 border-indigo-300 bg-white p-6 shadow-lg">
+    <div className="overflow-hidden rounded-[2rem] border-2 border-indigo-300 bg-surface-card p-6 shadow-lg dark:border-indigo-700">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 text-xs font-black">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 text-xs font-black">
             {index}
           </div>
           <span className={cn("inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold", typeConfig?.bg, typeConfig?.color)}>
@@ -264,19 +264,19 @@ export function QuizItemEditCard({
       <div className="space-y-5">
         {/* Question */}
         <div>
-          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">문제</label>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">문제</label>
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={3}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
+            className="w-full rounded-xl border border-border-default bg-surface-alt px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-all resize-none"
           />
         </div>
 
         {/* MCQ Options */}
         {item.quiz_type === "mcq" && (
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">보기</label>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">보기</label>
             <div className="space-y-2">
               {Object.entries(options).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => (
                 <div key={key} className="flex items-center gap-2">
@@ -286,8 +286,8 @@ export function QuizItemEditCard({
                     className={cn(
                       "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black transition-all",
                       correctAnswer === key
-                        ? "bg-emerald-100 text-emerald-700 ring-2 ring-emerald-300"
-                        : "bg-slate-100 text-slate-500 hover:bg-slate-200",
+                        ? "bg-emerald-100 text-emerald-700 ring-2 ring-emerald-300 dark:bg-emerald-900/20 dark:text-emerald-400 dark:ring-emerald-800"
+                        : "bg-surface-alt text-text-tertiary hover:bg-surface-alt",
                     )}
                     title={correctAnswer === key ? "정답" : "정답으로 선택"}
                   >
@@ -296,14 +296,14 @@ export function QuizItemEditCard({
                   <input
                     value={value}
                     onChange={(e) => handleOptionChange(key, e.target.value)}
-                    className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+                    className="flex-1 rounded-lg border border-border-default bg-surface-alt px-3 py-2 text-sm font-medium text-text-primary focus:border-indigo-300 focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-all"
                     placeholder={`보기 ${key}`}
                   />
                   {Object.keys(options).length > 2 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(key)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-tertiary hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
@@ -314,7 +314,7 @@ export function QuizItemEditCard({
                 <button
                   type="button"
                   onClick={handleAddOption}
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 transition-all"
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-text-tertiary hover:bg-surface-alt transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" /> 보기 추가
                 </button>
@@ -326,7 +326,7 @@ export function QuizItemEditCard({
         {/* Correct answer (non-MCQ) */}
         {item.quiz_type !== "mcq" && (
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">정답</label>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">정답</label>
             {item.quiz_type === "true_false" ? (
               <div className="flex gap-2">
                 {["O", "X"].map((v) => (
@@ -338,7 +338,7 @@ export function QuizItemEditCard({
                       "flex-1 rounded-xl py-3 text-sm font-bold transition-all",
                       correctAnswer === v
                         ? "bg-indigo-600 text-white shadow-lg"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                        : "bg-surface-alt text-text-secondary hover:bg-surface-alt",
                     )}
                   >
                     {v}
@@ -349,7 +349,7 @@ export function QuizItemEditCard({
               <input
                 value={correctAnswer}
                 onChange={(e) => setCorrectAnswer(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+                className="w-full rounded-xl border border-border-default bg-surface-alt px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-all"
               />
             )}
           </div>
@@ -357,30 +357,30 @@ export function QuizItemEditCard({
 
         {/* Explanation */}
         <div>
-          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">해설</label>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">해설</label>
           <textarea
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             rows={2}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
+            className="w-full rounded-xl border border-border-default bg-surface-alt px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-all resize-none"
           />
         </div>
 
         {/* Concept tags + Difficulty */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">
               개념 태그 <span className="font-medium normal-case">(쉼표 구분, 최대 5개)</span>
             </label>
             <input
               value={conceptTags}
               onChange={(e) => setConceptTags(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full rounded-xl border border-border-default bg-surface-alt px-4 py-3 text-sm font-medium text-text-primary focus:border-indigo-300 focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-all"
               placeholder="수학, 미적분"
             />
           </div>
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">난이도</label>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-text-tertiary mb-1.5">난이도</label>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((d) => (
                 <button
@@ -390,8 +390,8 @@ export function QuizItemEditCard({
                   className={cn(
                     "flex-1 rounded-lg py-2.5 text-sm font-bold transition-all",
                     d <= difficulty
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-slate-100 text-slate-400 hover:bg-slate-200",
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                      : "bg-surface-alt text-text-tertiary hover:bg-surface-alt",
                   )}
                 >
                   ★
@@ -407,7 +407,7 @@ export function QuizItemEditCard({
         <button
           onClick={handleCancel}
           disabled={updateMutation.isPending}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary transition-all hover:bg-surface-alt disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />
           취소
@@ -415,7 +415,7 @@ export function QuizItemEditCard({
         <button
           onClick={handleSave}
           disabled={updateMutation.isPending || !question.trim() || !correctAnswer.trim() || !explanation.trim()}
-          className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30 transition-all hover:bg-indigo-700 disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <span className="flex items-center gap-2">
