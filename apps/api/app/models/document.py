@@ -10,6 +10,7 @@ from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models.chunk import Chunk
+    from app.models.folder import Folder
     from app.models.quiz import Quiz
     from app.models.user import User
 
@@ -24,8 +25,12 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     source_type: Mapped[str] = mapped_column(String(20))  # "text", "pdf"
     char_count: Mapped[int] = mapped_column(Integer)
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    folder_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("folders.id", ondelete="SET NULL"), index=True, default=None
+    )
 
     owner: Mapped[User] = relationship(back_populates="documents")
+    folder: Mapped[Folder | None] = relationship(back_populates="documents")
     chunks: Mapped[list[Chunk]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )

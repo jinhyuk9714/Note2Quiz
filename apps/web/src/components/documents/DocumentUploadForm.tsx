@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Upload, FileUp, Type, X, FileText, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { uploadDocument, uploadDocumentFile } from "@/lib/api";
+import { listFolders, uploadDocument, uploadDocumentFile } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type UploadMode = "text" | "pdf" | "image";
@@ -15,23 +15,35 @@ function clearFileInput(ref: React.RefObject<HTMLInputElement | null>) {
   if (ref.current) ref.current.value = "";
 }
 
-export function DocumentUploadForm() {
+interface DocumentUploadFormProps {
+  defaultFolderId?: string | null;
+}
+
+export function DocumentUploadForm({ defaultFolderId }: DocumentUploadFormProps) {
   const [mode, setMode] = useState<UploadMode>("text");
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [folderId, setFolderId] = useState<string>(defaultFolderId ?? "");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
+  const { data: folders } = useQuery({
+    queryKey: ["folders"],
+    queryFn: listFolders,
+  });
+
   const mutation = useMutation({
     mutationFn: () => {
+      const folder = folderId || undefined;
       if ((mode === "pdf" || mode === "image") && file) {
-        return uploadDocumentFile(title, file);
+        return uploadDocumentFile(title, file, folder);
       }
-      return uploadDocument(title, text);
+      return uploadDocument(title, text, folder);
     },
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["folders"] });
       setTitle("");
       setText("");
       setFile(null);
@@ -111,6 +123,28 @@ export function DocumentUploadForm() {
             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400"
           />
         </div>
+
+        {/* Folder selector */}
+        {folders && folders.length > 0 && (
+          <div className="space-y-2">
+            <label htmlFor="doc-folder" className="ml-1 text-sm font-bold text-slate-700">
+              폴더 <span className="font-medium text-slate-400">(선택)</span>
+            </label>
+            <select
+              id="doc-folder"
+              value={folderId}
+              onChange={(e) => setFolderId(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 text-slate-700"
+            >
+              <option value="">미분류</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.emoji ? `${f.emoji} ` : ""}{f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Mode tabs */}
         <div className="flex p-1 gap-1 rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-200/50">

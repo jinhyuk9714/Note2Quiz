@@ -24,6 +24,8 @@ class DocumentResponse(BaseModel):
     char_count: int
     chunk_count: int
     quiz_count: int = 0
+    folder_id: uuid.UUID | None = None
+    folder_name: str | None = None
     created_at: datetime
 
 

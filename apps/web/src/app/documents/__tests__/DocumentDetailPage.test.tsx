@@ -40,6 +40,8 @@ const doc: DocumentDetail = {
   chunk_count: 3,
   quiz_count: 1,
   created_at: "2025-06-10T08:00:00Z",
+  folder_id: null,
+  folder_name: null,
   chunks: [
     { id: "c1", index: 0, content: "Chunk one content", token_count: 80 },
     { id: "c2", index: 1, content: "Chunk two content", token_count: 90 },

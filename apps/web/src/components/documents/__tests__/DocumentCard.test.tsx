@@ -11,6 +11,8 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/api", () => ({
   deleteDocument: vi.fn(),
+  listFolders: vi.fn().mockResolvedValue([]),
+  moveDocumentToFolder: vi.fn(),
 }));
 
 import { deleteDocument } from "@/lib/api";
@@ -23,6 +25,8 @@ const mockDocument: Document = {
   chunk_count: 3,
   quiz_count: 0,
   created_at: "2025-06-01T10:00:00Z",
+  folder_id: null,
+  folder_name: null,
 };
 
 describe("DocumentCard", () => {

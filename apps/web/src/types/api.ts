@@ -36,6 +36,31 @@ export interface DeleteAccountPayload {
 
 // Backend Pydantic 스키마 미러링
 
+export interface Folder {
+  id: string;
+  name: string;
+  color: string | null;
+  emoji: string | null;
+  document_count: number;
+  created_at: string;
+}
+
+export interface FolderCreatePayload {
+  name: string;
+  color?: string;
+  emoji?: string;
+}
+
+export interface FolderUpdatePayload {
+  name?: string;
+  color?: string;
+  emoji?: string;
+}
+
+export interface DocumentMovePayload {
+  folder_id: string | null;
+}
+
 export interface Document {
   id: string;
   title: string;
@@ -43,6 +68,8 @@ export interface Document {
   char_count: number;
   chunk_count: number;
   quiz_count: number;
+  folder_id: string | null;
+  folder_name: string | null;
   created_at: string;
 }
 

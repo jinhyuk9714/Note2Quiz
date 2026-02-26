@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { FileText, Trash2, Zap, Calendar, Hash, Sparkles, ChevronRight } from "lucide-react";
+import { FileText, Folder as FolderIcon, Trash2, Zap, Calendar, Hash, Sparkles, ChevronRight } from "lucide-react";
 import type { Document } from "@/types/api";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { deleteDocument } from "@/lib/api";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { FolderMoveDropdown } from "./FolderMoveDropdown";
 
 interface DocumentCardProps {
   document: Document;
@@ -65,6 +66,12 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
                 {document.quiz_count}개 퀴즈
               </div>
             )}
+            {document.folder_name && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-violet-500">
+                <FolderIcon className="h-3.5 w-3.5" />
+                {document.folder_name}
+              </div>
+            )}
             <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(document.created_at)}
@@ -85,6 +92,7 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
             퀴즈 생성
           </button>
         )}
+        <FolderMoveDropdown documentId={document.id} currentFolderId={document.folder_id} />
         <button
           onClick={handleDelete}
           disabled={mutation.isPending}

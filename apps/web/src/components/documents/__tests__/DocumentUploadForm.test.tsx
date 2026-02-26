@@ -6,6 +6,7 @@ import { DocumentUploadForm } from "../DocumentUploadForm";
 vi.mock("@/lib/api", () => ({
   uploadDocument: vi.fn(),
   uploadDocumentFile: vi.fn(),
+  listFolders: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("sonner", () => ({
@@ -23,8 +24,8 @@ describe("DocumentUploadForm", () => {
   it("renders form elements with mode tabs", () => {
     renderWithProviders(<DocumentUploadForm />);
     expect(screen.getByLabelText("문서 제목")).toBeInTheDocument();
-    expect(screen.getByText("텍스트 붙여넣기")).toBeInTheDocument();
-    expect(screen.getByText("PDF 업로드")).toBeInTheDocument();
+    expect(screen.getByText("텍스트")).toBeInTheDocument();
+    expect(screen.getByText("PDF")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /업로드 및 분석/ })).toBeInTheDocument();
   });
 
@@ -72,6 +73,8 @@ describe("DocumentUploadForm", () => {
       chunk_count: 2,
       quiz_count: 0,
       created_at: "2025-01-01T00:00:00Z",
+      folder_id: null,
+      folder_name: null,
     });
 
     renderWithProviders(<DocumentUploadForm />);
@@ -91,7 +94,7 @@ describe("DocumentUploadForm", () => {
 
   it("switches to PDF mode and hides textarea", async () => {
     renderWithProviders(<DocumentUploadForm />);
-    await userEvent.click(screen.getByText("PDF 업로드"));
+    await userEvent.click(screen.getByText("PDF"));
     expect(
       screen.getByText(/PDF 파일을 드래그하거나 선택하세요/),
     ).toBeInTheDocument();
@@ -101,7 +104,7 @@ describe("DocumentUploadForm", () => {
   it("disables submit in PDF mode without file", async () => {
     renderWithProviders(<DocumentUploadForm />);
     await userEvent.type(screen.getByLabelText("문서 제목"), "PDF Title");
-    await userEvent.click(screen.getByText("PDF 업로드"));
+    await userEvent.click(screen.getByText("PDF"));
     expect(screen.getByRole("button", { name: /업로드 및 분석/ })).toBeDisabled();
   });
 });

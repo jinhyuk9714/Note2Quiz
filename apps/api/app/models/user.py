@@ -10,6 +10,7 @@ from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.attempt import QuizAttempt, WrongAnswerNote
     from app.models.document import Document
+    from app.models.folder import Folder
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -27,4 +28,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     wrong_answer_notes: Mapped[list[WrongAnswerNote]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+    folders: Mapped[list[Folder]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan"
     )

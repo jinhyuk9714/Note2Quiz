@@ -78,6 +78,7 @@ async def create_document_with_chunks(
     title: str,
     raw_text: str,
     source_type: str = "text",
+    folder_id: uuid.UUID | None = None,
 ) -> Document:
     normalized = normalize_text(raw_text)
     chunk_texts = split_into_chunks(
@@ -92,6 +93,7 @@ async def create_document_with_chunks(
         source_type=source_type,
         char_count=len(normalized),
         chunk_count=len(chunk_texts),
+        folder_id=folder_id,
     )
     db.add(doc)
     await db.flush()

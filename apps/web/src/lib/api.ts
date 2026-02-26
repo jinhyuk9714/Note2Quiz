@@ -9,8 +9,12 @@ import type {
   DeleteAccountPayload,
   Document,
   DocumentDetail,
+  DocumentMovePayload,
   FlashcardItem,
   FlashcardQuiz,
+  Folder,
+  FolderCreatePayload,
+  FolderUpdatePayload,
   GenerateQuizPayload,
   ListParams,
   LoginPayload,
@@ -201,15 +205,49 @@ function buildQuery(params: Record<string, string | number | boolean | undefined
   return "?" + new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
 }
 
+// Folders
+export function listFolders(): Promise<Folder[]> {
+  return apiFetch<Folder[]>("/api/folders/");
+}
+
+export function createFolder(payload: FolderCreatePayload): Promise<Folder> {
+  return apiFetch<Folder>("/api/folders/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateFolder(id: string, payload: FolderUpdatePayload): Promise<Folder> {
+  return apiFetch<Folder>(`/api/folders/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteFolder(id: string): Promise<void> {
+  return apiDelete(`/api/folders/${id}`);
+}
+
+export function moveDocumentToFolder(
+  documentId: string,
+  payload: DocumentMovePayload,
+): Promise<Document> {
+  return apiFetch<Document>(`/api/documents/${documentId}/folder`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 // Documents
 export function listDocuments(
-  params?: ListParams & { source_type?: string },
+  params?: ListParams & { source_type?: string; folder_id?: string },
 ) {
   const qs = buildQuery({
     limit: params?.limit,
     offset: params?.offset,
     search: params?.search,
     source_type: params?.source_type,
+    folder_id: params?.folder_id,
     sort_by: params?.sort_by,
     order: params?.order,
   });
@@ -220,17 +258,19 @@ export function getDocument(id: string) {
   return apiFetch<DocumentDetail>(`/api/documents/${id}`);
 }
 
-export function uploadDocument(title: string, text: string) {
+export function uploadDocument(title: string, text: string, folderId?: string) {
   const formData = new FormData();
   formData.append("title", title);
   formData.append("text", text);
+  if (folderId) formData.append("folder_id", folderId);
   return apiFormFetch<Document>("/api/documents/", formData);
 }
 
-export function uploadDocumentFile(title: string, file: File) {
+export function uploadDocumentFile(title: string, file: File, folderId?: string) {
   const formData = new FormData();
   formData.append("title", title);
   formData.append("file", file);
+  if (folderId) formData.append("folder_id", folderId);
   return apiFormFetch<Document>("/api/documents/", formData);
 }
 
