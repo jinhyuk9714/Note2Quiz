@@ -41,11 +41,11 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
       {/* Slide-out panel */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ease-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white dark:bg-slate-800 shadow-2xl transition-transform duration-300 ease-out md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-slate-100 px-6">
+        <div className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-slate-700 px-6">
           <Link
             href="/"
             onClick={onClose}

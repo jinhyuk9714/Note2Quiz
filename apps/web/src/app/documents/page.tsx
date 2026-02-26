@@ -74,10 +74,10 @@ export default function DocumentsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-10 pb-12">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
           문서 관리
         </h1>
-        <p className="text-slate-500 font-medium">
+        <p className="text-slate-500 dark:text-slate-400 font-medium">
           강의 노트를 업로드하고 학습용 퀴즈를 생성하세요.
         </p>
       </div>

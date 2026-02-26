@@ -29,12 +29,12 @@ export function QuestionNavPanel({
   ).length;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
           문항 이동
         </h3>
-        <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+        <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 dark:text-slate-500">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-indigo-500" />
             답변 {answeredCount}
@@ -66,8 +66,8 @@ export function QuestionNavPanel({
                 hasAnswer
                   ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
                   : isSkipped
-                    ? "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-200"
-                    : "bg-slate-50 text-slate-400 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 hover:text-slate-600",
+                    ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-200"
+                    : "bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 ring-1 ring-inset ring-slate-200 dark:ring-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300",
                 idx === currentIndex && "ring-2 ring-indigo-400 ring-offset-1 scale-110",
               )}
               title={
@@ -91,7 +91,7 @@ export function QuestionNavPanel({
       </div>
 
       {items.length > 10 && (
-        <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-slate-300">
+        <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-slate-300 dark:text-slate-600">
           <Circle className="h-2.5 w-2.5" />
           번호를 클릭하면 해당 문항으로 이동합니다
         </div>

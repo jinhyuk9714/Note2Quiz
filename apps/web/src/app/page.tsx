@@ -52,26 +52,26 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-10 pb-12">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
           안녕하세요, 👋
         </h1>
-        <p className="text-slate-500 font-medium">
+        <p className="text-slate-500 dark:text-slate-400 font-medium">
           오늘도 당신의 학습 성장을 퀴즈노트 AI와 함께하세요.
         </p>
       </div>
 
       {isLoading && (
-        <div className="flex h-64 items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm">
+        <div className="flex h-64 items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-            <p className="text-sm font-medium text-slate-400">대시보드를 분석하는 중...</p>
+            <p className="text-sm font-medium text-slate-400 dark:text-slate-500">대시보드를 분석하는 중...</p>
           </div>
         </div>
       )}
 
       {isError && (
-        <div className="rounded-3xl border border-red-100 bg-red-50 p-8 text-center shadow-sm">
-          <p className="text-sm font-semibold text-red-600">
+        <div className="rounded-3xl border border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-8 text-center shadow-sm">
+          <p className="text-sm font-semibold text-red-600 dark:text-red-400">
             통계를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
           </p>
         </div>
@@ -79,14 +79,14 @@ export default function DashboardPage() {
 
       {stats && isNewUser && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="flex flex-col items-center gap-4 rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 px-8 py-16 text-center backdrop-blur-sm">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <div className="flex flex-col items-center gap-4 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 px-8 py-16 text-center backdrop-blur-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
               <BookOpen className="h-8 w-8" />
             </div>
-            <h2 className="text-xl font-extrabold tracking-tight text-slate-800">
+            <h2 className="text-xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
               아직 학습 데이터가 없어요
             </h2>
-            <p className="max-w-sm text-sm font-medium leading-relaxed text-slate-500">
+            <p className="max-w-sm text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
               문서를 업로드하고 첫 번째 퀴즈를 만들어보세요! AI가 여러분의 학습
               자료를 분석하여 맞춤형 문제를 생성합니다.
             </p>
@@ -111,15 +111,15 @@ export default function DashboardPage() {
 
           {/* Trends section */}
           <div className="mt-8 space-y-4">
-            <h2 className="px-1 text-xl font-bold tracking-tight text-slate-800">
+            <h2 className="px-1 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
               학습 트렌드{" "}
-              <span className="text-sm font-medium text-slate-400 ml-2">
+              <span className="text-sm font-medium text-slate-400 dark:text-slate-500 ml-2">
                 최근 30일
               </span>
             </h2>
 
             {isTrendsLoading && (
-              <div className="flex h-48 items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/50">
+              <div className="flex h-48 items-center justify-center rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
               </div>
             )}
@@ -165,21 +165,21 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <div className="space-y-6">
-        <h2 className="text-xl font-bold tracking-tight text-slate-800 px-1">새로운 학습 시작하기</h2>
+        <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100 px-1">새로운 학습 시작하기</h2>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Link
             href="/documents"
-            className="group relative flex items-start gap-5 overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/10 active:scale-[0.98]"
+            className="group relative flex items-start gap-5 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/10 active:scale-[0.98]"
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 transition-all duration-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-all duration-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6">
               <PlusCircle className="h-7 w-7" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="font-bold text-lg text-slate-800 truncate">문서 업로드</p>
-                <ArrowUpRight className="h-5 w-5 text-slate-300 transition-all duration-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <p className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate">문서 업로드</p>
+                <ArrowUpRight className="h-5 w-5 text-slate-300 dark:text-slate-500 transition-all duration-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 PDF나 텍스트 문서를 업로드하여 나만의 퀴즈 데이터베이스를 구축하세요.
               </p>
             </div>
@@ -187,17 +187,17 @@ export default function DashboardPage() {
 
           <Link
             href="/quiz/generate"
-            className="group relative flex items-start gap-5 overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/10 active:scale-[0.98]"
+            className="group relative flex items-start gap-5 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/10 active:scale-[0.98]"
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 transition-all duration-300 group-hover:bg-purple-600 group-hover:text-white group-hover:-rotate-6">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-all duration-300 group-hover:bg-purple-600 group-hover:text-white group-hover:-rotate-6">
               <Sparkles className="h-7 w-7" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="font-bold text-lg text-slate-800 truncate">AI 퀴즈 생성</p>
-                <ArrowUpRight className="h-5 w-5 text-slate-300 transition-all duration-300 group-hover:text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <p className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate">AI 퀴즈 생성</p>
+                <ArrowUpRight className="h-5 w-5 text-slate-300 dark:text-slate-500 transition-all duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 AI가 문서를 정밀하게 분석하여 고품질의 연습 문제를 자동으로 만듭니다.
               </p>
             </div>

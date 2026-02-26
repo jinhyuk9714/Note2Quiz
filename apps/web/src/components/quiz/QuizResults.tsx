@@ -143,10 +143,10 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
           {typeBreakdown.map((tb) => (
             <div
               key={tb.label}
-              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold shadow-sm ring-1 ring-inset ring-slate-200/50"
+              className="flex items-center gap-2 rounded-xl bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold shadow-sm ring-1 ring-inset ring-slate-200/50 dark:ring-slate-700/50"
             >
-              <span className="text-slate-500">{tb.label}</span>
-              <span className="text-indigo-600">{tb.correct}/{tb.total}</span>
+              <span className="text-slate-500 dark:text-slate-400">{tb.label}</span>
+              <span className="text-indigo-600 dark:text-indigo-400">{tb.correct}/{tb.total}</span>
             </div>
           ))}
         </div>
@@ -154,8 +154,8 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
 
       {/* Detailed results - grouped by correct/incorrect */}
       <div className="space-y-6">
-        <div className="flex items-center gap-2 px-1 text-slate-800">
-          <Target className="h-5 w-5 text-indigo-600" />
+        <div className="flex items-center gap-2 px-1 text-slate-800 dark:text-slate-100">
+          <Target className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
           <h3 className="text-xl font-bold tracking-tight">상세 결과 분석</h3>
         </div>
 
@@ -165,7 +165,7 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
             <button
               type="button"
               onClick={() => setShowIncorrect((p) => !p)}
-              className="mb-4 flex w-full items-center justify-between rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 ring-1 ring-inset ring-red-200/50 transition-all hover:bg-red-100"
+              className="mb-4 flex w-full items-center justify-between rounded-xl bg-red-50 dark:bg-red-900/30 px-4 py-3 text-sm font-bold text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-200/50 transition-all hover:bg-red-100 dark:hover:bg-red-900/50"
             >
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function QuizResults({ result, items, elapsedMs }: QuizResultsProps) {
             <button
               type="button"
               onClick={() => setShowCorrect((p) => !p)}
-              className="mb-4 flex w-full items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200/50 transition-all hover:bg-emerald-100"
+              className="mb-4 flex w-full items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm font-bold text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200/50 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
             >
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />

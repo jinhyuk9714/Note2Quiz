@@ -37,8 +37,8 @@ export function QuizItem({
     <div
       id={`quiz-item-${item.id}`}
       className={cn(
-        "overflow-hidden rounded-[2rem] border bg-white p-8 shadow-sm transition-all hover:shadow-md",
-        isSkipped && !value ? "border-amber-200" : "border-slate-200",
+        "overflow-hidden rounded-[2rem] border bg-white dark:bg-slate-800 p-8 shadow-sm transition-all hover:shadow-md",
+        isSkipped && !value ? "border-amber-200" : "border-slate-200 dark:border-slate-700",
         isFocused && "ring-2 ring-indigo-500 ring-offset-2 border-indigo-300",
       )}
     >
@@ -54,7 +54,7 @@ export function QuizItem({
         </div>
       </div>
 
-      <p className="mb-8 text-lg font-bold leading-relaxed text-slate-800">
+      <p className="mb-8 text-lg font-bold leading-relaxed text-slate-800 dark:text-slate-100">
         {item.question}
       </p>
 
@@ -70,8 +70,8 @@ export function QuizItem({
                   className={cn(
                     "group flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition-all duration-200",
                     isSelected
-                      ? "border-indigo-600 bg-indigo-50 shadow-sm ring-1 ring-indigo-600"
-                      : "border-slate-100 bg-slate-50/50 hover:border-slate-200 hover:bg-white",
+                      ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 shadow-sm ring-1 ring-indigo-600"
+                      : "border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:border-slate-200 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-700",
                     disabled && "pointer-events-none opacity-60"
                   )}
                 >
@@ -92,10 +92,10 @@ export function QuizItem({
                     )}
                   </div>
                   <div className="flex-1 text-sm font-semibold leading-relaxed">
-                    <span className={cn("mr-2 inline-block w-4 font-black", isSelected ? "text-indigo-600" : "text-slate-400")}>
+                    <span className={cn("mr-2 inline-block w-4 font-black", isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500")}>
                       {key}.
                     </span>
-                    <span className={isSelected ? "text-indigo-900" : "text-slate-600"}>{text}</span>
+                    <span className={isSelected ? "text-indigo-900 dark:text-indigo-200" : "text-slate-600 dark:text-slate-300"}>{text}</span>
                   </div>
                 </label>
               );
@@ -114,8 +114,8 @@ export function QuizItem({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center rounded-2xl border py-6 transition-all duration-200 active:scale-95",
                   isSelected
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-600"
-                    : "border-slate-100 bg-slate-50/50 text-slate-400 hover:border-slate-200 hover:bg-white hover:text-slate-600",
+                    ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 shadow-sm ring-1 ring-indigo-600"
+                    : "border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 hover:border-slate-200 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300",
                   disabled && "pointer-events-none opacity-60"
                 )}
               >
@@ -135,7 +135,7 @@ export function QuizItem({
             disabled={disabled}
             placeholder="답변을 상세히 입력하세요..."
             rows={3}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-60 placeholder:text-slate-400"
+            className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 px-5 py-4 text-sm font-medium transition-all focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-60 placeholder:text-slate-400 dark:placeholder:text-slate-500 dark:text-slate-100"
           />
           <div className="absolute right-4 bottom-4 text-slate-300">
             <PenTool className="h-4 w-4" />
@@ -150,8 +150,8 @@ export function QuizItem({
           className={cn(
             "mt-6 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95",
             isSkipped
-              ? "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-200"
-              : "text-slate-400 hover:bg-slate-50 hover:text-slate-600",
+              ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-200"
+              : "text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300",
           )}
         >
           <SkipForward className="h-3.5 w-3.5" />

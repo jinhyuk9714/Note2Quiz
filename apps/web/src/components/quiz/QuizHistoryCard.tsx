@@ -41,33 +41,33 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
   return (
     <div 
       onClick={() => router.push(`/quiz/${quiz.id}`)}
-      className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg active:scale-[0.99] cursor-pointer"
+      className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[2rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-lg active:scale-[0.99] cursor-pointer"
     >
       <div className="flex items-start gap-4 flex-1 min-w-0">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 shadow-sm ring-1 ring-inset ring-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 shadow-sm ring-1 ring-inset ring-indigo-100 dark:ring-indigo-800 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
           <History className="h-6 w-6" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="truncate text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+          <h3 className="truncate text-lg font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
             {quiz.title}
           </h3>
           {quiz.document_title && (
-            <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
               <FileText className="h-3 w-3" />
               <span className="truncate">{quiz.document_title}</span>
             </div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
               <Layers className="h-3.5 w-3.5" />
               {quiz.item_count}문제
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(quiz.created_at)}
             </div>
             {quiz.is_shared && (
-              <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600 ring-1 ring-inset ring-emerald-200">
+              <div className="flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200 dark:ring-emerald-800">
                 <Link2 className="h-3 w-3" />
                 공유중
               </div>
@@ -78,7 +78,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
                   <Trophy className="h-3.5 w-3.5" />
                   {quiz.latest_score}/{quiz.latest_total}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
                   <RotateCcw className="h-3.5 w-3.5" />
                   {quiz.attempt_count}회 풀이
                 </div>
@@ -94,7 +94,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             e.stopPropagation();
             router.push(`/quiz/${quiz.id}/flashcard`);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-indigo-50 hover:text-indigo-600"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400"
           title="플래시카드"
         >
           <FlipHorizontal className="h-4 w-4" />
@@ -104,7 +104,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             e.stopPropagation();
             router.push(`/quiz/${quiz.id}/edit`);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-amber-50 hover:text-amber-600"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400"
           title="편집"
         >
           <Pencil className="h-4 w-4" />
@@ -114,7 +114,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             e.stopPropagation();
             setShareOpen(true);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
           title="공유"
         >
           <Link2 className="h-4 w-4" />
@@ -122,7 +122,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
         <button
           onClick={handleDelete}
           disabled={mutation.isPending}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-all hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
           title="삭제"
         >
           {mutation.isPending ? (
@@ -131,7 +131,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
             <Trash2 className="h-4 w-4" />
           )}
         </button>
-        <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 group-hover:translate-x-1 transition-transform">
+        <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
           <ChevronRight className="h-5 w-5" />
         </div>
       </div>
