@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime, timedelta
+from typing import cast
+
 from sqlalchemy import distinct, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -124,7 +126,7 @@ async def _get_weak_concepts(
 
     tag_stats: dict[str, dict[str, int]] = {}
     for concept_tags, is_mastered in orm_rows:
-        tags: list[str] = concept_tags if isinstance(concept_tags, list) else []
+        tags = cast(list[str], concept_tags) if isinstance(concept_tags, list) else []
         for tag in tags:
             if tag not in tag_stats:
                 tag_stats[tag] = {"wrong": 0, "mastered": 0}
