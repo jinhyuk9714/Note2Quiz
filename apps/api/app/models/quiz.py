@@ -4,7 +4,7 @@ import enum
 import uuid
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +29,10 @@ class Quiz(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), index=True)
     title: Mapped[str] = mapped_column(String(500))
     item_count: Mapped[int] = mapped_column(Integer)
+    share_code: Mapped[str | None] = mapped_column(
+        String(12), unique=True, index=True, nullable=True, default=None
+    )
+    is_shared: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     document: Mapped[Document] = relationship(back_populates="quizzes")
     items: Mapped[list[QuizItem]] = relationship(

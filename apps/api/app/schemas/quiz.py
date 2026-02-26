@@ -135,6 +135,7 @@ class QuizListItemResponse(BaseModel):
     attempt_count: int = 0
     latest_score: int | None = None
     latest_total: int | None = None
+    is_shared: bool = False
 
 
 class QuizResponse(BaseModel):
@@ -143,6 +144,8 @@ class QuizResponse(BaseModel):
     item_count: int
     created_at: datetime
     items: list[QuizItemPublicResponse]
+    is_shared: bool = False
+    share_code: str | None = None
 
 
 class QuizAttemptSummaryResponse(BaseModel):

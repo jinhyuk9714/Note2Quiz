@@ -60,6 +60,7 @@ const quizzes: QuizListItem[] = [
     attempt_count: 1,
     latest_score: 4,
     latest_total: 5,
+    is_shared: false,
   },
 ];
 

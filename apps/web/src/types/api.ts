@@ -99,6 +99,8 @@ export interface Quiz {
   item_count: number;
   created_at: string;
   items: QuizItem[];
+  is_shared?: boolean;
+  share_code?: string | null;
 }
 
 export interface FlashcardItem {
@@ -149,6 +151,31 @@ export interface QuizListItem {
   attempt_count: number;
   latest_score: number | null;
   latest_total: number | null;
+  is_shared: boolean;
+}
+
+// Share
+export interface ShareInfoResponse {
+  quiz_id: string;
+  is_shared: boolean;
+  share_code: string | null;
+  share_url: string | null;
+}
+
+export interface SharedQuiz {
+  id: string;
+  title: string;
+  item_count: number;
+  created_at: string;
+  owner_display_name: string;
+  items: QuizItem[];
+}
+
+export interface QuizCopyResponse {
+  quiz_id: string;
+  document_id: string;
+  title: string;
+  item_count: number;
 }
 
 export interface GenerateQuizPayload {

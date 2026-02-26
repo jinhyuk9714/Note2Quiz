@@ -8,6 +8,7 @@ from app.api.routes.documents import router as documents_router
 from app.api.routes.export import router as export_router
 from app.api.routes.folders import router as folders_router
 from app.api.routes.quiz import router as quiz_router
+from app.api.routes.share import router as share_router
 from app.api.routes.wrong_notes import router as wrong_notes_router
 
 api_router = APIRouter()
@@ -17,4 +18,5 @@ api_router.include_router(documents_router)
 api_router.include_router(export_router)
 api_router.include_router(folders_router)
 api_router.include_router(quiz_router)
+api_router.include_router(share_router)
 api_router.include_router(wrong_notes_router)

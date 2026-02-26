@@ -20,6 +20,7 @@ import type {
   LoginPayload,
   QuizItemCreatePayload,
   QuizItemUpdatePayload,
+  QuizCopyResponse,
   QuizListParams,
   PaginatedResponse,
   Quiz,
@@ -27,6 +28,8 @@ import type {
   QuizStreamComplete,
   QuizStreamError,
   QuizStreamProgress,
+  ShareInfoResponse,
+  SharedQuiz,
   SignupPayload,
   SubmitResult,
   TokenResponse,
@@ -482,6 +485,45 @@ export function reviewWrongNote(noteId: string, quality: 1 | 3 | 5) {
 
 export function deleteWrongNote(noteId: string): Promise<void> {
   return apiDelete(`/api/wrong-notes/${noteId}`);
+}
+
+// Share
+export function getShareInfo(quizId: string) {
+  return apiFetch<ShareInfoResponse>(`/api/quiz/${quizId}/share`);
+}
+
+export function toggleShare(quizId: string, isShared: boolean) {
+  return apiFetch<ShareInfoResponse>(`/api/quiz/${quizId}/share`, {
+    method: "POST",
+    body: JSON.stringify({ is_shared: isShared }),
+  });
+}
+
+export function regenerateShareCode(quizId: string) {
+  return apiFetch<ShareInfoResponse>(`/api/quiz/${quizId}/share/regenerate`, {
+    method: "POST",
+  });
+}
+
+export function getSharedQuiz(shareCode: string) {
+  return apiFetch<SharedQuiz>(`/api/share/${shareCode}`);
+}
+
+export function submitSharedQuiz(shareCode: string, answers: AnswerItem[]) {
+  return apiFetch<SubmitResult>(`/api/share/${shareCode}/submit`, {
+    method: "POST",
+    body: JSON.stringify({ answers }),
+  });
+}
+
+export function getSharedQuizForStudy(shareCode: string) {
+  return apiFetch<FlashcardQuiz>(`/api/share/${shareCode}/study`);
+}
+
+export function copySharedQuiz(shareCode: string) {
+  return apiFetch<QuizCopyResponse>(`/api/share/${shareCode}/copy`, {
+    method: "POST",
+  });
 }
 
 // Dashboard

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { History, Trash2, ChevronRight, Calendar, Layers, Trophy, RotateCcw, FileText, FlipHorizontal, Pencil } from "lucide-react";
+import { History, Trash2, ChevronRight, Calendar, Layers, Trophy, RotateCcw, FileText, FlipHorizontal, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteQuiz } from "@/lib/api";
 import type { QuizListItem } from "@/types/api";
 import { formatDate } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ShareDialog } from "@/components/quiz/ShareDialog";
 
 interface QuizHistoryCardProps {
   quiz: QuizListItem;
@@ -18,6 +19,7 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => deleteQuiz(quiz.id),
@@ -64,6 +66,12 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(quiz.created_at)}
             </div>
+            {quiz.is_shared && (
+              <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600 ring-1 ring-inset ring-emerald-200">
+                <Link2 className="h-3 w-3" />
+                공유중
+              </div>
+            )}
             {quiz.attempt_count > 0 && (
               <>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-500">
@@ -102,6 +110,16 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
           <Pencil className="h-4 w-4" />
         </button>
         <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShareOpen(true);
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+          title="공유"
+        >
+          <Link2 className="h-4 w-4" />
+        </button>
+        <button
           onClick={handleDelete}
           disabled={mutation.isPending}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
@@ -125,6 +143,12 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
         title="퀴즈 삭제"
         description={`"${quiz.title}" 퀴즈를 삭제하시겠습니까?`}
         loading={mutation.isPending}
+      />
+
+      <ShareDialog
+        quizId={quiz.id}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
       />
     </div>
   );

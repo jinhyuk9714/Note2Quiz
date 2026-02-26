@@ -24,6 +24,7 @@ const quiz: QuizListItem = {
   attempt_count: 0,
   latest_score: null,
   latest_total: null,
+  is_shared: false,
 };
 
 describe("QuizHistoryCard", () => {

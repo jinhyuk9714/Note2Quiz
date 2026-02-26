@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { downloadFile } from "@/lib/download";
@@ -15,6 +15,7 @@ import { QuizTimer } from "@/components/quiz/QuizTimer";
 import { loadDraftSnapshot, useQuizDraft, useDraftBanner } from "@/hooks/useQuizDraft";
 import { useQuizShortcuts } from "@/hooks/useQuizShortcuts";
 import { ShortcutHelpPanel } from "@/components/common/ShortcutHelpPanel";
+import { ShareDialog } from "@/components/quiz/ShareDialog";
 import type { Quiz, SubmitResult } from "@/types/api";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
@@ -88,6 +89,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [csvExporting, setCsvExporting] = useState(false);
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { saveDraft, clearDraft } = useQuizDraft(quiz.id, itemIds);
   const { wasRestored, dismissRestored } = useDraftBanner(snapshot !== null);
@@ -240,6 +242,14 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
               <Pencil className="h-3 w-3" />
               편집
             </Link>
+            <button
+              onClick={() => setShareOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+              title="공유"
+            >
+              <Link2 className="h-3 w-3" />
+              공유
+            </button>
           </div>
           <p className="text-slate-500 font-medium">
             {phase === "results"
@@ -470,6 +480,12 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
           ]}
         />
       )}
+
+      <ShareDialog
+        quizId={quiz.id}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   );
 }

@@ -34,12 +34,14 @@ from app.schemas.quiz import (
     QuizStudyResponse,
     QuizUpdateRequest,
 )
+from app.schemas.share import ShareInfoResponse, ShareToggleRequest
 from app.services.quiz_generation import (
     generate_questions_for_chunk,
     generate_quiz_from_chunks,
     load_chunks,
     save_quiz_to_db,
 )
+from app.services.share_service import ensure_unique_share_code
 from app.services.wrong_note_service import create_attempt_with_wrong_notes
 
 router = APIRouter(prefix="/quiz", tags=["quiz"])
@@ -62,6 +64,8 @@ def _quiz_to_response(quiz: Quiz) -> QuizResponse:
             )
             for item in quiz.items
         ],
+        is_shared=quiz.is_shared,
+        share_code=quiz.share_code,
     )
 
 
@@ -320,6 +324,7 @@ async def list_quizzes(
                 attempt_count=int(ac),
                 latest_score=s,
                 latest_total=t,
+                is_shared=q.is_shared,
             )
             for q, ac, s, t in rows
         ],
@@ -715,4 +720,85 @@ async def submit_quiz(
         results=results,
         wrong_notes_created=len(wrong_notes),
         wrong_notes_updated=wrong_notes_updated,
+    )
+
+
+# ---------- Share management (owner-only) ----------
+
+
+def _build_share_url(share_code: str | None) -> str | None:
+    if not share_code:
+        return None
+    base = settings.frontend_base_url.rstrip("/")
+    return f"{base}/quiz/shared/{share_code}"
+
+
+@router.get("/{quiz_id}/share", response_model=ShareInfoResponse)
+async def get_share_info(
+    quiz_id: uuid.UUID, db: DBSession, user_id: CurrentUserID
+) -> ShareInfoResponse:
+    stmt = select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    result = await db.execute(stmt)
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    return ShareInfoResponse(
+        quiz_id=quiz.id,
+        is_shared=quiz.is_shared,
+        share_code=quiz.share_code,
+        share_url=_build_share_url(quiz.share_code) if quiz.is_shared else None,
+    )
+
+
+@router.post("/{quiz_id}/share", response_model=ShareInfoResponse)
+async def toggle_share(
+    quiz_id: uuid.UUID,
+    payload: ShareToggleRequest,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> ShareInfoResponse:
+    stmt = select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    result = await db.execute(stmt)
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    if payload.is_shared and not quiz.share_code:
+        quiz.share_code = await ensure_unique_share_code(db)
+
+    quiz.is_shared = payload.is_shared
+    await db.commit()
+    await db.refresh(quiz)
+
+    return ShareInfoResponse(
+        quiz_id=quiz.id,
+        is_shared=quiz.is_shared,
+        share_code=quiz.share_code,
+        share_url=_build_share_url(quiz.share_code) if quiz.is_shared else None,
+    )
+
+
+@router.post("/{quiz_id}/share/regenerate", response_model=ShareInfoResponse)
+async def regenerate_share_code(
+    quiz_id: uuid.UUID,
+    db: DBSession,
+    user_id: CurrentUserID,
+) -> ShareInfoResponse:
+    stmt = select(Quiz).join(Quiz.document).where(Quiz.id == quiz_id, Document.owner_id == user_id)
+    result = await db.execute(stmt)
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    quiz.share_code = await ensure_unique_share_code(db)
+    quiz.is_shared = True
+    await db.commit()
+    await db.refresh(quiz)
+
+    return ShareInfoResponse(
+        quiz_id=quiz.id,
+        is_shared=quiz.is_shared,
+        share_code=quiz.share_code,
+        share_url=_build_share_url(quiz.share_code),
     )
