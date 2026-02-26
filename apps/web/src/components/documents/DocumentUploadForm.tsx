@@ -2,7 +2,8 @@
 
 import React, { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, FileUp, Type, X, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, FileUp, Type, X, FileText } from "lucide-react";
+import { toast } from "sonner";
 import { uploadDocument, uploadDocumentFile } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -23,12 +24,16 @@ export function DocumentUploadForm() {
       }
       return uploadDocument(title, text);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
       setTitle("");
       setText("");
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      toast.success(`업로드 완료! (${data.chunk_count}개 섹션 생성)`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -194,20 +199,6 @@ export function DocumentUploadForm() {
                 />
               </>
             )}
-          </div>
-        )}
-
-        {mutation.isError && (
-          <div className="flex items-center gap-2 rounded-xl bg-red-50 p-4 text-xs font-bold text-red-600 ring-1 ring-inset ring-red-200/50">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {mutation.error.message}
-          </div>
-        )}
-
-        {mutation.isSuccess && (
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-xs font-bold text-emerald-600 ring-1 ring-inset ring-emerald-200/50">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            업로드 완료! ({mutation.data.chunk_count}개 섹션 생성)
           </div>
         )}
 

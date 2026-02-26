@@ -15,6 +15,7 @@ import {
   History,
   Pencil,
 } from "lucide-react";
+import { toast } from "sonner";
 import { getDocument, listQuizzes, deleteDocument, updateDocument } from "@/lib/api";
 import { QuizHistoryCard } from "@/components/quiz/QuizHistoryCard";
 import { ChunkViewer } from "@/components/documents/ChunkViewer";
@@ -52,6 +53,10 @@ export default function DocumentDetailPage() {
       setIsEditing(false);
       void queryClient.invalidateQueries({ queryKey: ["document", id] });
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("제목이 변경되었습니다");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -61,6 +66,9 @@ export default function DocumentDetailPage() {
       setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
       router.push("/documents");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -200,13 +208,6 @@ export default function DocumentDetailPage() {
           </button>
         </div>
       </div>
-
-      {(deleteMutation.isError || renameMutation.isError) && (
-        <div className="flex items-center gap-2 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-600 ring-1 ring-inset ring-red-200">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          {deleteMutation.error?.message ?? renameMutation.error?.message}
-        </div>
-      )}
 
       {/* Chunk Viewer */}
       {doc.chunks.length > 0 && <ChunkViewer chunks={doc.chunks} />}

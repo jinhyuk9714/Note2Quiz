@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FileText, Trash2, Zap, Calendar, Hash, Sparkles, ChevronRight } from "lucide-react";
 import type { Document } from "@/types/api";
 import { formatDate } from "@/lib/utils";
+import { toast } from "sonner";
 import { deleteDocument } from "@/lib/api";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
@@ -24,6 +25,10 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
     onSuccess: () => {
       setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("문서가 삭제되었습니다");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -65,11 +70,6 @@ export function DocumentCard({ document, onSelect }: DocumentCardProps) {
               {formatDate(document.created_at)}
             </div>
           </div>
-          {mutation.isError && (
-            <p className="mt-2 text-xs font-bold text-red-500">
-              {mutation.error.message}
-            </p>
-          )}
         </div>
       </div>
 

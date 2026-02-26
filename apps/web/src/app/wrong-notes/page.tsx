@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { BookOpenCheck, Filter, LayoutGrid, CalendarCheck, CheckCircle2, Sparkles, PlayCircle, Tag, X, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { listWrongNotes } from "@/lib/api";
+import { toast } from "sonner";
 import { downloadFile } from "@/lib/download";
 import { WrongNoteCard } from "@/components/wrong-notes/WrongNoteCard";
 import { ReviewSession } from "@/components/wrong-notes/ReviewSession";
@@ -119,7 +120,7 @@ export default function WrongNotesPage() {
       const ext = format === "csv" ? "csv" : "pdf";
       await downloadFile(`/api/export/wrong-notes/${format}${qs}`, `오답노트.${ext}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "내보내기 실패");
+      toast.error(err instanceof Error ? err.message : "내보내기 실패");
     } finally {
       setExporting(false);
     }

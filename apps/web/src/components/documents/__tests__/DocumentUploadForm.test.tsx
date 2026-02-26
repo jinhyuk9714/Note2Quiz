@@ -8,7 +8,12 @@ vi.mock("@/lib/api", () => ({
   uploadDocumentFile: vi.fn(),
 }));
 
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
 import { uploadDocument } from "@/lib/api";
+import { toast } from "sonner";
 
 describe("DocumentUploadForm", () => {
   beforeEach(() => {
@@ -78,7 +83,9 @@ describe("DocumentUploadForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /업로드 및 분석/ }));
 
     await waitFor(() => {
-      expect(screen.getByText(/업로드 완료/)).toBeInTheDocument();
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("업로드 완료"),
+      );
     });
   });
 

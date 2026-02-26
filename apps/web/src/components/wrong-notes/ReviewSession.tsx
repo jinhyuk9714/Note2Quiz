@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { reviewWrongNote } from "@/lib/api";
 import type { WrongNote } from "@/types/api";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,9 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
   const mutation = useMutation({
     mutationFn: ({ noteId, quality }: { noteId: string; quality: 1 | 3 | 5 }) =>
       reviewWrongNote(noteId, quality),
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
   });
 
   function handleReview(quality: 1 | 3 | 5) {
@@ -297,14 +301,6 @@ export function ReviewSession({ notes, onExit, backLabel }: ReviewSessionProps) 
           )}
         </div>
 
-        {mutation.isError && (
-          <div className="px-8 pb-6">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-500">
-              <AlertCircle className="h-3.5 w-3.5" />
-              {mutation.error.message}
-            </div>
-          </div>
-        )}
       </div>
 
       <ShortcutHelpPanel

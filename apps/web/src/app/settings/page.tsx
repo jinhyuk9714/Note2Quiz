@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, AlertTriangle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { updateProfile, changePassword, deleteAccount, clearToken } from "@/lib/api";
 
@@ -13,36 +14,24 @@ export default function SettingsPage() {
 
   // Profile
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
-  const [profileMsg, setProfileMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   // Password
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordMsg, setPasswordMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   // Delete
   const [deletePassword, setDeletePassword] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteMsg, setDeleteMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const profileMutation = useMutation({
     mutationFn: () => updateProfile({ display_name: displayName.trim() }),
     onSuccess: async () => {
       await refreshUser();
-      setProfileMsg({ type: "success", text: "프로필이 업데이트되었습니다." });
+      toast.success("프로필이 업데이트되었습니다");
     },
     onError: (err: Error) => {
-      setProfileMsg({ type: "error", text: err.message });
+      toast.error(err.message);
     },
   });
 
@@ -56,13 +45,10 @@ export default function SettingsPage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setPasswordMsg({
-        type: "success",
-        text: "비밀번호가 변경되었습니다.",
-      });
+      toast.success("비밀번호가 변경되었습니다");
     },
     onError: (err: Error) => {
-      setPasswordMsg({ type: "error", text: err.message });
+      toast.error(err.message);
     },
   });
 
@@ -74,7 +60,7 @@ export default function SettingsPage() {
       router.replace("/login");
     },
     onError: (err: Error) => {
-      setDeleteMsg({ type: "error", text: err.message });
+      toast.error(err.message);
     },
   });
 
@@ -128,22 +114,11 @@ export default function SettingsPage() {
             id="display_name"
             type="text"
             value={displayName}
-            onChange={(e) => {
-              setDisplayName(e.target.value);
-              setProfileMsg(null);
-            }}
+            onChange={(e) => setDisplayName(e.target.value)}
             maxLength={100}
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           />
         </div>
-
-        {profileMsg && (
-          <p
-            className={`mb-4 text-sm font-medium ${profileMsg.type === "success" ? "text-emerald-600" : "text-red-600"}`}
-          >
-            {profileMsg.text}
-          </p>
-        )}
 
         <button
           onClick={() => profileMutation.mutate()}
@@ -172,10 +147,7 @@ export default function SettingsPage() {
             id="current_password"
             type="password"
             value={currentPassword}
-            onChange={(e) => {
-              setCurrentPassword(e.target.value);
-              setPasswordMsg(null);
-            }}
+            onChange={(e) => setCurrentPassword(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           />
         </div>
@@ -191,10 +163,7 @@ export default function SettingsPage() {
             id="new_password"
             type="password"
             value={newPassword}
-            onChange={(e) => {
-              setNewPassword(e.target.value);
-              setPasswordMsg(null);
-            }}
+            onChange={(e) => setNewPassword(e.target.value)}
             placeholder="8자 이상"
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
           />
@@ -211,10 +180,7 @@ export default function SettingsPage() {
             id="confirm_password"
             type="password"
             value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              setPasswordMsg(null);
-            }}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             className={`w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800 transition-colors focus:outline-none focus:ring-2 ${
               passwordMismatch
                 ? "border-red-300 focus:border-red-300 focus:ring-red-100"
@@ -227,14 +193,6 @@ export default function SettingsPage() {
             </p>
           )}
         </div>
-
-        {passwordMsg && (
-          <p
-            className={`mb-4 text-sm font-medium ${passwordMsg.type === "success" ? "text-emerald-600" : "text-red-600"}`}
-          >
-            {passwordMsg.text}
-          </p>
-        )}
 
         <button
           onClick={() => passwordMutation.mutate()}
@@ -276,18 +234,10 @@ export default function SettingsPage() {
                 id="delete_password"
                 type="password"
                 value={deletePassword}
-                onChange={(e) => {
-                  setDeletePassword(e.target.value);
-                  setDeleteMsg(null);
-                }}
+                onChange={(e) => setDeletePassword(e.target.value)}
                 className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-slate-800 transition-colors focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-100"
               />
             </div>
-            {deleteMsg && (
-              <p className="text-sm font-medium text-red-600">
-                {deleteMsg.text}
-              </p>
-            )}
             <div className="flex gap-2">
               <button
                 onClick={() => deleteMutation.mutate()}
@@ -300,7 +250,6 @@ export default function SettingsPage() {
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setDeletePassword("");
-                  setDeleteMsg(null);
                 }}
                 className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
               >

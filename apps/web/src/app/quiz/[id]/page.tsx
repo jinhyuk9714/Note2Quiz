@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, CheckCircle2, BookOpenCheck, Sparkles, AlertCircle, RotateCcw, History, RefreshCw, X, Download } from "lucide-react";
+import { toast } from "sonner";
 import { getQuiz, submitQuiz, listQuizAttempts } from "@/lib/api";
 import { downloadFile } from "@/lib/download";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { QuizItem } from "@/components/quiz/QuizItem";
 import { QuestionNavPanel } from "@/components/quiz/QuestionNavPanel";
 import { QuizResults } from "@/components/quiz/QuizResults";
@@ -85,6 +87,7 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [csvExporting, setCsvExporting] = useState(false);
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
   const { saveDraft, clearDraft } = useQuizDraft(quiz.id, itemIds);
   const { wasRestored, dismissRestored } = useDraftBanner(snapshot !== null);
@@ -147,7 +150,10 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
       void queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quiz.id] });
       void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },
-    onError: () => setPhase("taking"),
+    onError: (err: Error) => {
+      setPhase("taking");
+      toast.error(err.message);
+    },
   });
 
   function handleRetake() {
@@ -188,10 +194,8 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     if (answeredCount === 0) return;
     const unanswered = totalCount - answeredCount;
     if (unanswered > 0) {
-      const confirmed = window.confirm(
-        `${unanswered}개 문항이 미답변입니다. 그래도 제출하시겠습니까?`,
-      );
-      if (!confirmed) return;
+      setSubmitConfirmOpen(true);
+      return;
     }
     mutation.mutate();
   }
@@ -423,12 +427,18 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
             )}
           </button>
 
-          {mutation.isError && (
-            <div className="flex items-center gap-2 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-600 ring-1 ring-inset ring-red-200">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              {mutation.error.message}
-            </div>
-          )}
+          <ConfirmDialog
+            open={submitConfirmOpen}
+            onConfirm={() => {
+              setSubmitConfirmOpen(false);
+              mutation.mutate();
+            }}
+            onCancel={() => setSubmitConfirmOpen(false)}
+            title="미답변 문항 있음"
+            description={`${totalCount - answeredCount}개 문항이 미답변입니다. 그래도 제출하시겠습니까?`}
+            confirmLabel="제출"
+            variant="default"
+          />
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Brain, Calendar, Info, Tag, AlertCircle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { reviewWrongNote, deleteWrongNote } from "@/lib/api";
 import type { WrongNote } from "@/types/api";
 import { cn, formatDate, getRelativeTime } from "@/lib/utils";
@@ -24,6 +25,9 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
     },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -33,6 +37,10 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
     onSuccess: () => {
       setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["wrong-notes"] });
+      toast.success("오답노트가 삭제되었습니다");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -159,13 +167,6 @@ export function WrongNoteCard({ note }: WrongNoteCardProps) {
             <CheckCircle2 className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
             쉬웠어요
           </button>
-        </div>
-      )}
-
-      {(mutation.isError || deleteMutation.isError) && (
-        <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-red-500 animate-in shake duration-300">
-          <AlertCircle className="h-3.5 w-3.5" />
-          {mutation.error?.message ?? deleteMutation.error?.message}
         </div>
       )}
 

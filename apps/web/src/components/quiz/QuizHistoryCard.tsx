@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { History, Trash2, ChevronRight, Calendar, Layers, AlertCircle, Trophy, RotateCcw, FileText } from "lucide-react";
+import { History, Trash2, ChevronRight, Calendar, Layers, Trophy, RotateCcw, FileText } from "lucide-react";
+import { toast } from "sonner";
 import { deleteQuiz } from "@/lib/api";
 import type { QuizListItem } from "@/types/api";
 import { formatDate } from "@/lib/utils";
@@ -23,6 +24,10 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
     onSuccess: () => {
       setConfirmOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      toast.success("퀴즈가 삭제되었습니다");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -72,12 +77,6 @@ export function QuizHistoryCard({ quiz }: QuizHistoryCardProps) {
               </>
             )}
           </div>
-          {mutation.isError && (
-            <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-red-500">
-              <AlertCircle className="h-3 w-3" />
-              {mutation.error.message}
-            </div>
-          )}
         </div>
       </div>
 
