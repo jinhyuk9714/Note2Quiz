@@ -56,6 +56,7 @@ export function ActivityBarChart({ data }: ActivityBarChartProps) {
               strokeDasharray="3 3"
               stroke={colors.grid}
               vertical={false}
+              syncWithTicks
             />
             <XAxis
               dataKey="date"
@@ -69,6 +70,7 @@ export function ActivityBarChart({ data }: ActivityBarChartProps) {
               tick={{ fontSize: 11, fill: colors.tick }}
               tickLine={false}
               axisLine={false}
+              tickCount={6}
             />
             <Tooltip
               formatter={(value) => [value, "퀴즈 수"]}
