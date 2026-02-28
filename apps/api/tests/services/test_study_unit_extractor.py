@@ -2,10 +2,23 @@ from __future__ import annotations
 
 import json
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.schemas.document_analysis import BlockKind, SourceBlock, StudyUnitType
+import pytest
+from anthropic.types import TextBlock
+
+from app.schemas.document_analysis import (
+    BlockKind,
+    DocumentProfile,
+    DocumentType,
+    SourceBlock,
+    StudyUnitType,
+)
 from app.services.study_unit_extractor import (
+    _call_study_unit_llm,  # pyright: ignore[reportPrivateUsage]
+    _deduplicate_text,  # pyright: ignore[reportPrivateUsage]
     _parse_study_units,  # pyright: ignore[reportPrivateUsage]
+    _try_repair_truncated_json,  # pyright: ignore[reportPrivateUsage]
 )
 
 
@@ -268,3 +281,216 @@ class TestParseStudyUnits:
             )
             units = _parse_study_units(raw, blocks)
             assert len(units) == 1, f"Failed for unit_type={ut.value}"
+
+
+class TestDeduplicateText:
+    """Test OCR text deduplication."""
+
+    def test_no_duplication(self) -> None:
+        text = "これは普通の文章です。重複はありません。"
+        result = _deduplicate_text(text)
+        assert "普通の文章" in result
+        assert "重複はありません" in result
+
+    def test_consecutive_sentence_dedup(self) -> None:
+        text = "機械学習とは。機械学習とは。データから学ぶ。"
+        result = _deduplicate_text(text)
+        assert result.count("機械学習とは") == 1
+        assert "データから学ぶ" in result
+
+    def test_ocr_japanese_with_delimiter(self) -> None:
+        """OCR duplication with sentence delimiters — deduped by line comparison."""
+        text = "かれはわたしのあにです。かれはわたしのあにです。別の文。"
+        result = _deduplicate_text(text)
+        assert result.count("かれはわたしのあにです") == 1
+        assert "別の文" in result
+
+    def test_repeated_substring_in_deduped_text(self) -> None:
+        """Regex handles long repeated substrings (>=10 chars, 3+ repeats)."""
+        phrase = "これは長いフレーズです。"  # sentence with delimiter
+        # After sentence-level dedup, inner regex handles inline repeats
+        text = "aaa" + phrase * 3 + "bbb。"
+        result = _deduplicate_text(text)
+        # The regex (.{10,}?)\1{2,} should collapse the 3x repeat
+        assert result.count("これは長いフレーズです") < 3
+
+    def test_repeated_phrase_regex(self) -> None:
+        """Substring >=10 chars repeated 3+ times is collapsed."""
+        phrase = "This is a long enough phrase. "
+        text = phrase * 5
+        result = _deduplicate_text(text)
+        assert result.count(phrase.strip()) < 5
+
+    def test_mixed_delimiters(self) -> None:
+        """Japanese and English sentence boundaries both split correctly."""
+        text = "First sentence. First sentence. 日本語の文。日本語の文。End!"
+        result = _deduplicate_text(text)
+        assert result.count("First sentence") == 1
+        assert result.count("日本語の文") == 1
+
+    def test_short_text_passthrough(self) -> None:
+        """Text with no sentence boundaries returns unchanged."""
+        text = "short text no delimiters"
+        result = _deduplicate_text(text)
+        assert result == text
+
+    def test_empty_text(self) -> None:
+        assert _deduplicate_text("") == ""
+
+
+class TestTryRepairTruncatedJson:
+    """Test truncated JSON array repair."""
+
+    def test_truncated_after_two_complete_items(self) -> None:
+        text = '[{"a":1},{"b":2},{"c":3'
+        result = _try_repair_truncated_json(text)
+        assert len(result) == 2
+        assert result[0] == {"a": 1}
+        assert result[1] == {"b": 2}
+
+    def test_no_complete_items(self) -> None:
+        text = '[{"a":'
+        result = _try_repair_truncated_json(text)
+        assert result == []
+
+    def test_single_complete_item(self) -> None:
+        text = '[{"a":1},{"b":'
+        result = _try_repair_truncated_json(text)
+        assert len(result) == 1
+        assert result[0] == {"a": 1}
+
+    def test_truncated_with_newline_separator(self) -> None:
+        text = '[{"a":1}\n,{"b":2}\n,{"c":'
+        result = _try_repair_truncated_json(text)
+        assert len(result) >= 1
+
+    def test_realistic_study_unit_truncation(self) -> None:
+        """Simulate a realistic truncated study unit JSON response."""
+        complete_item = {
+            "unit_id": "unit-blk-1",
+            "block_id": "blk-1",
+            "unit_type": "definition",
+            "title": "Test",
+            "content": "Content",
+            "quizworthiness": 3,
+            "concept_tags": ["test"],
+            "source_excerpt": "excerpt",
+        }
+        truncated = (
+            json.dumps([complete_item])[:-1]
+            + ',{"unit_id":"unit-blk-2","block_id":"blk-2","unit_ty'
+        )
+        result = _try_repair_truncated_json(truncated)
+        assert len(result) == 1
+        assert result[0]["unit_id"] == "unit-blk-1"
+
+
+def _make_profile(**overrides: object) -> DocumentProfile:
+    defaults: dict[str, object] = {
+        "document_type": DocumentType.VOCABULARY_BOOK,
+        "dominant_language": "ja",
+        "quizability_score": 4,
+        "quizable_block_ids": ["blk-0"],
+        "ignored_block_ids": [],
+        "rationale": "test",
+    }
+    defaults.update(overrides)
+    return DocumentProfile(**defaults)  # type: ignore[arg-type]
+
+
+class TestCallStudyUnitLlm:
+    """Test LLM call integration with mocked Anthropic API."""
+
+    @pytest.mark.asyncio
+    async def test_normal_response(self) -> None:
+        blocks = _make_blocks(1)
+        profile = _make_profile(quizable_block_ids=[blocks[0].block_id])
+
+        llm_response_data = json.dumps(
+            [
+                {
+                    "unit_id": "unit-1",
+                    "block_id": blocks[0].block_id,
+                    "unit_type": "definition",
+                    "title": "Test Title",
+                    "content": "Test Content",
+                    "quizworthiness": 4,
+                    "concept_tags": ["test"],
+                    "source_excerpt": "excerpt",
+                }
+            ]
+        )
+
+        mock_text_block = MagicMock(spec=TextBlock)
+        mock_text_block.text = llm_response_data
+        mock_response = MagicMock()
+        mock_response.content = [mock_text_block]
+        mock_response.stop_reason = "end_turn"
+
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await _call_study_unit_llm(blocks, profile, mock_client)
+        assert len(result) == 1
+        assert result[0].title == "Test Title"
+        assert result[0].unit_type == StudyUnitType.DEFINITION
+
+    @pytest.mark.asyncio
+    async def test_max_tokens_truncation_logs_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        blocks = _make_blocks(1)
+        profile = _make_profile(quizable_block_ids=[blocks[0].block_id])
+
+        # Simulate truncated response
+        mock_text_block = MagicMock(spec=TextBlock)
+        mock_text_block.text = "[]"
+        mock_response = MagicMock()
+        mock_response.content = [mock_text_block]
+        mock_response.stop_reason = "max_tokens"
+
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            await _call_study_unit_llm(blocks, profile, mock_client)
+
+        assert any("max_tokens" in r.message for r in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_dedup_applied_to_block_text(self) -> None:
+        """Verify duplicated text in blocks is cleaned before sending to LLM."""
+        cid = uuid.uuid4()
+        blocks = [
+            SourceBlock(
+                block_id="blk-dup",
+                chunk_id=cid,
+                index=0,
+                origin="chunk-0",
+                text="重複テスト。重複テスト。重複テスト。",
+                heuristic_kind=BlockKind.LEARNING_CONTENT,
+            )
+        ]
+        profile = _make_profile(quizable_block_ids=["blk-dup"])
+
+        mock_text_block = MagicMock(spec=TextBlock)
+        mock_text_block.text = "[]"
+        mock_response = MagicMock()
+        mock_response.content = [mock_text_block]
+        mock_response.stop_reason = "end_turn"
+
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch(
+            "app.services.study_unit_extractor.build_study_unit_prompt",
+            return_value="mocked prompt",
+        ) as mock_prompt:
+            await _call_study_unit_llm(blocks, profile, mock_client)
+            call_args = mock_prompt.call_args
+            sent_blocks = call_args.kwargs.get("blocks") or call_args[0][0]
+            # The duplicated text should have been deduped
+            sent_text = sent_blocks[0]["text"]
+            assert sent_text.count("重複テスト") < 3
