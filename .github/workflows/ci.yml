@@ -30,6 +30,9 @@ jobs:
       - name: Ruff lint
         run: ruff check .
 
+      - name: Ruff format check
+        run: ruff format --check .
+
       - name: Pyright typecheck
         run: pyright
 
@@ -67,3 +70,15 @@ jobs:
 
       - name: Run tests
         run: pnpm test:run
+
+  docker-build:
+    name: Docker build verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build -t note2quiz-api:ci ./apps/api
+
+      - name: Build Web image
+        run: docker build -t note2quiz-web:ci ./apps/web --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000

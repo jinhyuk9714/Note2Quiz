@@ -9,16 +9,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler  # type: ignore[import-untyped]
 from slowapi.errors import RateLimitExceeded  # type: ignore[import-untyped]
 from slowapi.middleware import SlowAPIMiddleware  # type: ignore[import-untyped]
+from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import engine
+from app.core.deps import DBSession
 from app.core.logging_config import setup_logging
 from app.core.rate_limit import limiter
 from app.middleware.logging_middleware import (
     RequestLoggingMiddleware,
     register_exception_handler,
 )
+from app.middleware.security_headers import SecurityHeadersMiddleware
 
 setup_logging()
 
@@ -41,8 +44,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 register_exception_handler(app)
 
 # Middleware stack (last added = outermost)
-# Request flow: CORS -> RequestLogging -> SlowAPI -> Route
+# Request flow: CORS -> RequestLogging -> SecurityHeaders -> SlowAPI -> Route
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
@@ -58,3 +62,9 @@ app.include_router(api_router, prefix="/api")
 @app.get("/health", tags=["infra"])
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/health/ready", tags=["infra"])
+async def readiness_check(db: DBSession) -> dict[str, str]:
+    await db.execute(text("SELECT 1"))
+    return {"status": "ok", "database": "connected"}

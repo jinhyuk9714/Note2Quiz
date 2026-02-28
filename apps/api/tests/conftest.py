@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 os.environ["RATE_LIMIT_ENABLED"] = "false"
+os.environ.setdefault("DEBUG", "true")
 
 import pytest  # noqa: E402
 from httpx import ASGITransport, AsyncClient

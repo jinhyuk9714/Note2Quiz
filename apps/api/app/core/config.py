@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+import logging
+import warnings
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
+
+_JWT_PLACEHOLDER = "CHANGE-ME-IN-PRODUCTION-use-at-least-32-bytes"
 
 
 class Settings(BaseSettings):
@@ -22,7 +30,7 @@ class Settings(BaseSettings):
     anthropic_model: str = "claude-haiku-4-5-20251001"
 
     # Auth / JWT
-    jwt_secret_key: str = "CHANGE-ME-IN-PRODUCTION-use-at-least-32-bytes"
+    jwt_secret_key: str = _JWT_PLACEHOLDER
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440  # 24 hours
 
@@ -56,6 +64,21 @@ class Settings(BaseSettings):
     default_chunk_size: int = 1500  # characters
     default_chunk_overlap: int = 200  # characters
     max_questions_per_chunk: int = 5
+
+    @model_validator(mode="after")
+    def _validate_production_settings(self) -> Settings:
+        if not self.debug:
+            if self.jwt_secret_key == _JWT_PLACEHOLDER:
+                raise ValueError(
+                    "JWT_SECRET_KEY must be set in production. "
+                    'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+                )
+        if not self.anthropic_api_key:
+            warnings.warn(
+                "ANTHROPIC_API_KEY is empty — quiz generation and grading will fail",
+                stacklevel=1,
+            )
+        return self
 
 
 settings = Settings()
