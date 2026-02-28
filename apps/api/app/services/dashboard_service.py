@@ -129,7 +129,7 @@ async def _get_weak_concepts(
                 COUNT(*) AS wrong_count,
                 COUNT(*) FILTER (WHERE is_mastered = TRUE) AS mastered_count
             FROM wrong_answer_notes,
-                 json_array_elements_text(concept_tags) AS tag
+                 jsonb_array_elements_text(concept_tags) AS tag
             WHERE user_id = :user_id
             GROUP BY tag
             ORDER BY wrong_count DESC
