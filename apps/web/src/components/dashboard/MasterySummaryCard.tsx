@@ -11,7 +11,7 @@ export function MasterySummaryCard({ summary }: MasterySummaryCardProps) {
   const remaining = summary.total_wrong_notes - summary.mastered_count;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="bento-card flex h-full flex-col overflow-hidden p-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
           <Award className="h-5 w-5" />

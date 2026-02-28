@@ -10,7 +10,7 @@ export function LearningStreakCard({ streak }: LearningStreakCardProps) {
   const isActive = streak.current_streak_days > 0;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="bento-card flex h-full flex-col overflow-hidden p-8">
       <div className="mb-6 flex items-center gap-3">
         <div
           className={cn(

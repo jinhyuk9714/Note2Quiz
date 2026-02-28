@@ -8,7 +8,7 @@ interface WeakConceptsCardProps {
 
 export function WeakConceptsCard({ concepts }: WeakConceptsCardProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border-default bg-surface-card p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="bento-card flex h-full flex-col overflow-hidden p-8">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
