@@ -17,6 +17,7 @@ from app.core.database import engine
 from app.core.deps import DBSession
 from app.core.logging_config import setup_logging
 from app.core.rate_limit import limiter
+from app.core.sentry_setup import init_sentry
 from app.middleware.logging_middleware import (
     RequestLoggingMiddleware,
     register_exception_handler,
@@ -24,9 +25,6 @@ from app.middleware.logging_middleware import (
 from app.middleware.security_headers import SecurityHeadersMiddleware
 
 setup_logging()
-
-from app.core.sentry_setup import init_sentry
-
 init_sentry()
 
 logger = logging.getLogger(__name__)

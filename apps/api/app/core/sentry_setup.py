@@ -8,16 +8,18 @@ from fastapi import HTTPException
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.types import Event, Hint
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
+def _before_send(event: Event, hint: Hint) -> Event | None:
     """Filter out expected client errors to save Sentry quota."""
-    if "exc_info" in hint:
-        exc = hint["exc_info"][1]
+    exc_info: Any = hint.get("exc_info")
+    if exc_info is not None:
+        exc: Any = exc_info[1]
         if isinstance(exc, HTTPException) and exc.status_code < 500:
             return None
     return event
@@ -47,7 +49,7 @@ def init_sentry() -> None:
             LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
         ],
         traces_sampler=_traces_sampler,
-        before_send=_before_send,
+        before_send=_before_send,  # type: ignore[arg-type]
         send_default_pii=False,
     )
     logger.info("Sentry initialized (env=%s)", settings.sentry_environment)
