@@ -108,6 +108,7 @@ async def generate_quiz(
             quiz_types=payload.quiz_types,
             title=title,
             focus_concepts=payload.focus_concepts,
+            document_title=doc.title,
         )
     except NoChunksFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -191,6 +192,7 @@ async def generate_quiz_stream(
                             questions_per_chunk,
                             payload.quiz_types,
                             focus_concepts=payload.focus_concepts,
+                            document_title=doc.title,
                         )
                         get_circuit_breaker().record_success()
                         break

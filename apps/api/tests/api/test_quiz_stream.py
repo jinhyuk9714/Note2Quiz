@@ -218,7 +218,7 @@ class TestGenerateQuizStream:
         # Verify LLM prompt contained focus concepts
         call_args = mock_client.messages.create.call_args
         prompt_content = call_args.kwargs["messages"][0]["content"]
-        assert "FOCUS CONCEPTS" in prompt_content
+        assert "Focus concepts" in prompt_content
         assert "미적분" in prompt_content
 
         events = _parse_sse_events(resp.text)

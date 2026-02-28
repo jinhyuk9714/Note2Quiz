@@ -110,6 +110,8 @@ async def generate_questions_for_chunk(
     questions_per_chunk: int,
     quiz_types: list[str],
     focus_concepts: list[str] | None = None,
+    document_title: str | None = None,
+    already_covered_concepts: list[str] | None = None,
 ) -> list[dict[str, object]]:
     """Call LLM for a single chunk and return parsed quiz items."""
     # E2E test mock: return deterministic items when using a test API key
@@ -124,6 +126,8 @@ async def generate_questions_for_chunk(
         n_questions=questions_per_chunk,
         quiz_types=quiz_types,
         focus_concepts=focus_concepts,
+        document_title=document_title,
+        already_covered_concepts=already_covered_concepts,
     )
     response = await client.messages.create(
         model=settings.anthropic_model,
@@ -190,6 +194,7 @@ async def generate_quiz_from_chunks(
     quiz_types: list[str],
     title: str,
     focus_concepts: list[str] | None = None,
+    document_title: str | None = None,
 ) -> Quiz:
     chunks = await load_chunks(db, document_id, chunk_ids)
     logger.info(
@@ -217,6 +222,7 @@ async def generate_quiz_from_chunks(
                         questions_per_chunk,
                         quiz_types,
                         focus_concepts=focus_concepts,
+                        document_title=document_title,
                     )
                     get_circuit_breaker().record_success()
                     return result
