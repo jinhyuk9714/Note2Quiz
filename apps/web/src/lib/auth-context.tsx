@@ -10,7 +10,14 @@ import {
 } from "react";
 
 import type { AuthUser } from "@/types/api";
-import { clearToken, getMe, getToken, setToken as saveToken } from "@/lib/api";
+import {
+  clearToken,
+  clearRefreshToken,
+  getMe,
+  getToken,
+  logoutApi,
+  setToken as saveToken,
+} from "@/lib/api";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -29,6 +36,7 @@ async function loadUser(): Promise<AuthUser | null> {
     return await getMe();
   } catch {
     clearToken();
+    clearRefreshToken();
     return null;
   }
 }
@@ -48,11 +56,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveToken(token);
     getMe()
       .then(setUser)
-      .catch(() => clearToken());
+      .catch(() => {
+        clearToken();
+        clearRefreshToken();
+      });
   }, []);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Ignore logout errors
+    }
     clearToken();
+    clearRefreshToken();
     setUser(null);
   }, []);
 
@@ -62,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(u);
     } catch {
       clearToken();
+      clearRefreshToken();
       setUser(null);
     }
   }, []);

@@ -57,7 +57,7 @@ describe("LoginPage", () => {
   });
 
   it("calls login API with email and password on submit", async () => {
-    vi.mocked(login).mockResolvedValueOnce({ access_token: "tok123", token_type: "bearer" });
+    vi.mocked(login).mockResolvedValueOnce({ access_token: "tok123", refresh_token: "ref123", token_type: "bearer" });
     renderWithProviders(<LoginPage />);
 
     await user.type(screen.getByLabelText("이메일 주소"), "test@test.com");
@@ -73,7 +73,7 @@ describe("LoginPage", () => {
   });
 
   it("calls setToken and router.replace on success", async () => {
-    vi.mocked(login).mockResolvedValueOnce({ access_token: "tok123", token_type: "bearer" });
+    vi.mocked(login).mockResolvedValueOnce({ access_token: "tok123", refresh_token: "ref123", token_type: "bearer" });
     renderWithProviders(<LoginPage />);
 
     await user.type(screen.getByLabelText("이메일 주소"), "test@test.com");
@@ -100,7 +100,7 @@ describe("LoginPage", () => {
   });
 
   it("shows loading text while submitting", async () => {
-    let resolveLogin: (value: { access_token: string; token_type: string }) => void;
+    let resolveLogin: (value: { access_token: string; refresh_token: string; token_type: string }) => void;
     vi.mocked(login).mockImplementationOnce(
       () =>
         new Promise((resolve) => {
@@ -115,7 +115,7 @@ describe("LoginPage", () => {
 
     expect(screen.getByText("로그인 중...")).toBeInTheDocument();
 
-    resolveLogin!({ access_token: "tok", token_type: "bearer" });
+    resolveLogin!({ access_token: "tok", refresh_token: "ref", token_type: "bearer" });
     await waitFor(() => {
       expect(screen.getByText(/시작하기/)).toBeInTheDocument();
     });

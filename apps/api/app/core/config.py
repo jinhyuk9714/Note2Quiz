@@ -32,7 +32,9 @@ class Settings(BaseSettings):
     # Auth / JWT
     jwt_secret_key: str = _JWT_PLACEHOLDER
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440  # 24 hours
+    jwt_expire_minutes: int = 30  # 30 minutes (access token)
+    jwt_refresh_expire_days: int = 7  # 7 days (refresh token)
+    password_reset_expire_minutes: int = 30
 
     # Frontend
     frontend_base_url: str = "http://localhost:3000"

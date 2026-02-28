@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
 
-const PUBLIC_PATHS = ["/login", "/signup"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();

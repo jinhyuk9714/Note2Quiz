@@ -18,6 +18,8 @@ import type {
   GenerateQuizPayload,
   ListParams,
   LoginPayload,
+  PasswordResetConfirmPayload,
+  PasswordResetRequestPayload,
   QuizItemCreatePayload,
   QuizItemUpdatePayload,
   QuizCopyResponse,
@@ -41,6 +43,7 @@ import type {
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const TOKEN_KEY = "quiznote_token";
+const REFRESH_KEY = "quiznote_refresh_token";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -55,7 +58,77 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(REFRESH_KEY);
+}
+
+export function setRefreshToken(token: string): void {
+  localStorage.setItem(REFRESH_KEY, token);
+}
+
+export function clearRefreshToken(): void {
+  localStorage.removeItem(REFRESH_KEY);
+}
+
+function clearAllTokens(): void {
+  clearToken();
+  clearRefreshToken();
+}
+
+function redirectToLogin(): void {
+  if (typeof window !== "undefined") {
+    window.location.href = "/login";
+  }
+}
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  // Deduplicate concurrent refresh attempts
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const rt = getRefreshToken();
+    if (!rt) return false;
+    try {
+      const res = await fetch(`${BASE}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: rt }),
+      });
+      if (!res.ok) return false;
+      const data = (await res.json()) as TokenResponse;
+      setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function apiFetch<T>(
+  path: string,
+  init?: RequestInit,
+  _retried = false,
+): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(init?.headers as Record<string, string> | undefined),
@@ -72,16 +145,16 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    // Redirect to login on 401 (but not for auth endpoints)
-    if (res.status === 401 && !path.startsWith("/api/auth/")) {
-      clearToken();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    if (res.status === 401 && !path.startsWith("/api/auth/") && !_retried) {
+      const refreshed = await tryRefresh();
+      if (refreshed) return apiFetch(path, init, true);
+      clearAllTokens();
+      redirectToLogin();
     }
     const body = await res.json().catch(() => ({}));
-    throw new Error(
+    throw new ApiError(
       (body as { detail?: string }).detail ?? `HTTP ${res.status}`,
+      res.status,
     );
   }
   return res.json() as Promise<T>;
@@ -94,6 +167,7 @@ export async function signup(payload: SignupPayload): Promise<TokenResponse> {
     body: JSON.stringify(payload),
   });
   setToken(data.access_token);
+  setRefreshToken(data.refresh_token);
   return data;
 }
 
@@ -103,7 +177,16 @@ export async function login(payload: LoginPayload): Promise<TokenResponse> {
     body: JSON.stringify(payload),
   });
   setToken(data.access_token);
+  setRefreshToken(data.refresh_token);
   return data;
+}
+
+export async function logoutApi(): Promise<void> {
+  try {
+    await apiFetch("/api/auth/logout", { method: "POST" });
+  } catch {
+    // Ignore logout errors
+  }
 }
 
 export function getMe(): Promise<AuthUser> {
@@ -118,18 +201,10 @@ export function updateProfile(payload: UpdateProfilePayload): Promise<AuthUser> 
 }
 
 export async function changePassword(payload: ChangePasswordPayload): Promise<void> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${BASE}/api/auth/me/password`, {
+  await apiFetch("/api/auth/me/password", {
     method: "PUT",
-    headers,
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
-  }
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<void> {
@@ -143,14 +218,36 @@ export async function deleteAccount(payload: DeleteAccountPayload): Promise<void
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+    throw new ApiError(
+      (body as { detail?: string }).detail ?? `HTTP ${res.status}`,
+      res.status,
+    );
   }
+}
+
+export async function forgotPassword(
+  payload: PasswordResetRequestPayload,
+): Promise<void> {
+  await apiFetch("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function resetPassword(
+  payload: PasswordResetConfirmPayload,
+): Promise<void> {
+  await apiFetch("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 // Multipart form fetch (for file uploads — no Content-Type header; browser sets boundary)
 async function apiFormFetch<T>(
   path: string,
   formData: FormData,
+  _retried = false,
 ): Promise<T> {
   const headers: Record<string, string> = {};
   const token = getToken();
@@ -165,21 +262,22 @@ async function apiFormFetch<T>(
   });
 
   if (!res.ok) {
-    if (res.status === 401 && !path.startsWith("/api/auth/")) {
-      clearToken();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    if (res.status === 401 && !path.startsWith("/api/auth/") && !_retried) {
+      const refreshed = await tryRefresh();
+      if (refreshed) return apiFormFetch(path, formData, true);
+      clearAllTokens();
+      redirectToLogin();
     }
     const body = await res.json().catch(() => ({}));
-    throw new Error(
+    throw new ApiError(
       (body as { detail?: string }).detail ?? `HTTP ${res.status}`,
+      res.status,
     );
   }
   return res.json() as Promise<T>;
 }
 
-async function apiDelete(path: string): Promise<void> {
+async function apiDelete(path: string, _retried = false): Promise<void> {
   const headers: Record<string, string> = {};
   const token = getToken();
   if (token) {
@@ -187,15 +285,16 @@ async function apiDelete(path: string): Promise<void> {
   }
   const res = await fetch(`${BASE}${path}`, { method: "DELETE", headers });
   if (!res.ok) {
-    if (res.status === 401 && !path.startsWith("/api/auth/")) {
-      clearToken();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    if (res.status === 401 && !path.startsWith("/api/auth/") && !_retried) {
+      const refreshed = await tryRefresh();
+      if (refreshed) return apiDelete(path, true);
+      clearAllTokens();
+      redirectToLogin();
     }
     const body = await res.json().catch(() => ({}));
-    throw new Error(
+    throw new ApiError(
       (body as { detail?: string }).detail ?? `HTTP ${res.status}`,
+      res.status,
     );
   }
 }
@@ -335,8 +434,8 @@ export function generateQuizStream(
 
       if (!res.ok) {
         if (res.status === 401) {
-          clearToken();
-          if (typeof window !== "undefined") window.location.href = "/login";
+          clearAllTokens();
+          redirectToLogin();
           return;
         }
         const body = (await res.json().catch(() => ({}))) as { detail?: string };

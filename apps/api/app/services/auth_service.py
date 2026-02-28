@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
@@ -39,3 +40,11 @@ def decode_access_token(token: str) -> str:
     if not isinstance(sub, str):
         raise jwt.InvalidTokenError("Missing sub claim")
     return sub
+
+
+def create_refresh_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def create_password_reset_token() -> str:
+    return secrets.token_urlsafe(32)

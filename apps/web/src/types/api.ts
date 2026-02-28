@@ -1,7 +1,17 @@
 // Auth
 export interface TokenResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
+}
+
+export interface PasswordResetRequestPayload {
+  email: string;
+}
+
+export interface PasswordResetConfirmPayload {
+  token: string;
+  new_password: string;
 }
 
 export interface AuthUser {

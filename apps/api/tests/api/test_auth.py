@@ -130,6 +130,12 @@ async def _signup_and_get_headers(client: AsyncClient) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+async def _signup_and_get_tokens(client: AsyncClient) -> dict[str, str]:
+    """Helper: signup and return full token response."""
+    resp = await client.post("/api/auth/signup", json=SIGNUP_PAYLOAD)
+    return resp.json()  # type: ignore[no-any-return]
+
+
 class TestUpdateProfile:
     async def test_update_display_name(self, anon_client: AsyncClient) -> None:
         headers = await _signup_and_get_headers(anon_client)
@@ -230,3 +236,178 @@ class TestDeleteAccount:
             content=json.dumps({"password": "whatever"}),
         )
         assert resp.status_code in (401, 403)
+
+
+class TestRefreshToken:
+    async def test_signup_returns_refresh_token(self, anon_client: AsyncClient) -> None:
+        resp = await anon_client.post("/api/auth/signup", json=SIGNUP_PAYLOAD)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "refresh_token" in data
+        assert len(data["refresh_token"]) > 0
+
+    async def test_login_returns_refresh_token(self, anon_client: AsyncClient) -> None:
+        await anon_client.post("/api/auth/signup", json=SIGNUP_PAYLOAD)
+        resp = await anon_client.post(
+            "/api/auth/login",
+            json={"email": SIGNUP_PAYLOAD["email"], "password": SIGNUP_PAYLOAD["password"]},
+        )
+        assert resp.status_code == 200
+        assert "refresh_token" in resp.json()
+
+    async def test_refresh_success(self, anon_client: AsyncClient) -> None:
+        tokens = await _signup_and_get_tokens(anon_client)
+        resp = await anon_client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": tokens["refresh_token"]},
+        )
+        assert resp.status_code == 200
+        new_tokens = resp.json()
+        assert "access_token" in new_tokens
+        assert "refresh_token" in new_tokens
+        # New refresh token should differ (rotation)
+        assert new_tokens["refresh_token"] != tokens["refresh_token"]
+
+    async def test_refresh_with_invalid_token_returns_401(self, anon_client: AsyncClient) -> None:
+        resp = await anon_client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": "invalid-token-value"},
+        )
+        assert resp.status_code == 401
+
+    async def test_old_refresh_token_invalid_after_rotation(self, anon_client: AsyncClient) -> None:
+        tokens = await _signup_and_get_tokens(anon_client)
+        old_refresh = tokens["refresh_token"]
+
+        # Rotate once
+        await anon_client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": old_refresh},
+        )
+
+        # Old token should now be invalid
+        resp = await anon_client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": old_refresh},
+        )
+        assert resp.status_code == 401
+
+    async def test_refreshed_access_token_works(self, anon_client: AsyncClient) -> None:
+        tokens = await _signup_and_get_tokens(anon_client)
+        resp = await anon_client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": tokens["refresh_token"]},
+        )
+        new_tokens = resp.json()
+
+        me_resp = await anon_client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {new_tokens['access_token']}"},
+        )
+        assert me_resp.status_code == 200
+        assert me_resp.json()["email"] == SIGNUP_PAYLOAD["email"]
+
+
+class TestLogout:
+    async def test_logout_invalidates_refresh_token(self, anon_client: AsyncClient) -> None:
+        tokens = await _signup_and_get_tokens(anon_client)
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+        resp = await anon_client.post("/api/auth/logout", headers=headers)
+        assert resp.status_code == 204
+
+        # Refresh should now fail
+        refresh_resp = await anon_client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": tokens["refresh_token"]},
+        )
+        assert refresh_resp.status_code == 401
+
+
+class TestForgotPassword:
+    async def test_forgot_password_existing_email(self, anon_client: AsyncClient) -> None:
+        await anon_client.post("/api/auth/signup", json=SIGNUP_PAYLOAD)
+        resp = await anon_client.post(
+            "/api/auth/forgot-password",
+            json={"email": SIGNUP_PAYLOAD["email"]},
+        )
+        # Always returns 204 to prevent email enumeration
+        assert resp.status_code == 204
+
+    async def test_forgot_password_nonexistent_email(self, anon_client: AsyncClient) -> None:
+        resp = await anon_client.post(
+            "/api/auth/forgot-password",
+            json={"email": "nobody@example.com"},
+        )
+        # Still returns 204
+        assert resp.status_code == 204
+
+
+class TestResetPassword:
+    async def test_reset_password_success(
+        self, anon_client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        await anon_client.post("/api/auth/signup", json=SIGNUP_PAYLOAD)
+        await anon_client.post(
+            "/api/auth/forgot-password",
+            json={"email": SIGNUP_PAYLOAD["email"]},
+        )
+
+        # Get the token from DB directly
+        from app.models.user import User
+
+        stmt = __import__("sqlalchemy").select(User).where(User.email == SIGNUP_PAYLOAD["email"])
+        result = await db_session.execute(stmt)
+        user = result.scalar_one()
+        assert user.password_reset_token is not None
+
+        # Reset the password
+        resp = await anon_client.post(
+            "/api/auth/reset-password",
+            json={"token": user.password_reset_token, "new_password": "brandnewpass123"},
+        )
+        assert resp.status_code == 204
+
+        # Login with new password
+        login_resp = await anon_client.post(
+            "/api/auth/login",
+            json={"email": SIGNUP_PAYLOAD["email"], "password": "brandnewpass123"},
+        )
+        assert login_resp.status_code == 200
+
+    async def test_reset_password_invalid_token(self, anon_client: AsyncClient) -> None:
+        resp = await anon_client.post(
+            "/api/auth/reset-password",
+            json={"token": "invalid-token", "new_password": "newpassword123"},
+        )
+        assert resp.status_code == 400
+
+    async def test_reset_token_single_use(
+        self, anon_client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        await anon_client.post("/api/auth/signup", json=SIGNUP_PAYLOAD)
+        await anon_client.post(
+            "/api/auth/forgot-password",
+            json={"email": SIGNUP_PAYLOAD["email"]},
+        )
+
+        from app.models.user import User
+
+        stmt = __import__("sqlalchemy").select(User).where(User.email == SIGNUP_PAYLOAD["email"])
+        result = await db_session.execute(stmt)
+        user = result.scalar_one()
+        token = user.password_reset_token
+
+        # First use succeeds
+        resp = await anon_client.post(
+            "/api/auth/reset-password",
+            json={"token": token, "new_password": "firstnewpass123"},
+        )
+        assert resp.status_code == 204
+
+        # Second use fails (token consumed)
+        resp2 = await anon_client.post(
+            "/api/auth/reset-password",
+            json={"token": token, "new_password": "secondnewpass123"},
+        )
+        assert resp2.status_code == 400

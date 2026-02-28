@@ -58,7 +58,7 @@ describe("SignupPage", () => {
   });
 
   it("calls signup API with correct fields on submit", async () => {
-    vi.mocked(signup).mockResolvedValueOnce({ access_token: "tok456", token_type: "bearer" });
+    vi.mocked(signup).mockResolvedValueOnce({ access_token: "tok456", refresh_token: "ref456", token_type: "bearer" });
     renderWithProviders(<SignupPage />);
 
     await user.type(screen.getByLabelText("사용자 이름"), "홍길동");
@@ -76,7 +76,7 @@ describe("SignupPage", () => {
   });
 
   it("calls setToken and router.replace on success", async () => {
-    vi.mocked(signup).mockResolvedValueOnce({ access_token: "tok456", token_type: "bearer" });
+    vi.mocked(signup).mockResolvedValueOnce({ access_token: "tok456", refresh_token: "ref456", token_type: "bearer" });
     renderWithProviders(<SignupPage />);
 
     await user.type(screen.getByLabelText("사용자 이름"), "홍길동");
@@ -105,7 +105,7 @@ describe("SignupPage", () => {
   });
 
   it("shows loading text while submitting", async () => {
-    let resolveSignup: (value: { access_token: string; token_type: string }) => void;
+    let resolveSignup: (value: { access_token: string; refresh_token: string; token_type: string }) => void;
     vi.mocked(signup).mockImplementationOnce(
       () =>
         new Promise((resolve) => {
@@ -121,7 +121,7 @@ describe("SignupPage", () => {
 
     expect(screen.getByText("가입 중...")).toBeInTheDocument();
 
-    resolveSignup!({ access_token: "tok", token_type: "bearer" });
+    resolveSignup!({ access_token: "tok", refresh_token: "ref", token_type: "bearer" });
     await waitFor(() => {
       expect(screen.getByText(/회원가입/)).toBeInTheDocument();
     });
