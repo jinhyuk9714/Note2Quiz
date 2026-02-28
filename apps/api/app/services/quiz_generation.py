@@ -18,7 +18,7 @@ from app.core.llm_client import (
 )
 from app.models.chunk import Chunk
 from app.models.quiz import Quiz, QuizItem, QuizType
-from app.prompts.quiz_prompt import build_quiz_generation_prompt
+from app.prompts.quiz_prompt import build_quiz_generation_prompt, validate_quiz_items
 
 logger = logging.getLogger(__name__)
 
@@ -137,9 +137,17 @@ async def generate_questions_for_chunk(
     first_block = response.content[0]
     raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
     parsed = _parse_quiz_json(raw_text)
-    for item_data in parsed:
+    validated = validate_quiz_items(parsed, quiz_types)
+    if len(validated) < len(parsed):
+        logger.warning(
+            "Chunk %s: %d/%d items dropped by validation",
+            chunk.id,
+            len(parsed) - len(validated),
+            len(parsed),
+        )
+    for item_data in validated:
         item_data["source_chunk_id"] = str(chunk.id)
-    return parsed
+    return validated
 
 
 async def save_quiz_to_db(

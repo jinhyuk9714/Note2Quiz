@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 
 def build_quiz_generation_prompt(
     chunk_text: str,
@@ -110,6 +112,10 @@ Never generate questions from:
 - Use them only when they teach a core concept, mechanism, comparison, condition, or application.
 - Do NOT ask about superficial details.
 - For formulas or code, prefer conceptual meaning, variable roles, conditions, or interpretation rather than raw copying, unless the exact expression itself is a key learning target.
+- For code snippets: ask about what the code does, its time/space complexity, edge cases, or the purpose of a specific construct — not line-by-line memorization.
+- For mathematical formulas: ask about what each variable represents, when the formula applies, its assumptions, or how changing a parameter affects the result.
+- For tables or comparison charts: ask about differences, trade-offs, or patterns across rows/columns — not individual cell values unless they represent a key concept.
+- For diagrams or flowcharts: ask about the overall process, decision points, or relationships — not visual layout details.
 
 **Question quality rules**
 - Each question must test ONE clear learning point.
@@ -191,3 +197,80 @@ Preserve technical terms in their original form when that improves correctness.
 {chunk_text}
 
 Return ONLY the JSON array."""
+
+
+_VALID_DIFFICULTIES = {1, 2, 3}
+_MCQ_KEYS = {"A", "B", "C", "D"}
+
+
+def validate_quiz_items(
+    items: list[dict[str, object]],
+    allowed_types: list[str],
+) -> list[dict[str, object]]:
+    """Validate and filter LLM-generated quiz items.
+
+    Returns only items that pass all checks. Invalid items are silently dropped.
+    """
+    valid: list[dict[str, object]] = []
+    allowed_set = set(allowed_types)
+
+    for item in items:
+        quiz_type = item.get("quiz_type")
+        if quiz_type not in allowed_set:
+            continue
+
+        question = item.get("question")
+        if not isinstance(question, str) or not question.strip():
+            continue
+
+        correct_answer = item.get("correct_answer")
+        if not isinstance(correct_answer, str) or not correct_answer.strip():
+            continue
+
+        explanation = item.get("explanation")
+        if not isinstance(explanation, str) or not explanation.strip():
+            continue
+
+        difficulty = item.get("difficulty")
+        if difficulty not in _VALID_DIFFICULTIES:
+            # Try coercing
+            try:
+                difficulty = int(difficulty)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                difficulty = 2
+            if difficulty not in _VALID_DIFFICULTIES:
+                difficulty = 2
+            item["difficulty"] = difficulty
+
+        concept_tags = item.get("concept_tags")
+        if not isinstance(concept_tags, list) or len(cast(list[object], concept_tags)) == 0:
+            continue
+        if len(cast(list[object], concept_tags)) > 3:
+            item["concept_tags"] = concept_tags[:3]
+
+        # MCQ-specific: must have valid options
+        if quiz_type == "mcq":
+            options = item.get("options")
+            if not isinstance(options, dict):
+                continue
+            if set(cast(dict[str, object], options).keys()) != _MCQ_KEYS:
+                continue
+            if correct_answer not in _MCQ_KEYS:
+                continue
+        else:
+            # Non-MCQ should not have options (or options should be None/omitted)
+            options = item.get("options")
+            if options is not None:
+                item["options"] = None
+
+        # true_false: answer must be O or X
+        if quiz_type == "true_false" and correct_answer not in ("O", "X"):
+            continue
+
+        # fill_blank: question must contain ___
+        if quiz_type == "fill_blank" and "___" not in str(question):
+            continue
+
+        valid.append(item)
+
+    return valid
