@@ -82,26 +82,3 @@ jobs:
 
       - name: Build Web image
         run: docker build -t note2quiz-web:ci ./apps/web --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000
-
-  deploy:
-    name: Deploy to production
-    needs: [backend, frontend, docker-build]
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd /opt/note2quiz
-            git pull origin master
-            docker compose -f docker-compose.prod.yml build
-            docker compose -f docker-compose.prod.yml up -d
-            sleep 10
-            curl -sf http://localhost:8000/health || exit 1
