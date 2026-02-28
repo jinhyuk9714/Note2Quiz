@@ -214,7 +214,7 @@ async def generate_quiz_from_chunks(
     )
 
     client = create_llm_client(PROFILE_QUIZ_GENERATION)
-    questions_per_chunk = max(1, n_questions // len(chunks))
+    questions_per_chunk = max(len(quiz_types), n_questions // len(chunks))
 
     semaphore = asyncio.Semaphore(5)
     max_attempts = settings.llm_chunk_retry_attempts + 1

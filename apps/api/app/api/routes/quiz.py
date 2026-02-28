@@ -168,7 +168,7 @@ async def generate_quiz_stream(
         try:
             chunks = await load_chunks(db, payload.document_id, payload.chunk_ids)
             client = create_llm_client(PROFILE_QUIZ_GENERATION)
-            questions_per_chunk = max(1, payload.n_questions // len(chunks))
+            questions_per_chunk = max(len(payload.quiz_types), payload.n_questions // len(chunks))
             total = len(chunks)
             all_items: list[dict[str, object]] = []
 
