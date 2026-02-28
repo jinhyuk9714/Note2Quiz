@@ -13,9 +13,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 async def dashboard_stats(
     db: DBSession, user_id: CurrentUserID, factory: SessionFactory
 ) -> DashboardStatsResponse:
-    return await get_dashboard_stats(
-        db=db, user_id=user_id, session_factory=factory
-    )
+    return await get_dashboard_stats(db=db, user_id=user_id, session_factory=factory)
 
 
 @router.get("/trends", response_model=DashboardTrendsResponse)

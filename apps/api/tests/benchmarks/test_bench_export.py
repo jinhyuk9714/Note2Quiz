@@ -7,7 +7,7 @@ import uuid
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import load_only, selectinload
+from sqlalchemy.orm import selectinload
 
 from app.models.attempt import WrongAnswerNote
 from app.models.quiz import QuizItem
@@ -36,9 +36,7 @@ async def _fetch_load_only(db: AsyncSession, user_id: uuid.UUID) -> int:
     stmt = (
         select(WrongAnswerNote)
         .where(WrongAnswerNote.user_id == user_id, WrongAnswerNote.is_mastered == False)  # noqa: E712
-        .options(
-            selectinload(WrongAnswerNote.quiz_item).load_only(QuizItem.question)
-        )
+        .options(selectinload(WrongAnswerNote.quiz_item).load_only(QuizItem.question))
         .order_by(WrongAnswerNote.created_at.desc())
         .limit(100)
     )
@@ -78,9 +76,7 @@ class TestExportBenchmark:
         print(before.summary())
         print(after.summary())
 
-    async def test_correctness(
-        self, db_session: AsyncSession, large_dataset: SeedResult
-    ) -> None:
+    async def test_correctness(self, db_session: AsyncSession, large_dataset: SeedResult) -> None:
         """Both approaches should return identical results."""
         user_id = large_dataset.user_id
 

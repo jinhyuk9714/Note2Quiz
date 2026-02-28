@@ -13,9 +13,7 @@ from tests.benchmarks.seed_factory import SeedResult
 class TestDocumentListBenchmark:
     """Measure document list query performance after JOIN consolidation."""
 
-    async def test_query_count(
-        self, db_session: AsyncSession, large_dataset: SeedResult
-    ) -> None:
+    async def test_query_count(self, db_session: AsyncSession, large_dataset: SeedResult) -> None:
         """Verify the optimized list_documents uses only 2 SQL queries (count + data)."""
         from sqlalchemy import func, select
 

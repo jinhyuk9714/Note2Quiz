@@ -141,7 +141,11 @@ async def seed_benchmark_data(
     for quiz in quizzes:
         for k in range(n_items_per_quiz):
             qt = rng.choice(_QUIZ_TYPES)
-            options = {"A": "옵션A", "B": "옵션B", "C": "옵션C", "D": "옵션D"} if qt == QuizType.MCQ else None
+            options = (
+                {"A": "옵션A", "B": "옵션B", "C": "옵션C", "D": "옵션D"}
+                if qt == QuizType.MCQ
+                else None
+            )
             correct = rng.choice(["A", "B", "C", "D"]) if qt == QuizType.MCQ else "정답"
             n_tags = rng.randint(1, 3)
             tags = rng.sample(_CONCEPT_POOL, n_tags)

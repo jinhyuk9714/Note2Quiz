@@ -19,9 +19,7 @@ from tests.benchmarks.seed_factory import SeedResult
 class TestCompressionBenchmark:
     """Verify GZip middleware is active and estimate compression savings."""
 
-    async def test_gzip_enabled(
-        self, db_session: AsyncSession, large_dataset: SeedResult
-    ) -> None:
+    async def test_gzip_enabled(self, db_session: AsyncSession, large_dataset: SeedResult) -> None:
         """Verify the GZip middleware sets content-encoding: gzip for large responses."""
         from app.services.auth_service import create_access_token
 

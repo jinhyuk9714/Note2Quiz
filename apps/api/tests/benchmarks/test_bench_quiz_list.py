@@ -12,13 +12,11 @@ from sqlalchemy.orm import selectinload
 from app.models.attempt import QuizAttempt
 from app.models.document import Document
 from app.models.quiz import Quiz
-from tests.benchmarks.conftest import QueryCounter, async_benchmark, compare_results
+from tests.benchmarks.conftest import async_benchmark, compare_results
 from tests.benchmarks.seed_factory import SeedResult
 
 
-async def _list_quizzes_subquery(
-    db: AsyncSession, user_id: uuid.UUID
-) -> int:
+async def _list_quizzes_subquery(db: AsyncSession, user_id: uuid.UUID) -> int:
     """BEFORE: original subquery approach (window function computed twice)."""
     attempt_numbered = (
         select(
@@ -79,9 +77,7 @@ async def _list_quizzes_subquery(
     return int(total) + len(rows)
 
 
-async def _list_quizzes_cte(
-    db: AsyncSession, user_id: uuid.UUID
-) -> int:
+async def _list_quizzes_cte(db: AsyncSession, user_id: uuid.UUID) -> int:
     """AFTER: CTE approach (window function computed once, reused)."""
     attempt_numbered = (
         select(

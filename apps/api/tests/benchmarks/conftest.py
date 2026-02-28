@@ -11,7 +11,7 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.benchmarks.seed_factory import SeedResult, seed_benchmark_data
-from tests.conftest import TestSessionFactory, test_engine
+from tests.conftest import test_engine
 
 T = TypeVar("T")
 
@@ -144,9 +144,7 @@ async def async_benchmark(
 def compare_results(before: BenchmarkResult, after: BenchmarkResult) -> str:
     """Return formatted comparison table."""
     latency_change = (
-        ((after.mean_ms - before.mean_ms) / before.mean_ms * 100)
-        if before.mean_ms > 0
-        else 0.0
+        ((after.mean_ms - before.mean_ms) / before.mean_ms * 100) if before.mean_ms > 0 else 0.0
     )
     query_change = after.query_count - before.query_count
 

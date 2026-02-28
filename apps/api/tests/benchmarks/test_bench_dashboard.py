@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,18 +45,14 @@ class TestDashboardBenchmark:
         print(after.summary())
 
         # Correctness: both should return valid stats
-        result = await get_dashboard_stats(
-            db_session, user_id, session_factory=TestSessionFactory
-        )
+        result = await get_dashboard_stats(db_session, user_id, session_factory=TestSessionFactory)
         assert result.learning_progress.total_quizzes_taken > 0
         assert result.streak.total_active_days > 0
         assert result.mastery_summary.total_wrong_notes > 0
 
 
 @pytest.mark.benchmark
-async def test_dashboard_query_count(
-    db_session: AsyncSession, large_dataset: SeedResult
-) -> None:
+async def test_dashboard_query_count(db_session: AsyncSession, large_dataset: SeedResult) -> None:
     """Verify query count doesn't change between sequential and parallel."""
     from tests.benchmarks.conftest import QueryCounter
 
@@ -73,9 +67,7 @@ async def test_dashboard_query_count(
     # Count queries for parallel
     counter2 = QueryCounter()
     with counter2:
-        await get_dashboard_stats(
-            db_session, user_id, session_factory=TestSessionFactory
-        )
+        await get_dashboard_stats(db_session, user_id, session_factory=TestSessionFactory)
     parallel_queries = counter2.count
 
     print(f"\n  Sequential queries: {sequential_queries}")
