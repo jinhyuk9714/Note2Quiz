@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 class Chunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "chunks"
+    __table_args__ = (Index("ix_chunks_document_index", "document_id", "index"),)
 
     document_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("documents.id", ondelete="CASCADE"), index=True

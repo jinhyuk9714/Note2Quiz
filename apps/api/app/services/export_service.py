@@ -51,7 +51,15 @@ async def _fetch_wrong_notes(
         stmt = stmt.where(WrongAnswerNote.is_mastered == False)  # noqa: E712
 
     if concept_tag:
-        stmt = stmt.where(cast(WrongAnswerNote.concept_tags, String).contains(f'"{concept_tag}"'))
+        dialect = db.bind.dialect.name if db.bind else "unknown"  # type: ignore[union-attr]
+        if dialect == "postgresql":
+            stmt = stmt.where(
+                WrongAnswerNote.concept_tags.op("@>")(f'["{concept_tag}"]')  # type: ignore[union-attr]
+            )
+        else:
+            stmt = stmt.where(
+                cast(WrongAnswerNote.concept_tags, String).contains(f'"{concept_tag}"')
+            )
     if search:
         stmt = stmt.join(WrongAnswerNote.quiz_item).where(QuizItem.question.ilike(f"%{search}%"))
 

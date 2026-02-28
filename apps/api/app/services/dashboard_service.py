@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import cast
 
-from sqlalchemy import distinct, func, select, text
+from sqlalchemy import case, distinct, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attempt import QuizAttempt, WrongAnswerNote
@@ -158,40 +158,37 @@ async def _get_review_schedule(
     now = datetime.now(UTC)
     today = now.date()
     today_start = datetime(today.year, today.month, today.day, tzinfo=UTC)
-    tomorrow_start = today_start + timedelta(days=1)
 
-    # Overdue: next_review_at < now AND NOT is_mastered
-    overdue_stmt = select(func.count(WrongAnswerNote.id)).where(
+    # Single query with SUM+CASE — works on both PostgreSQL and SQLite
+    review_at = WrongAnswerNote.next_review_at
+    day_bounds = [today_start + timedelta(days=i) for i in range(9)]
+
+    columns = [
+        func.sum(case((review_at < now, 1), else_=0)).label("overdue"),
+    ]
+    for i in range(8):  # day0=today .. day7
+        columns.append(
+            func.sum(
+                case(
+                    ((review_at >= day_bounds[i]) & (review_at < day_bounds[i + 1]), 1),
+                    else_=0,
+                )
+            ).label(f"day{i}")
+        )
+
+    stmt = select(*columns).where(
         WrongAnswerNote.user_id == user_id,
         WrongAnswerNote.is_mastered == False,  # noqa: E712
-        WrongAnswerNote.next_review_at < now,
     )
-    overdue_result = await db.execute(overdue_stmt)
-    overdue_count: int = overdue_result.scalar_one()  # type: ignore[assignment]
+    result = await db.execute(stmt)
+    row = result.one()
 
-    # Today
-    today_stmt = select(func.count(WrongAnswerNote.id)).where(
-        WrongAnswerNote.user_id == user_id,
-        WrongAnswerNote.is_mastered == False,  # noqa: E712
-        WrongAnswerNote.next_review_at >= today_start,
-        WrongAnswerNote.next_review_at < tomorrow_start,
-    )
-    today_result = await db.execute(today_stmt)
-    today_count: int = today_result.scalar_one()  # type: ignore[assignment]
+    overdue_count = int(row.overdue or 0)  # type: ignore[attr-defined]
+    today_count = int(row.day0 or 0)  # type: ignore[attr-defined]
 
-    # Upcoming 7 days
     upcoming: list[ReviewScheduleDay] = []
     for i in range(1, 8):
-        day_start = today_start + timedelta(days=i)
-        day_end = day_start + timedelta(days=1)
-        day_stmt = select(func.count(WrongAnswerNote.id)).where(
-            WrongAnswerNote.user_id == user_id,
-            WrongAnswerNote.is_mastered == False,  # noqa: E712
-            WrongAnswerNote.next_review_at >= day_start,
-            WrongAnswerNote.next_review_at < day_end,
-        )
-        day_result = await db.execute(day_stmt)
-        count: int = day_result.scalar_one()  # type: ignore[assignment]
+        count = int(getattr(row, f"day{i}", 0) or 0)
         if count > 0:
             upcoming.append(
                 ReviewScheduleDay(
@@ -271,18 +268,17 @@ async def _get_mastery_summary(
     db: AsyncSession,
     user_id: uuid.UUID,
 ) -> MasterySummaryStats:
-    total_stmt = select(func.count(WrongAnswerNote.id)).where(
-        WrongAnswerNote.user_id == user_id,
-    )
-    total_result = await db.execute(total_stmt)
-    total: int = total_result.scalar_one()  # type: ignore[assignment]
+    stmt = select(
+        func.count(WrongAnswerNote.id).label("total"),
+        func.sum(
+            case((WrongAnswerNote.is_mastered == True, 1), else_=0)  # noqa: E712
+        ).label("mastered"),
+    ).where(WrongAnswerNote.user_id == user_id)
 
-    mastered_stmt = select(func.count(WrongAnswerNote.id)).where(
-        WrongAnswerNote.user_id == user_id,
-        WrongAnswerNote.is_mastered == True,  # noqa: E712
-    )
-    mastered_result = await db.execute(mastered_stmt)
-    mastered: int = mastered_result.scalar_one()  # type: ignore[assignment]
+    result = await db.execute(stmt)
+    row = result.one()
+    total = int(row.total)  # type: ignore[attr-defined]
+    mastered = int(row.mastered or 0)  # type: ignore[attr-defined]
 
     mastery_rate = mastered / total if total > 0 else 0.0
 

@@ -344,9 +344,32 @@ async def list_quizzes(
             (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) < score_max,
         )
 
-    # Total count
-    count_stmt = select(func.count()).select_from(base.subquery())
-    total = (await db.execute(count_stmt)).scalar_one()
+    # Total count — lightweight query without window functions or eager loads
+    count_base = (
+        select(func.count(Quiz.id))
+        .join(Quiz.document)
+        .outerjoin(attempt_stats_sq, Quiz.id == attempt_stats_sq.c.quiz_id)
+        .where(Document.owner_id == user_id)
+    )
+    if search:
+        count_base = count_base.where(Quiz.title.ilike(f"%{search}%"))
+    if document_id:
+        count_base = count_base.where(Quiz.document_id == document_id)
+    if attempt_status == "not_attempted":
+        count_base = count_base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) == 0)
+    elif attempt_status == "attempted":
+        count_base = count_base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) > 0)
+    if score_min is not None:
+        count_base = count_base.where(
+            attempt_stats_sq.c.total > 0,
+            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) >= score_min,
+        )
+    if score_max is not None:
+        count_base = count_base.where(
+            attempt_stats_sq.c.total > 0,
+            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) < score_max,
+        )
+    total = (await db.execute(count_base)).scalar_one()
 
     # Sorting
     sort_map = {

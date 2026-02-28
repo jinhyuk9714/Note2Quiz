@@ -49,8 +49,15 @@ async def list_wrong_notes(
     if due_only:
         base = base.where(WrongAnswerNote.next_review_at <= datetime.now(UTC))
     if concept_tag:
-        # concept_tags is JSON array — use cast+LIKE for SQLite/PostgreSQL compatibility
-        base = base.where(cast(WrongAnswerNote.concept_tags, String).contains(f'"{concept_tag}"'))
+        dialect = db.bind.dialect.name if db.bind else "unknown"  # type: ignore[union-attr]
+        if dialect == "postgresql":
+            base = base.where(
+                WrongAnswerNote.concept_tags.op("@>")(f'["{concept_tag}"]')  # type: ignore[union-attr]
+            )
+        else:
+            base = base.where(
+                cast(WrongAnswerNote.concept_tags, String).contains(f'"{concept_tag}"')
+            )
     if search:
         base = base.join(WrongAnswerNote.quiz_item).where(QuizItem.question.ilike(f"%{search}%"))
 

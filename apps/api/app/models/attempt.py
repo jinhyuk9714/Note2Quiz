@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSONB as _PGJSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import JSON as _StdJSON
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
@@ -14,11 +16,15 @@ if TYPE_CHECKING:
     from app.models.quiz import Quiz, QuizItem
     from app.models.user import User
 
+# JSONB on PostgreSQL, plain JSON on SQLite (tests)
+_JSONBCompat = _StdJSON().with_variant(_PGJSONB(), "postgresql")
+
 
 class QuizAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "quiz_attempts"
     __table_args__ = (
         Index("ix_quiz_attempts_user_quiz_created", "user_id", "quiz_id", "created_at"),
+        Index("ix_quiz_attempts_user_created", "user_id", "created_at"),
     )
 
     quiz_id: Mapped[uuid.UUID] = mapped_column(
@@ -59,7 +65,7 @@ class WrongAnswerNote(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user_answer: Mapped[str] = mapped_column(Text)
     correct_answer: Mapped[str] = mapped_column(Text)
     wrong_reason: Mapped[str] = mapped_column(Text)
-    concept_tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    concept_tags: Mapped[list[str]] = mapped_column(_JSONBCompat, default=list)
 
     # SRS fields
     review_count: Mapped[int] = mapped_column(Integer, default=0)

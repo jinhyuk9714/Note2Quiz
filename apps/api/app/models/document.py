@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "documents"
+    __table_args__ = (Index("ix_documents_owner_created", "owner_id", "created_at"),)
 
     owner_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
