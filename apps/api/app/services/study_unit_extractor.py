@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import uuid
 from typing import Any
 
@@ -80,6 +81,7 @@ async def extract_study_units(
             logger.error("Study unit batch %d failed: %s", i, result)
             failed_batches += 1
         else:
+            logger.info("Study unit batch %d: extracted %d units", i, len(result))
             all_units.extend(result)
 
     if failed_batches > 0:
@@ -93,6 +95,37 @@ async def extract_study_units(
     return all_units
 
 
+def _deduplicate_text(text: str) -> str:
+    """Remove repeated sentences/phrases caused by OCR duplication.
+
+    OCR-scanned PDFs often produce text where every sentence is repeated 3-7 times
+    consecutively. This function detects and removes such duplications.
+    """
+    # Split by common sentence boundaries
+    lines = re.split(r"(?<=[。．.!?！？\n])", text)
+    if len(lines) <= 1:
+        # Try splitting by spaces for short texts
+        return text
+
+    seen: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        # Skip if this exact line was the previous one
+        if seen and stripped == seen[-1]:
+            continue
+        seen.append(stripped)
+
+    deduped = " ".join(seen)
+
+    # Also handle repeated phrases within a single line (no delimiter)
+    # Pattern: detect substring that repeats 3+ times consecutively
+    deduped = re.sub(r"(.{10,}?)\1{2,}", r"\1", deduped)
+
+    return deduped
+
+
 async def _call_study_unit_llm(
     blocks: list[SourceBlock],
     profile: DocumentProfile,
@@ -103,7 +136,7 @@ async def _call_study_unit_llm(
         {
             "block_id": b.block_id,
             "chunk_id": str(b.chunk_id),
-            "text": b.text,
+            "text": _deduplicate_text(b.text),
         }
         for b in blocks
     ]
@@ -145,11 +178,20 @@ def _parse_study_units(
             try:
                 data = json.loads(text[start:end])
             except json.JSONDecodeError:
+                logger.warning(
+                    "Failed to parse study units JSON (fallback also failed), response[:500]=%s",
+                    raw_text[:500],
+                )
                 return []
         else:
+            logger.warning(
+                "Study units response is not JSON, response[:500]=%s",
+                raw_text[:500],
+            )
             return []
 
     if not isinstance(data, list):
+        logger.warning("Study units response is not a list, type=%s", type(data).__name__)
         return []
 
     valid_block_ids = {b.block_id for b in blocks}
@@ -157,6 +199,9 @@ def _parse_study_units(
     valid_unit_types = {t.value for t in StudyUnitType}
 
     units: list[StudyUnit] = []
+    skipped_block_id = 0
+    skipped_unit_type = 0
+    skipped_empty = 0
     for raw_item in data:  # pyright: ignore[reportUnknownVariableType]
         if not isinstance(raw_item, dict):
             continue
@@ -164,15 +209,18 @@ def _parse_study_units(
 
         block_id: str = item.get("block_id", "")
         if block_id not in valid_block_ids:
+            skipped_block_id += 1
             continue
 
         unit_type_str: str = item.get("unit_type", "")
         if unit_type_str not in valid_unit_types:
+            skipped_unit_type += 1
             continue
 
         title: str = item.get("title", "")
         content: str = item.get("content", "")
         if not title or not content:
+            skipped_empty += 1
             continue
 
         # Coerce quizworthiness
@@ -205,6 +253,19 @@ def _parse_study_units(
                 concept_tags=[str(t) for t in concept_tags],
                 source_excerpt=source_excerpt,
             )
+        )
+
+    skipped_total = skipped_block_id + skipped_unit_type + skipped_empty
+    total_items = len(units) + skipped_total
+    if skipped_total > 0:
+        logger.info(
+            "Study unit parsing: %d items from LLM, %d valid, skipped=%d (block_id=%d, unit_type=%d, empty=%d)",
+            total_items,
+            len(units),
+            skipped_total,
+            skipped_block_id,
+            skipped_unit_type,
+            skipped_empty,
         )
 
     return units

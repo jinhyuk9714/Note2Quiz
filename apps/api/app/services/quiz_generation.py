@@ -295,16 +295,15 @@ async def generate_quiz_with_analysis(
 
     # Filter by quizworthiness
     quizworthy_units = [u for u in all_units if u.quizworthiness >= 3]
-    if not quizworthy_units:
-        raise InsufficientContentError(
-            "이 문서에서는 퀴즈로 만들 만한 학습 콘텐츠를 충분히 찾지 못했습니다."
-        )
-
     logger.info(
         "Study units: total=%d, quizworthy=%d",
         len(all_units),
         len(quizworthy_units),
     )
+    if not quizworthy_units:
+        raise InsufficientContentError(
+            "이 문서에서는 퀴즈로 만들 만한 학습 콘텐츠를 충분히 찾지 못했습니다."
+        )
 
     # Step 5: Generate quiz from study units
     quiz_items = await _generate_quiz_from_units(
