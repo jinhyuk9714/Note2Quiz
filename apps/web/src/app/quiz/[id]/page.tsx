@@ -472,8 +472,6 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
       {phase === "taking" && (
         <ShortcutHelpPanel
           shortcuts={[
-            { keys: ["1", "~", "9"], description: "문항으로 이동" },
-            { keys: ["↑", "↓"], description: "이전/다음 문항" },
             { keys: ["A", "B", "C", "D"], description: "객관식 답변 선택" },
             { keys: ["O", "X"], description: "O/X 답변 선택" },
             { keys: ["S"], description: "건너뛰기" },

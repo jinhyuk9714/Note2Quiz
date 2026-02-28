@@ -11,12 +11,6 @@ interface UseQuizShortcutsOptions {
   enabled: boolean;
 }
 
-function scrollToItem(itemId: string) {
-  document
-    .getElementById(`quiz-item-${itemId}`)
-    ?.scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
 function isTextInputFocused(): boolean {
   const el = document.activeElement;
   if (!el) return false;
@@ -40,7 +34,7 @@ export function useQuizShortcuts(options: UseQuizShortcutsOptions): void {
       const opts = optionsRef.current;
       if (!opts.enabled) return;
 
-      const { items, currentIndex, setCurrentIndex, onAnswer, onSkip, onSubmit } = opts;
+      const { items, currentIndex, onAnswer, onSkip, onSubmit } = opts;
       if (items.length === 0) return;
 
       const textFocused = isTextInputFocused();
@@ -61,39 +55,8 @@ export function useQuizShortcuts(options: UseQuizShortcutsOptions): void {
         return;
       }
 
-      // Number keys 1-9 — jump to question (works even in textarea)
-      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key >= "1" && e.key <= "9") {
-        const targetIndex = parseInt(e.key) - 1;
-        if (targetIndex < items.length) {
-          if (textFocused) {
-            (document.activeElement as HTMLElement).blur();
-          }
-          setCurrentIndex(targetIndex);
-          scrollToItem(items[targetIndex].id);
-          e.preventDefault();
-        }
-        return;
-      }
-
       // Below this point: suppress when text input is focused
       if (textFocused) return;
-
-      // Arrow keys — prev/next question
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-        e.preventDefault();
-        const newIdx = Math.max(0, currentIndex - 1);
-        setCurrentIndex(newIdx);
-        scrollToItem(items[newIdx].id);
-        return;
-      }
-
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-        e.preventDefault();
-        const newIdx = Math.min(items.length - 1, currentIndex + 1);
-        setCurrentIndex(newIdx);
-        scrollToItem(items[newIdx].id);
-        return;
-      }
 
       const currentItem = items[currentIndex];
       if (!currentItem) return;
