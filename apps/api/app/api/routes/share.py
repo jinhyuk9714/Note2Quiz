@@ -67,15 +67,18 @@ async def submit_shared_quiz(
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found or no longer shared")
 
-    attempt, wrong_notes, wrong_notes_updated = await create_attempt_with_wrong_notes(
-        db=db,
-        quiz_id=quiz.id,
-        user_id=user_id,
-        answers=[
-            {"quiz_item_id": str(a.quiz_item_id), "user_answer": a.user_answer}
-            for a in payload.answers
-        ],
-    )
+    try:
+        attempt, wrong_notes, wrong_notes_updated = await create_attempt_with_wrong_notes(
+            db=db,
+            quiz_id=quiz.id,
+            user_id=user_id,
+            answers=[
+                {"quiz_item_id": str(a.quiz_item_id), "user_answer": a.user_answer}
+                for a in payload.answers
+            ],
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
     # Build results
     item_ids = [uuid.UUID(str(g["quiz_item_id"])) for g in attempt.answers]

@@ -221,6 +221,85 @@ class TestSharedQuizSubmit:
         assert data["total"] == 1
         assert data["results"][0]["is_correct"] is True
 
+    async def test_submit_shared_quiz_duplicate_item_id_returns_422(
+        self, client: AsyncClient, second_client: AsyncClient, db_session: Any
+    ) -> None:
+        from app.models.quiz import Quiz, QuizItem, QuizType
+
+        doc = await _make_document(client)
+        quiz = Quiz(document_id=uuid.UUID(doc["id"]), title="Submit Quiz", item_count=1)
+        db_session.add(quiz)
+        await db_session.flush()
+
+        item = QuizItem(
+            quiz_id=quiz.id,
+            source_chunk_id=None,
+            quiz_type=QuizType.MCQ,
+            question="What is 1+1?",
+            correct_answer="A",
+            explanation="Basic math",
+            options={"A": "2", "B": "3"},
+            concept_tags=["math"],
+            difficulty=1,
+        )
+        db_session.add(item)
+        await db_session.commit()
+        await db_session.refresh(quiz)
+        await db_session.refresh(item)
+
+        resp = await client.post(f"/api/quiz/{quiz.id}/share", json={"is_shared": True})
+        share_code = resp.json()["share_code"]
+
+        submit_resp = await second_client.post(
+            f"/api/share/{share_code}/submit",
+            json={
+                "answers": [
+                    {"quiz_item_id": str(item.id), "user_answer": "A"},
+                    {"quiz_item_id": str(item.id), "user_answer": "B"},
+                ]
+            },
+        )
+        assert submit_resp.status_code == 422
+
+    async def test_submit_shared_quiz_unknown_item_id_returns_422(
+        self, client: AsyncClient, second_client: AsyncClient, db_session: Any
+    ) -> None:
+        from app.models.quiz import Quiz, QuizItem, QuizType
+
+        doc = await _make_document(client)
+        quiz = Quiz(document_id=uuid.UUID(doc["id"]), title="Submit Quiz", item_count=1)
+        db_session.add(quiz)
+        await db_session.flush()
+
+        item = QuizItem(
+            quiz_id=quiz.id,
+            source_chunk_id=None,
+            quiz_type=QuizType.MCQ,
+            question="What is 1+1?",
+            correct_answer="A",
+            explanation="Basic math",
+            options={"A": "2", "B": "3"},
+            concept_tags=["math"],
+            difficulty=1,
+        )
+        db_session.add(item)
+        await db_session.commit()
+        await db_session.refresh(quiz)
+
+        resp = await client.post(f"/api/quiz/{quiz.id}/share", json={"is_shared": True})
+        share_code = resp.json()["share_code"]
+
+        submit_resp = await second_client.post(
+            f"/api/share/{share_code}/submit",
+            json={
+                "answers": [
+                    {"quiz_item_id": str(uuid.uuid4()), "user_answer": "A"},
+                ]
+            },
+        )
+        assert submit_resp.status_code == 422
+        assert "Unknown quiz_item_id" in submit_resp.json()["detail"]
+
 
 class TestSharedQuizStudy:
     async def test_study_without_attempt_403(

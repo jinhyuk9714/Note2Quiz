@@ -185,6 +185,12 @@ class TestDocumentSearchAndPagination:
         resp = await client.get("/api/documents/?source_type=text")
         assert resp.json()["total"] == 1
 
+    async def test_invalid_folder_id_returns_422(self, client: AsyncClient) -> None:
+        await self._upload(client, "Folder Filter Target")
+
+        resp = await client.get("/api/documents/?folder_id=invalid-uuid")
+        assert resp.status_code == 422
+
     async def test_pagination(self, client: AsyncClient) -> None:
         for i in range(5):
             await self._upload(client, f"Doc {i}")

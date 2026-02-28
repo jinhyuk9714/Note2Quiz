@@ -59,6 +59,7 @@ describe("ShareDialog", () => {
     await waitFor(() => {
       expect(screen.getByRole("switch")).toBeInTheDocument();
     });
+    expect(screen.getByText("링크를 받은 로그인 사용자가 이 퀴즈를 풀 수 있습니다")).toBeInTheDocument();
   });
 
   it("shows share URL and copy button when shared", async () => {

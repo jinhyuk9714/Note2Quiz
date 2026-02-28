@@ -23,6 +23,14 @@ from app.prompts.quiz_prompt import build_quiz_generation_prompt
 logger = logging.getLogger(__name__)
 
 
+class NoChunksFoundError(ValueError):
+    """Raised when no chunks are available for quiz generation."""
+
+
+class NoGeneratedItemsError(RuntimeError):
+    """Raised when quiz generation produced no items."""
+
+
 async def load_chunks(
     db: AsyncSession,
     document_id: uuid.UUID,
@@ -36,7 +44,7 @@ async def load_chunks(
     result = await db.execute(stmt)
     chunks = list(result.scalars().all())
     if not chunks:
-        raise ValueError("No chunks found for the given document/chunk IDs")
+        raise NoChunksFoundError("No chunks found for the given document/chunk IDs")
     return chunks
 
 
@@ -139,6 +147,10 @@ async def save_quiz_to_db(
     quiz_types: list[str],
 ) -> Quiz:
     """Create Quiz + QuizItem rows from generated item data."""
+    selected_items = items_data[:n_questions]
+    if not selected_items:
+        raise NoGeneratedItemsError("No generated quiz items to save")
+
     quiz = Quiz(
         document_id=document_id,
         title=title,
@@ -148,7 +160,7 @@ async def save_quiz_to_db(
     await db.flush()
 
     all_items: list[QuizItem] = []
-    for idx, item_data in enumerate(items_data[:n_questions]):
+    for idx, item_data in enumerate(selected_items):
         quiz_type_str = str(item_data.get("quiz_type", "mcq"))
         if quiz_type_str not in quiz_types:
             quiz_type_str = quiz_types[idx % len(quiz_types)]
@@ -237,7 +249,7 @@ async def generate_quiz_from_chunks(
             new_items_data.extend(result)
 
     if failed_chunks == len(chunks):
-        raise RuntimeError("All chunks failed during quiz generation")
+        raise NoGeneratedItemsError("All chunks failed during quiz generation")
     if failed_chunks > 0:
         logger.warning(
             "%d/%d chunks failed; proceeding with %d items",
@@ -245,6 +257,8 @@ async def generate_quiz_from_chunks(
             len(chunks),
             len(new_items_data),
         )
+    if not new_items_data:
+        raise NoGeneratedItemsError("Quiz generation produced no items")
 
     logger.info(
         "Quiz generation complete: %d items from %d chunks", len(new_items_data), len(chunks)

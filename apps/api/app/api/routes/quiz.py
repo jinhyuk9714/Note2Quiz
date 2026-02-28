@@ -43,6 +43,8 @@ from app.schemas.quiz import (
 )
 from app.schemas.share import ShareInfoResponse, ShareToggleRequest
 from app.services.quiz_generation import (
+    NoChunksFoundError,
+    NoGeneratedItemsError,
     generate_questions_for_chunk,
     generate_quiz_from_chunks,
     load_chunks,
@@ -107,8 +109,20 @@ async def generate_quiz(
             title=title,
             focus_concepts=payload.focus_concepts,
         )
-    except ValueError as e:
+    except NoChunksFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    except NoGeneratedItemsError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+    except CircuitBreakerOpenError as e:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service temporarily unavailable. Please try again later.",
+        ) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail="Quiz generation failed due to AI service error.",
+        ) from e
 
     # Reload with items
     stmt = select(Quiz).where(Quiz.id == quiz.id).options(selectinload(Quiz.items))
@@ -226,6 +240,10 @@ async def generate_quiz_stream(
                 "error",
                 {"message": "AI 서비스가 일시적으로 사용 불가합니다. 잠시 후 다시 시도해주세요."},
             )
+        except NoChunksFoundError:
+            yield _sse_event("error", {"message": "문서에서 학습 자료를 찾을 수 없습니다."})
+        except NoGeneratedItemsError:
+            yield _sse_event("error", {"message": "퀴즈 생성에 실패했습니다. 다시 시도해주세요."})
         except ValueError as e:
             yield _sse_event("error", {"message": str(e)})
         except Exception:
@@ -714,15 +732,18 @@ async def submit_quiz(
     if not ownership_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    attempt, wrong_notes, wrong_notes_updated = await create_attempt_with_wrong_notes(
-        db=db,
-        quiz_id=quiz_id,
-        user_id=user_id,
-        answers=[
-            {"quiz_item_id": str(a.quiz_item_id), "user_answer": a.user_answer}
-            for a in payload.answers
-        ],
-    )
+    try:
+        attempt, wrong_notes, wrong_notes_updated = await create_attempt_with_wrong_notes(
+            db=db,
+            quiz_id=quiz_id,
+            user_id=user_id,
+            answers=[
+                {"quiz_item_id": str(a.quiz_item_id), "user_answer": a.user_answer}
+                for a in payload.answers
+            ],
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
     # Load quiz items to get correct_answer + explanation for all results
     item_ids = [uuid.UUID(str(g["quiz_item_id"])) for g in attempt.answers]

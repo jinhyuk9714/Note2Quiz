@@ -104,6 +104,7 @@ async def create_attempt_with_wrong_notes(
     stmt = select(QuizItem).where(QuizItem.quiz_id == quiz_id)
     result = await db.execute(stmt)
     items_map = {item.id: item for item in result.scalars().all()}
+    seen_ids: set[uuid.UUID] = set()
 
     # Phase 1: Exact match grading
     graded: list[dict[str, object]] = []
@@ -111,9 +112,15 @@ async def create_attempt_with_wrong_notes(
 
     for answer in answers:
         item_id = uuid.UUID(answer["quiz_item_id"])
+        if item_id in seen_ids:
+            msg = f"Duplicate quiz_item_id '{item_id}' in answers"
+            raise ValueError(msg)
+        seen_ids.add(item_id)
+
         item = items_map.get(item_id)
         if not item:
-            continue
+            msg = f"Unknown quiz_item_id '{item_id}'"
+            raise ValueError(msg)
 
         exact_match = normalize_answer(answer["user_answer"]) == normalize_answer(
             item.correct_answer

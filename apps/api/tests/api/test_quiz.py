@@ -7,6 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from httpx import AsyncClient
 
+from app.core.llm_client import CircuitBreakerOpenError
+
 MOCK_QUIZ_RESPONSE = json.dumps(
     [
         {
@@ -120,6 +122,71 @@ class TestGenerateQuiz:
         )
         assert resp.status_code == 404
 
+    async def test_generate_quiz_no_items_returns_502(self, client: AsyncClient) -> None:
+        _, mock_client = _mock_anthropic(response_text="not-json-response")
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Empty Generation",
+                "text": "This text is long enough to create chunks for generation.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        with (
+            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
+            patch(
+                "app.services.quiz_generation.isinstance",
+                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
+            ),
+        ):
+            resp = await client.post(
+                "/api/quiz/generate",
+                json={
+                    "document_id": doc_id,
+                    "n_questions": 1,
+                    "quiz_types": ["mcq"],
+                },
+            )
+
+        assert resp.status_code == 502
+
+        list_resp = await client.get("/api/quiz/")
+        assert list_resp.status_code == 200
+        assert list_resp.json()["total"] == 0
+
+    async def test_generate_quiz_circuit_breaker_returns_503(self, client: AsyncClient) -> None:
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Circuit Breaker",
+                "text": "This text is long enough to create chunks for generation.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        with patch(
+            "app.services.quiz_generation.create_llm_client",
+            side_effect=CircuitBreakerOpenError("circuit open"),
+        ):
+            resp = await client.post(
+                "/api/quiz/generate",
+                json={
+                    "document_id": doc_id,
+                    "n_questions": 1,
+                    "quiz_types": ["mcq"],
+                },
+            )
+
+        assert resp.status_code == 503
+        assert (
+            resp.json()["detail"] == "AI service temporarily unavailable. Please try again later."
+        )
+
+        list_resp = await client.get("/api/quiz/")
+        assert list_resp.status_code == 200
+        assert list_resp.json()["total"] == 0
+
 
 class TestQuizTitle:
     async def test_auto_generated_title(self, client: AsyncClient) -> None:
@@ -229,6 +296,37 @@ class TestSubmitQuiz:
         result = resp.json()
         assert result["score"] == 0
         assert result["wrong_notes_created"] == 1
+
+    async def test_submit_duplicate_quiz_item_id_returns_422(self, client: AsyncClient) -> None:
+        quiz_data = await self._create_quiz(client)
+        quiz_id = quiz_data["id"]
+        item_id = quiz_data["items"][0]["id"]
+
+        resp = await client.post(
+            f"/api/quiz/{quiz_id}/submit",
+            json={
+                "answers": [
+                    {"quiz_item_id": item_id, "user_answer": "A"},
+                    {"quiz_item_id": item_id, "user_answer": "B"},
+                ]
+            },
+        )
+        assert resp.status_code == 422
+
+    async def test_submit_unknown_quiz_item_id_returns_422(self, client: AsyncClient) -> None:
+        quiz_data = await self._create_quiz(client)
+        quiz_id = quiz_data["id"]
+
+        resp = await client.post(
+            f"/api/quiz/{quiz_id}/submit",
+            json={
+                "answers": [
+                    {"quiz_item_id": str(uuid.uuid4()), "user_answer": "A"},
+                ]
+            },
+        )
+        assert resp.status_code == 422
+        assert "Unknown quiz_item_id" in resp.json()["detail"]
 
 
 class TestListQuizzes:
@@ -345,6 +443,22 @@ class TestQuizInputValidation:
         resp = await client.post(
             "/api/quiz/generate",
             json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["banana"]},
+        )
+        assert resp.status_code == 422
+
+    async def test_empty_quiz_types_returns_422(self, client: AsyncClient) -> None:
+        doc_resp = await client.post(
+            "/api/documents/",
+            data={
+                "title": "Validation Empty Types",
+                "text": "Enough text for document processing testing.",
+            },
+        )
+        doc_id = doc_resp.json()["id"]
+
+        resp = await client.post(
+            "/api/quiz/generate",
+            json={"document_id": doc_id, "n_questions": 1, "quiz_types": []},
         )
         assert resp.status_code == 422
 

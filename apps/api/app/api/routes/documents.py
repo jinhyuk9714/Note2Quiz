@@ -139,7 +139,11 @@ async def list_documents(
         if folder_id == "none":
             base = base.where(Document.folder_id.is_(None))
         else:
-            base = base.where(Document.folder_id == uuid.UUID(folder_id))
+            try:
+                folder_uuid = uuid.UUID(folder_id)
+            except ValueError as e:
+                raise HTTPException(status_code=422, detail="Invalid folder_id format") from e
+            base = base.where(Document.folder_id == folder_uuid)
 
     # Total count
     count_stmt = select(func.count()).select_from(base.subquery())

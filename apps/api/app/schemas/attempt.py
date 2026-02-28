@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AnswerItem(BaseModel):
@@ -14,6 +14,17 @@ class AnswerItem(BaseModel):
 
 class QuizSubmitRequest(BaseModel):
     answers: list[AnswerItem] = Field(min_length=1)
+
+    @field_validator("answers")
+    @classmethod
+    def validate_unique_quiz_item_ids(cls, v: list[AnswerItem]) -> list[AnswerItem]:
+        seen: set[uuid.UUID] = set()
+        for answer in v:
+            if answer.quiz_item_id in seen:
+                msg = f"Duplicate quiz_item_id '{answer.quiz_item_id}' in answers"
+                raise ValueError(msg)
+            seen.add(answer.quiz_item_id)
+        return v
 
 
 class AnswerResult(BaseModel):

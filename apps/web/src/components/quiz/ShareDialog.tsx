@@ -114,7 +114,7 @@ function ShareDialogInner({ quizId, onClose }: ShareDialogProps) {
               <div>
                 <p className="text-sm font-semibold text-text-secondary">공유 활성화</p>
                 <p className="text-xs text-text-tertiary mt-0.5">
-                  링크를 아는 누구나 이 퀴즈를 풀 수 있습니다
+                  링크를 받은 로그인 사용자가 이 퀴즈를 풀 수 있습니다
                 </p>
               </div>
               <button

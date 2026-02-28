@@ -21,6 +21,9 @@ class QuizGenerateRequest(BaseModel):
     @field_validator("quiz_types")
     @classmethod
     def validate_quiz_types(cls, v: list[str]) -> list[str]:
+        if not v:
+            msg = "quiz_types must not be empty"
+            raise ValueError(msg)
         for qt in v:
             if qt not in _VALID_QUIZ_TYPES:
                 msg = f"Invalid quiz type '{qt}'. Must be one of: {', '.join(sorted(_VALID_QUIZ_TYPES))}"
