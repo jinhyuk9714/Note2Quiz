@@ -44,9 +44,9 @@
 | **Frontend** | Next.js 16 (App Router), TypeScript strict, Tailwind CSS, TanStack Query, Recharts, Framer Motion |
 | **Backend** | FastAPI, Python 3.11+, SQLAlchemy 2.0 (async), Pydantic v2 |
 | **AI** | Claude API — 퀴즈 생성 (Haiku), 의미 채점, OCR |
-| **Database** | PostgreSQL 16, Alembic 마이그레이션 (11개) |
+| **Database** | PostgreSQL 16, Alembic 마이그레이션 (12개) |
 | **Infra** | Docker Compose, Caddy (자동 HTTPS), Sentry 모니터링, 구조화 로깅 |
-| **Testing** | pytest 392+ 테스트 (유닛/통합/벤치마크), Playwright E2E, Vitest |
+| **Testing** | pytest 489+ 테스트 (유닛/통합/벤치마크), Playwright E2E, Vitest |
 | **Resilience** | Circuit Breaker, Rate Limiting, 보안 헤더, GZip 압축 |
 
 ---
@@ -96,7 +96,9 @@ apps/
     │   └── middleware/     # 로깅, 보안 헤더
     ├── alembic/            # DB 마이그레이션
     └── tests/
-        ├── unit/           # 유닛 테스트
+        ├── services/       # 서비스 유닛 테스트
+        ├── prompts/        # 프롬프트 테스트
+        ├── api/            # API 엔드포인트 테스트
         ├── integration/    # 통합 테스트
         └── benchmarks/     # 성능 벤치마크
 ```
@@ -110,17 +112,23 @@ apps/
 ### 생성 파이프라인
 
 ```
-문서 → 청크 분할 → [청크별 병렬 생성] → JSON 파싱 → 검증/필터링 → DB 저장
-                        │
-                  ┌─────▼─────┐
-                  │ Claude API │
-                  │  (Haiku)   │
-                  └───────────┘
+문서 → 청크 분할 → 문서 프로파일링 → StudyUnit 추출 → 퀴즈 생성 → 검증/필터링 → DB 저장
+                        │                   │                │
+                  ┌─────▼─────┐       ┌─────▼─────┐   ┌─────▼─────┐
+                  │ Claude API │       │ Claude API │   │ Claude API │
+                  │ (프로파일링)│       │(학습단위추출)│   │ (퀴즈생성) │
+                  └───────────┘       └───────────┘   └───────────┘
 ```
 
-- **병렬 처리**: `asyncio.gather()` + 세마포어(동시 5개)로 청크별 병렬 생성
-- **재시도**: 청크별 최대 3회 재시도 (지수 백오프)
+1. **문서 프로파일링**: 문서 유형(교과서/어휘집/논문 등), 언어, 퀴즈 적합 블록 자동 분류
+2. **StudyUnit 추출**: 퀴즈 적합 블록에서 개별 학습 단위(정의/개념/비교/공식 등) 추출
+3. **퀴즈 생성**: StudyUnit 기반으로 문맥 있는 퀴즈 생성 (단순 청크 → 퀴즈보다 품질 향상)
+
+- **병렬 처리**: `asyncio.gather()` + 세마포어(동시 3~5개)로 배치 병렬 처리
+- **재시도**: 배치별 최대 3회 재시도 (지수 백오프)
 - **Circuit Breaker**: 연속 5회 실패 시 60초 차단 → 연쇄 장애 방지
+- **OCR 텍스트 정리**: 스캔 PDF의 반복 텍스트 자동 제거
+- **잘린 JSON 복구**: max_tokens 초과 시 완성된 항목만 회수
 
 ### 프롬프트 구조
 
@@ -367,7 +375,7 @@ ruff check . && pyright
 cd apps/web && pnpm test
 
 # E2E
-pnpm e2e
+pnpm test:e2e
 ```
 
 ---
