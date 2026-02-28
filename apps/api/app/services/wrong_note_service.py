@@ -100,9 +100,8 @@ async def create_attempt_with_wrong_notes(
     user_id: uuid.UUID,
     answers: list[dict[str, str]],
 ) -> tuple[QuizAttempt, list[WrongAnswerNote], int]:
-    # Load quiz items
-    item_ids = [uuid.UUID(a["quiz_item_id"]) for a in answers]
-    stmt = select(QuizItem).where(QuizItem.id.in_(item_ids))
+    # Load ALL quiz items (not just answered ones)
+    stmt = select(QuizItem).where(QuizItem.quiz_id == quiz_id)
     result = await db.execute(stmt)
     items_map = {item.id: item for item in result.scalars().all()}
 
@@ -156,6 +155,19 @@ async def create_attempt_with_wrong_notes(
                 }
             )
 
+    # Unanswered items → automatic wrong
+    answered_ids = {uuid.UUID(str(g["quiz_item_id"])) for g in graded}
+    for item_id in items_map:
+        if item_id not in answered_ids:
+            graded.append(
+                {
+                    "quiz_item_id": str(item_id),
+                    "user_answer": "",
+                    "is_correct": False,
+                    "grading_method": "unanswered",
+                }
+            )
+
     # Phase 2: Semantic grading (single batched API call)
     if needs_semantic:
         semantic_results = await grade_answers_semantically(needs_semantic)
@@ -184,7 +196,7 @@ async def create_attempt_with_wrong_notes(
         user_id=user_id,
         attempt_number=attempt_number,
         score=score,
-        total=len(graded),
+        total=len(items_map),
         answers=graded,  # type: ignore[arg-type]
     )
     db.add(attempt)
