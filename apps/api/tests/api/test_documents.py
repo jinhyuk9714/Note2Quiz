@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import json
 import uuid
 from io import BytesIO
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import fitz  # pyright: ignore[reportMissingTypeStubs]
 from httpx import AsyncClient
+
+from tests.api.test_quiz import mock_quiz_pipeline
 
 
 def _make_test_pdf(text: str, num_pages: int = 1) -> bytes:
@@ -241,32 +242,7 @@ class TestDocumentQuizCount:
         )
         doc_id = doc_resp.json()["id"]
 
-        mock_block = MagicMock()
-        mock_block.text = json.dumps(
-            [
-                {
-                    "quiz_type": "mcq",
-                    "question": "Q?",
-                    "correct_answer": "A",
-                    "explanation": "E",
-                    "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
-                    "concept_tags": ["test"],
-                    "difficulty": 1,
-                }
-            ]
-        )
-        mock_response = MagicMock()
-        mock_response.content = [mock_block]
-        mock_client = AsyncMock()
-        mock_client.messages.create = AsyncMock(return_value=mock_response)
-
-        with (
-            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             await client.post(
                 "/api/quiz/generate",
                 json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},

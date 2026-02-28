@@ -64,6 +64,7 @@ class QuizItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     options: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     concept_tags: Mapped[list[str]] = mapped_column(_JSONBCompat, default=list)
     difficulty: Mapped[int] = mapped_column(Integer, default=1)
+    source_unit_ids: Mapped[list[str]] = mapped_column(_JSONBCompat, default=list)
 
     quiz: Mapped[Quiz] = relationship(back_populates="items")
     source_chunk: Mapped[Chunk | None] = relationship(back_populates="quiz_items")

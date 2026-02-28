@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+import re
+import unicodedata
 from typing import cast
 
 
@@ -270,6 +273,272 @@ def validate_quiz_items(
         # fill_blank: question must contain ___
         if quiz_type == "fill_blank" and "___" not in str(question):
             continue
+
+        valid.append(item)
+
+    return valid
+
+
+# ---------------------------------------------------------------------------
+# StudyUnit-based quiz generation prompt
+# ---------------------------------------------------------------------------
+
+_DOCUMENT_TYPE_STRATEGIES: dict[str, str] = {
+    "vocabulary_book": (
+        "- Prioritize meaning recall, usage distinction, and confusable pair differentiation.\n"
+        "- Avoid asking only 'what does X mean?' — also test usage, collocations, and nuance."
+    ),
+    "lecture_note": (
+        "- Focus on conceptual understanding, cause-effect, and comparison.\n"
+        "- Prefer application and distinction over verbatim recall."
+    ),
+    "textbook_chapter": (
+        "- Test definitions, theorem conditions, formula applications, and concept relationships.\n"
+        "- Use difficulty 2-3 questions that require understanding, not just memorization."
+    ),
+    "slide_deck": (
+        "- Extract the underlying concept from bullet points.\n"
+        "- Prefer understanding and application over slide-specific wording."
+    ),
+    "research_paper": (
+        "- Focus on research purpose, methodology rationale, key findings, and interpretation.\n"
+        "- Avoid asking about author names or publication metadata."
+    ),
+    "workbook": (
+        "- Focus on problem-solving rules, patterns, and procedures.\n"
+        "- Test the underlying principle, not just the specific exercise answer."
+    ),
+    "article": (
+        "- Focus on key claims, arguments, evidence, and conclusions.\n"
+        "- Test critical reading and interpretation."
+    ),
+    "mixed": (
+        "- Focus on the most educationally valuable content.\n"
+        "- Be selective — only create questions that genuinely test learning."
+    ),
+}
+
+
+def build_quiz_generation_prompt_from_units(
+    units: list[dict[str, object]],
+    n_questions: int,
+    quiz_types: list[str],
+    document_type: str,
+    language: str,
+    focus_concepts: list[str] | None = None,
+) -> str:
+    """Build quiz generation prompt from pre-extracted StudyUnits.
+
+    Args:
+        units: List of StudyUnit dicts (unit_id, unit_type, title, content, concept_tags).
+        n_questions: Number of questions to generate.
+        quiz_types: Allowed quiz types.
+        document_type: Classified document type.
+        language: Dominant language code.
+        focus_concepts: Optional focus concepts.
+
+    Returns:
+        Prompt string for LLM quiz generation.
+    """
+    if not units:
+        raise ValueError("units must not be empty")
+    if not quiz_types:
+        raise ValueError("quiz_types must not be empty")
+    if n_questions <= 0:
+        raise ValueError("n_questions must be > 0")
+    if n_questions < len(quiz_types):
+        raise ValueError(
+            "n_questions must be >= len(quiz_types) because every allowed quiz type must appear at least once"
+        )
+
+    types_str = ", ".join(quiz_types)
+    types_literal = ", ".join(f'"{qt}"' for qt in quiz_types)
+
+    per_type = n_questions // len(quiz_types)
+    remainder = n_questions % len(quiz_types)
+    distribution = (
+        f"- Use every allowed question type at least once.\n"
+        f"- Target an even distribution: about {per_type} questions per type"
+    )
+    if remainder:
+        distribution += f", assigning the extra {remainder} question(s) to any type."
+    else:
+        distribution += "."
+
+    strategy = _DOCUMENT_TYPE_STRATEGIES.get(document_type, _DOCUMENT_TYPE_STRATEGIES["mixed"])
+
+    focus_block = ""
+    if focus_concepts:
+        focus_block = (
+            "**Focus concepts**\n"
+            f"- Prioritize: [{', '.join(focus_concepts)}]\n"
+            "- Aim for at least 70% of questions to test these concepts when feasible.\n\n"
+        )
+
+    units_json = json.dumps(units, ensure_ascii=False, indent=2)
+
+    return f"""You are an expert university-level instructional designer and quiz writer.
+
+Generate exactly {n_questions} quiz questions from the study units below.
+Each study unit represents a pre-extracted, verified learning point from a {document_type} document.
+
+**Allowed quiz types**: {types_str}
+{distribution}
+
+**Document type**: {document_type}
+**Document type strategy**:
+{strategy}
+
+{focus_block}**CRITICAL RULES — NEVER violate these**:
+- Each question MUST be based on one or more specific study units.
+- You MUST include "source_unit_ids" in each question — a list of unit_id values that the question is based on.
+- A question with empty or missing "source_unit_ids" is INVALID.
+- Do NOT create questions about:
+  - Document introduction, structure, or organization
+  - How to use the document or study tips
+  - Table of contents, part sizes, coverage percentages
+  - Author comments, publisher information, or promotional content
+  - References, bibliography, URLs, or copyright
+  - Statistics about the document itself (e.g., "how many chapters")
+- Do NOT ask "what is this document about" or "how is this document organized"
+- EVERY question must test actual learning content with real educational value
+
+**Question quality rules**
+- Each question must test ONE clear learning point.
+- Prefer understanding, distinction, reasoning, and application over verbatim recall.
+- Make each question self-contained.
+- Avoid near-duplicate questions.
+- Cover different study units as evenly as possible.
+
+**Difficulty**: 1=recall, 2=comparison/application, 3=inference/reasoning. Use a balanced mix.
+
+**Type-specific rules**
+- "mcq": options A/B/C/D, exactly one correct, plausible distractors
+- "short_answer": concise key phrase answer, no essays
+- "true_false": declarative statement, answer "O" or "X"
+- "fill_blank": exactly one "___" blank, answer is term/phrase
+
+**Tagging**: 1-3 canonical concept tags per question. No generic tags (introduction, overview, chapter, important).
+
+**Explanation**: 1-2 sentences, based only on the study material.
+
+**Language**: Generate ALL content in {language}. Preserve technical terms in original form when appropriate.
+
+**Output format**
+Return ONLY a valid JSON array (no markdown fences, no surrounding text).
+Each item must contain:
+- "quiz_type": one of {types_literal}
+- "question": string
+- "correct_answer": string
+- "explanation": string
+- "concept_tags": array of 1-3 strings
+- "difficulty": integer 1, 2, or 3
+- "options": required ONLY when quiz_type == "mcq" (keys A, B, C, D)
+- "source_unit_ids": array of unit_id strings that this question is based on (REQUIRED, must not be empty)
+
+**Study units**
+{units_json}
+
+Return ONLY the JSON array."""
+
+
+# ---------------------------------------------------------------------------
+# Enhanced validator for StudyUnit-based quiz items
+# ---------------------------------------------------------------------------
+
+_META_QUESTION_PATTERNS = re.compile(
+    r"(?i)(?:"
+    r"\b(?:table\s+of\s+contents|how\s+to\s+use|study\s+tips?|study\s+guide"
+    r"|references?\b|bibliography|copyright|isbn|appendix|appendices)"
+    r"|목\s*차|차\s*례|사용\s*방법|학습\s*(?:방법|법)|공부\s*(?:방법|법)"
+    r"|참고\s*문헌|저작권|부록|정답\s*(?:지|표)"
+    r"|how\s+(?:many|much)\s+(?:chapters?|sections?|parts?|pages?)"
+    r"|(?:https?://|www\.)|blog\.|\.com/"
+    r")",
+)
+
+_GENERIC_TAGS = frozenset(
+    {
+        "introduction",
+        "overview",
+        "chapter",
+        "important",
+        "example",
+        "section",
+        "summary",
+        "review",
+        "소개",
+        "개요",
+        "중요",
+        "예시",
+        "요약",
+    }
+)
+
+
+def _normalize_question_for_dedup(question: str) -> str:
+    """Normalize a question for deduplication comparison."""
+    text = unicodedata.normalize("NFC", question.lower().strip())
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"[^\w\s]", "", text)
+    return text
+
+
+def validate_quiz_items_from_units(
+    items: list[dict[str, object]],
+    allowed_types: list[str],
+    valid_unit_ids: set[str],
+) -> list[dict[str, object]]:
+    """Validate and filter quiz items generated from StudyUnits.
+
+    Extends base validation with:
+    - source_unit_ids presence and validity checking
+    - Meta-question pattern rejection
+    - Question deduplication
+    - Generic concept tag filtering
+    """
+    # First pass: base validation
+    base_valid = validate_quiz_items(items, allowed_types)
+
+    valid: list[dict[str, object]] = []
+    seen_questions: set[str] = set()
+
+    for item in base_valid:
+        # source_unit_ids must be present and non-empty
+        source_ids = item.get("source_unit_ids")
+        if not isinstance(source_ids, list) or not source_ids:
+            continue
+
+        # All referenced unit IDs must exist
+        source_id_strs = [str(sid) for sid in cast(list[object], source_ids)]
+        if not all(sid in valid_unit_ids for sid in source_id_strs):
+            continue
+        item["source_unit_ids"] = source_id_strs
+
+        # Reject meta-questions
+        question = str(item.get("question", ""))
+        explanation = str(item.get("explanation", ""))
+        combined_text = question + " " + explanation
+        if _META_QUESTION_PATTERNS.search(combined_text):
+            continue
+
+        # Deduplicate by normalized question
+        norm_q = _normalize_question_for_dedup(question)
+        if norm_q in seen_questions:
+            continue
+        seen_questions.add(norm_q)
+
+        # Filter generic concept tags
+        concept_tags = item.get("concept_tags", [])
+        if isinstance(concept_tags, list):
+            tags_list = cast(list[object], concept_tags)
+            filtered_tags = [
+                t for t in tags_list if isinstance(t, str) and t.lower() not in _GENERIC_TAGS
+            ]
+            if not filtered_tags:
+                # If all tags are generic, keep original (don't drop the item)
+                filtered_tags = cast(list[str], concept_tags[:1])
+            item["concept_tags"] = filtered_tags[:3]
 
         valid.append(item)
 

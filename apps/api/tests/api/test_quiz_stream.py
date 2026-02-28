@@ -2,37 +2,10 @@ from __future__ import annotations
 
 import json
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from httpx import AsyncClient
 
-MOCK_QUIZ_RESPONSE = json.dumps(
-    [
-        {
-            "quiz_type": "mcq",
-            "question": "What is 2+2?",
-            "correct_answer": "A",
-            "explanation": "Basic arithmetic.",
-            "options": {"A": "4", "B": "3", "C": "5", "D": "6"},
-            "concept_tags": ["math"],
-            "difficulty": 1,
-        }
-    ]
-)
-
-
-def _mock_anthropic() -> tuple[MagicMock, AsyncMock]:
-    mock_block = MagicMock()
-    mock_block.text = MOCK_QUIZ_RESPONSE
-
-    mock_response = MagicMock()
-    mock_response.content = [mock_block]
-
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_response)
-
-    mock_cls = MagicMock(return_value=mock_client)
-    return mock_cls, mock_client
+from tests.api.test_quiz import mock_quiz_pipeline
 
 
 def _parse_sse_events(text: str) -> list[tuple[str, dict[str, object]]]:
@@ -51,8 +24,6 @@ def _parse_sse_events(text: str) -> list[tuple[str, dict[str, object]]]:
 
 class TestGenerateQuizStream:
     async def test_stream_emits_progress_and_complete(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -62,13 +33,7 @@ class TestGenerateQuizStream:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             resp = await client.post(
                 "/api/quiz/generate-stream",
                 json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
@@ -84,10 +49,6 @@ class TestGenerateQuizStream:
 
         assert len(progress_events) >= 1
         assert progress_events[0][1]["step"] == "analyzing"
-        assert progress_events[0][1]["current"] == 1
-
-        # Last progress should be saving
-        assert progress_events[-1][1]["step"] == "saving"
 
         assert len(complete_events) == 1
         assert "quiz_id" in complete_events[0][1]
@@ -105,8 +66,6 @@ class TestGenerateQuizStream:
         assert resp.status_code == 404
 
     async def test_stream_creates_quiz_in_db(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -116,13 +75,7 @@ class TestGenerateQuizStream:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             resp = await client.post(
                 "/api/quiz/generate-stream",
                 json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
@@ -156,8 +109,6 @@ class TestGenerateQuizStream:
         assert resp.status_code == 404
 
     async def test_stream_progress_message_contains_chunk_info(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -167,13 +118,7 @@ class TestGenerateQuizStream:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             resp = await client.post(
                 "/api/quiz/generate-stream",
                 json={"document_id": doc_id, "n_questions": 1, "quiz_types": ["mcq"]},
@@ -185,8 +130,6 @@ class TestGenerateQuizStream:
         assert "분석 중" in str(analyzing[0][1]["message"])
 
     async def test_stream_with_focus_concepts(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -196,13 +139,7 @@ class TestGenerateQuizStream:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.api.routes.quiz.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline() as mock_client:
             resp = await client.post(
                 "/api/quiz/generate-stream",
                 json={

@@ -1,33 +1,8 @@
 from __future__ import annotations
 
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
-
 from httpx import AsyncClient
 
-MOCK_QUIZ_RESPONSE = json.dumps(
-    [
-        {
-            "quiz_type": "mcq",
-            "question": "What is 2+2?",
-            "correct_answer": "A",
-            "explanation": "Basic math.",
-            "options": {"A": "4", "B": "3", "C": "5", "D": "6"},
-            "concept_tags": ["math", "arithmetic"],
-            "difficulty": 1,
-        }
-    ]
-)
-
-
-def _mock_anthropic() -> tuple[MagicMock, AsyncMock]:
-    mock_block = MagicMock()
-    mock_block.text = MOCK_QUIZ_RESPONSE
-    mock_response = MagicMock()
-    mock_response.content = [mock_block]
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_response)
-    return MagicMock(return_value=mock_client), mock_client
+from tests.api.test_quiz import mock_quiz_pipeline
 
 
 class TestDashboardStats:
@@ -49,8 +24,6 @@ class TestDashboardStats:
         assert rs["upcoming"] == []
 
     async def test_stats_after_wrong_answer(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -60,13 +33,7 @@ class TestDashboardStats:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             quiz_resp = await client.post(
                 "/api/quiz/generate",
                 json={
@@ -102,7 +69,6 @@ class TestDashboardStats:
 
         tags = [c["tag"] for c in data["weak_concepts"]]
         assert "math" in tags
-        assert "arithmetic" in tags
 
         rs = data["review_schedule"]
         total_scheduled = rs["overdue_count"] + rs["today_count"]
@@ -110,8 +76,6 @@ class TestDashboardStats:
         assert total_scheduled >= 1
 
     async def test_accuracy_with_correct_answer(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -121,13 +85,7 @@ class TestDashboardStats:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             quiz_resp = await client.post(
                 "/api/quiz/generate",
                 json={
@@ -165,8 +123,6 @@ class TestDashboardTrends:
         assert data["days"] == 30
 
     async def test_trends_after_attempt(self, client: AsyncClient) -> None:
-        _, mock_client = _mock_anthropic()
-
         doc_resp = await client.post(
             "/api/documents/",
             data={
@@ -176,13 +132,7 @@ class TestDashboardTrends:
         )
         doc_id = doc_resp.json()["id"]
 
-        with (
-            patch("app.services.quiz_generation.create_llm_client", return_value=mock_client),
-            patch(
-                "app.services.quiz_generation.isinstance",
-                side_effect=lambda obj, cls: True,  # type: ignore[arg-type]
-            ),
-        ):
+        with mock_quiz_pipeline():
             quiz_resp = await client.post(
                 "/api/quiz/generate",
                 json={

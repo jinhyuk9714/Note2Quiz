@@ -39,6 +39,18 @@ PROFILE_OCR: Final = LLMProfile(
     max_tokens=4096,
 )
 
+PROFILE_DOCUMENT_ANALYSIS: Final = LLMProfile(
+    timeout_seconds=settings.llm_timeout_quiz,
+    max_retries=settings.llm_max_retries,
+    max_tokens=2048,
+)
+
+PROFILE_STUDY_UNIT_EXTRACTION: Final = LLMProfile(
+    timeout_seconds=settings.llm_timeout_quiz,
+    max_retries=settings.llm_max_retries,
+    max_tokens=4096,
+)
+
 
 class CircuitBreakerOpenError(Exception):
     """Raised when the circuit breaker is open and rejecting requests."""

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import asyncio
 import json
-import logging
 import uuid
 from collections.abc import AsyncGenerator
 from typing import Any, Literal
@@ -16,10 +14,7 @@ from starlette.responses import StreamingResponse
 from app.core.config import settings
 from app.core.deps import CurrentUserID, DBSession
 from app.core.llm_client import (
-    PROFILE_QUIZ_GENERATION,
     CircuitBreakerOpenError,
-    create_llm_client,
-    get_circuit_breaker,
 )
 from app.core.rate_limit import limiter
 from app.models.attempt import QuizAttempt
@@ -43,12 +38,11 @@ from app.schemas.quiz import (
 )
 from app.schemas.share import ShareInfoResponse, ShareToggleRequest
 from app.services.quiz_generation import (
+    InsufficientContentError,
     NoChunksFoundError,
     NoGeneratedItemsError,
-    generate_questions_for_chunk,
     generate_quiz_from_chunks,
-    load_chunks,
-    save_quiz_to_db,
+    generate_quiz_with_analysis,
 )
 from app.services.share_service import ensure_unique_share_code
 from app.services.wrong_note_service import create_attempt_with_wrong_notes
@@ -112,6 +106,8 @@ async def generate_quiz(
         )
     except NoChunksFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    except InsufficientContentError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     except NoGeneratedItemsError as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
     except CircuitBreakerOpenError as e:
@@ -161,73 +157,22 @@ async def generate_quiz_stream(
     else:
         title = payload.title or f"{doc.title} 퀴즈"
 
-    logger = logging.getLogger(__name__)
-    max_attempts = settings.llm_chunk_retry_attempts + 1
-
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
-            chunks = await load_chunks(db, payload.document_id, payload.chunk_ids)
-            client = create_llm_client(PROFILE_QUIZ_GENERATION)
-            questions_per_chunk = max(len(payload.quiz_types), payload.n_questions // len(chunks))
-            total = len(chunks)
-            all_items: list[dict[str, object]] = []
-
-            for i, chunk in enumerate(chunks):
-                yield _sse_event(
-                    "progress",
-                    {
-                        "step": "analyzing",
-                        "current": i + 1,
-                        "total": total,
-                        "message": f"청크 {i + 1}/{total} 분석 중...",
-                    },
-                )
-
-                chunk_items: list[dict[str, object]] | None = None
-                for attempt in range(max_attempts):
-                    try:
-                        chunk_items = await generate_questions_for_chunk(
-                            client,
-                            chunk,
-                            questions_per_chunk,
-                            payload.quiz_types,
-                            focus_concepts=payload.focus_concepts,
-                            document_title=doc.title,
-                        )
-                        get_circuit_breaker().record_success()
-                        break
-                    except Exception as exc:
-                        get_circuit_breaker().record_failure()
-                        if attempt < max_attempts - 1:
-                            await asyncio.sleep(2**attempt)
-                        else:
-                            logger.error("Stream chunk %s failed after retries: %s", chunk.id, exc)
-                            yield _sse_event(
-                                "chunk_error",
-                                {
-                                    "chunk_index": i + 1,
-                                    "message": f"청크 {i + 1} 생성 실패, 건너뜁니다.",
-                                },
-                            )
-
-                if chunk_items:
-                    all_items.extend(chunk_items)
-
-            if not all_items:
-                yield _sse_event("error", {"message": "모든 청크에서 퀴즈 생성에 실패했습니다."})
-                return
-
             yield _sse_event(
                 "progress",
-                {
-                    "step": "saving",
-                    "current": total,
-                    "total": total,
-                    "message": "퀴즈 저장 중...",
-                },
+                {"step": "analyzing", "current": 0, "total": 3, "message": "문서 분석 중..."},
             )
-            quiz = await save_quiz_to_db(
-                db, payload.document_id, title, all_items, payload.n_questions, payload.quiz_types
+
+            quiz = await generate_quiz_with_analysis(
+                db=db,
+                document_id=payload.document_id,
+                chunk_ids=payload.chunk_ids,
+                n_questions=payload.n_questions,
+                quiz_types=payload.quiz_types,
+                title=title,
+                focus_concepts=payload.focus_concepts,
+                document_title=doc.title,
             )
 
             yield _sse_event(
@@ -244,6 +189,8 @@ async def generate_quiz_stream(
             )
         except NoChunksFoundError:
             yield _sse_event("error", {"message": "문서에서 학습 자료를 찾을 수 없습니다."})
+        except InsufficientContentError as e:
+            yield _sse_event("error", {"message": str(e)})
         except NoGeneratedItemsError:
             yield _sse_event("error", {"message": "퀴즈 생성에 실패했습니다. 다시 시도해주세요."})
         except ValueError as e:
