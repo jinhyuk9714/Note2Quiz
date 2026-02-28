@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>복습할 문제가 있습니다</h2>
+<p>{{ display_name }}님, 복습 시점에 도달한 문제가 <strong>{{ due_count }}개</strong> 있습니다.</p>
+<p>지금 복습하면 기억에 더 오래 남습니다.</p>
+<p style="text-align: center; margin: 28px 0;">
+  <a href="{{ review_url }}" class="btn">복습하러 가기</a>
+</p>
+{% endblock %}

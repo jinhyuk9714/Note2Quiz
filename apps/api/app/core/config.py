@@ -62,6 +62,22 @@ class Settings(BaseSettings):
     llm_circuit_breaker_cooldown: float = 60.0  # seconds before half-open
     llm_chunk_retry_attempts: int = 2  # app-level per-chunk retry
 
+    # Email
+    email_backend: str = "console"  # "console" | "smtp" | "resend"
+    email_from_address: str = "noreply@note2quiz.com"
+    email_from_name: str = "Note2Quiz"
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    resend_api_key: str = ""
+
+    # Sentry
+    sentry_dsn: str = ""
+    sentry_environment: str = "development"
+    sentry_traces_sample_rate: float = 0.1  # 10% of transactions
+
     # Quiz generation defaults
     default_chunk_size: int = 1500  # characters
     default_chunk_overlap: int = 200  # characters

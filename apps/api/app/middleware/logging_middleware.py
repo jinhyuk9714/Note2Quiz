@@ -36,6 +36,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         request.state.request_id = request_id
 
+        if user_id:
+            import sentry_sdk
+
+            sentry_sdk.set_user({"id": user_id})
+
         extra = {
             "request_id": request_id,
             "method": request.method,

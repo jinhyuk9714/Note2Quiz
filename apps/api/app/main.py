@@ -25,6 +25,10 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 
 setup_logging()
 
+from app.core.sentry_setup import init_sentry
+
+init_sentry()
+
 logger = logging.getLogger(__name__)
 
 

@@ -140,10 +140,18 @@ async def forgot_password(
             minutes=settings.password_reset_expire_minutes
         )
         await db.commit()
-        # In production, send email with reset link.
-        # For now, log the token for development use.
         reset_url = f"{settings.frontend_base_url}/reset-password?token={token}"
-        logger.info("Password reset requested for %s: %s", payload.email, reset_url)
+        logger.info("Password reset requested for %s", payload.email)
+
+        from app.services.email_service import send_email
+        from app.services.email_templates import render_password_reset_email
+
+        message = render_password_reset_email(
+            to_email=user.email,
+            display_name=user.display_name,
+            reset_url=reset_url,
+        )
+        await send_email(message)
 
     # Always return 204 to prevent email enumeration
     return Response(status_code=204)
