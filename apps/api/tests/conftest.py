@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.database import get_db
+from app.core.deps import get_session_factory
 from app.core.llm_client import get_circuit_breaker
 from app.main import app
 from app.models import Base, User  # noqa: F401 — registers all models
@@ -89,6 +90,9 @@ async def client(
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    # Use None to fall back to sequential mode in tests (SQLite in-memory
+    # doesn't support parallel sessions sharing the same data).
+    app.dependency_overrides[get_session_factory] = lambda: None  # type: ignore[assignment]
 
     transport = ASGITransport(app=app)  # type: ignore[arg-type]
     async with AsyncClient(transport=transport, base_url="http://test", headers=auth_headers) as ac:
@@ -130,6 +134,7 @@ async def second_client(
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_session_factory] = lambda: None  # type: ignore[assignment]
 
     transport = ASGITransport(app=app)  # type: ignore[arg-type]
     async with AsyncClient(

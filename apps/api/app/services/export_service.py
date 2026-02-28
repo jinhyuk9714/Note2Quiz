@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 import fitz
 from sqlalchemy import String, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import load_only, selectinload
 
 from app.models.attempt import QuizAttempt, WrongAnswerNote
 from app.models.document import Document
@@ -64,7 +64,9 @@ async def _fetch_wrong_notes(
         stmt = stmt.join(WrongAnswerNote.quiz_item).where(QuizItem.question.ilike(f"%{search}%"))
 
     stmt = stmt.order_by(WrongAnswerNote.created_at.desc())
-    stmt = stmt.options(selectinload(WrongAnswerNote.quiz_item))
+    stmt = stmt.options(
+        selectinload(WrongAnswerNote.quiz_item).load_only(QuizItem.question)
+    )
 
     result = await db.execute(stmt)
     return list(result.scalars().all())

@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler  # type: ignore[import-untyped]
 from slowapi.errors import RateLimitExceeded  # type: ignore[import-untyped]
 from slowapi.middleware import SlowAPIMiddleware  # type: ignore[import-untyped]
@@ -46,8 +47,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 register_exception_handler(app)
 
 # Middleware stack (last added = outermost)
-# Request flow: CORS -> RequestLogging -> SecurityHeaders -> SlowAPI -> Route
+# Request flow: CORS -> RequestLogging -> SecurityHeaders -> GZip -> SlowAPI -> Route
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(

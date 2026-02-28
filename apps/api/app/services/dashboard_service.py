@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime, timedelta
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import case, distinct, func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models.attempt import QuizAttempt, WrongAnswerNote
 from app.models.document import Document
@@ -30,14 +32,40 @@ logger = logging.getLogger(__name__)
 async def get_dashboard_stats(
     db: AsyncSession,
     user_id: uuid.UUID,
+    *,
+    session_factory: async_sessionmaker[AsyncSession] | None = None,
 ) -> DashboardStatsResponse:
     logger.debug("Fetching dashboard stats for user=%s", user_id)
-    learning_progress = await _get_learning_progress(db, user_id)
-    weak_concepts = await _get_weak_concepts(db, user_id)
-    review_schedule = await _get_review_schedule(db, user_id)
-    streak = await _get_streak_stats(db, user_id)
-    mastery_summary = await _get_mastery_summary(db, user_id)
-    recent_activity = await _get_recent_activity(db, user_id)
+
+    if session_factory is not None:
+        # Parallel execution: each query gets its own session
+        async def _run(fn: Callable[..., Awaitable[Any]], *args: Any) -> Any:
+            async with session_factory() as s:
+                return await fn(s, *args)
+
+        (
+            learning_progress,
+            weak_concepts,
+            review_schedule,
+            streak,
+            mastery_summary,
+            recent_activity,
+        ) = await asyncio.gather(
+            _run(_get_learning_progress, user_id),
+            _run(_get_weak_concepts, user_id),
+            _run(_get_review_schedule, user_id),
+            _run(_get_streak_stats, user_id),
+            _run(_get_mastery_summary, user_id),
+            _run(_get_recent_activity, user_id),
+        )
+    else:
+        # Sequential execution: reuse the provided session
+        learning_progress = await _get_learning_progress(db, user_id)
+        weak_concepts = await _get_weak_concepts(db, user_id)
+        review_schedule = await _get_review_schedule(db, user_id)
+        streak = await _get_streak_stats(db, user_id)
+        mastery_summary = await _get_mastery_summary(db, user_id)
+        recent_activity = await _get_recent_activity(db, user_id)
 
     return DashboardStatsResponse(
         learning_progress=learning_progress,

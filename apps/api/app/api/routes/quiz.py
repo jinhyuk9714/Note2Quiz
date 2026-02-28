@@ -5,7 +5,7 @@ import json
 import logging
 import uuid
 from collections.abc import AsyncGenerator
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import func, select
@@ -261,24 +261,13 @@ async def generate_quiz_stream(
     )
 
 
-@router.get("/", response_model=PaginatedResponse[QuizListItemResponse])
-async def list_quizzes(
-    db: DBSession,
-    user_id: CurrentUserID,
-    limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
-    search: str | None = Query(default=None, min_length=1, max_length=200),
-    document_id: uuid.UUID | None = None,
-    attempt_status: Literal["all", "not_attempted", "attempted"] = Query(default="all"),
-    score_min: int | None = Query(default=None, ge=0, le=100),
-    score_max: int | None = Query(default=None, ge=0, le=100),
-    sort_by: Literal["created_at", "title", "item_count", "latest_score"] = Query(
-        default="created_at"
-    ),
-    order: Literal["asc", "desc"] = Query(default="desc"),
-) -> PaginatedResponse[QuizListItemResponse]:
-    # Combined attempt stats subquery — single scan of QuizAttempt table
-    # Uses window functions for both attempt_count and latest score
+def _build_attempt_stats_cte(user_id: uuid.UUID) -> Any:
+    """Build a CTE for per-quiz attempt stats (count + latest score).
+
+    Using a CTE instead of a subquery allows the database to compute
+    the window function result once and reference it from both the data
+    query and the count query.
+    """
     attempt_numbered = (
         select(
             QuizAttempt.quiz_id,
@@ -297,7 +286,7 @@ async def list_quizzes(
         .where(QuizAttempt.user_id == user_id)
         .subquery()
     )
-    attempt_stats_sq = (
+    return (
         select(
             attempt_numbered.c.quiz_id,
             attempt_numbered.c.attempt_count,
@@ -305,87 +294,108 @@ async def list_quizzes(
             attempt_numbered.c.total,
         )
         .where(attempt_numbered.c.rn == 1)
-        .subquery()
+        .cte("attempt_stats")
     )
 
-    # Main query with single join
-    base = (
-        select(
-            Quiz,
-            func.coalesce(attempt_stats_sq.c.attempt_count, 0).label("attempt_count"),
-            attempt_stats_sq.c.score.label("latest_score"),
-            attempt_stats_sq.c.total.label("latest_total"),
-        )
-        .join(Quiz.document)
-        .outerjoin(attempt_stats_sq, Quiz.id == attempt_stats_sq.c.quiz_id)
-        .where(Document.owner_id == user_id)
-    )
 
+def _apply_quiz_filters(
+    query: Any,
+    cte: Any,
+    *,
+    search: str | None,
+    document_id: uuid.UUID | None,
+    attempt_status: str,
+    score_min: int | None,
+    score_max: int | None,
+) -> Any:
+    """Apply shared filter conditions to both data and count queries."""
     if search:
-        base = base.where(Quiz.title.ilike(f"%{search}%"))
+        query = query.where(Quiz.title.ilike(f"%{search}%"))
     if document_id:
-        base = base.where(Quiz.document_id == document_id)
-
-    # Attempt status filter
+        query = query.where(Quiz.document_id == document_id)
     if attempt_status == "not_attempted":
-        base = base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) == 0)
+        query = query.where(func.coalesce(cte.c.attempt_count, 0) == 0)
     elif attempt_status == "attempted":
-        base = base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) > 0)
-
-    # Score filter (percentage-based)
+        query = query.where(func.coalesce(cte.c.attempt_count, 0) > 0)
     if score_min is not None:
-        base = base.where(
-            attempt_stats_sq.c.total > 0,
-            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) >= score_min,
+        query = query.where(
+            cte.c.total > 0,
+            (cte.c.score * 100.0 / cte.c.total) >= score_min,
         )
     if score_max is not None:
-        base = base.where(
-            attempt_stats_sq.c.total > 0,
-            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) < score_max,
+        query = query.where(
+            cte.c.total > 0,
+            (cte.c.score * 100.0 / cte.c.total) < score_max,
         )
+    return query
 
-    # Total count — lightweight query without window functions or eager loads
-    count_base = (
+
+@router.get("/", response_model=PaginatedResponse[QuizListItemResponse])
+async def list_quizzes(
+    db: DBSession,
+    user_id: CurrentUserID,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=200),
+    document_id: uuid.UUID | None = None,
+    attempt_status: Literal["all", "not_attempted", "attempted"] = Query(default="all"),
+    score_min: int | None = Query(default=None, ge=0, le=100),
+    score_max: int | None = Query(default=None, ge=0, le=100),
+    sort_by: Literal["created_at", "title", "item_count", "latest_score"] = Query(
+        default="created_at"
+    ),
+    order: Literal["asc", "desc"] = Query(default="desc"),
+) -> PaginatedResponse[QuizListItemResponse]:
+    # CTE — window functions computed once, reused by data + count queries
+    attempt_stats = _build_attempt_stats_cte(user_id)
+
+    _fkw: dict[str, Any] = dict(
+        search=search,
+        document_id=document_id,
+        attempt_status=attempt_status,
+        score_min=score_min,
+        score_max=score_max,
+    )
+
+    # Total count
+    count_q = (
         select(func.count(Quiz.id))
         .join(Quiz.document)
-        .outerjoin(attempt_stats_sq, Quiz.id == attempt_stats_sq.c.quiz_id)
+        .outerjoin(attempt_stats, Quiz.id == attempt_stats.c.quiz_id)
         .where(Document.owner_id == user_id)
     )
-    if search:
-        count_base = count_base.where(Quiz.title.ilike(f"%{search}%"))
-    if document_id:
-        count_base = count_base.where(Quiz.document_id == document_id)
-    if attempt_status == "not_attempted":
-        count_base = count_base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) == 0)
-    elif attempt_status == "attempted":
-        count_base = count_base.where(func.coalesce(attempt_stats_sq.c.attempt_count, 0) > 0)
-    if score_min is not None:
-        count_base = count_base.where(
-            attempt_stats_sq.c.total > 0,
-            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) >= score_min,
+    count_q = _apply_quiz_filters(count_q, attempt_stats, **_fkw)
+    total = (await db.execute(count_q)).scalar_one()
+
+    # Data query
+    data_q = (
+        select(
+            Quiz,
+            func.coalesce(attempt_stats.c.attempt_count, 0).label("attempt_count"),
+            attempt_stats.c.score.label("latest_score"),
+            attempt_stats.c.total.label("latest_total"),
         )
-    if score_max is not None:
-        count_base = count_base.where(
-            attempt_stats_sq.c.total > 0,
-            (attempt_stats_sq.c.score * 100.0 / attempt_stats_sq.c.total) < score_max,
-        )
-    total = (await db.execute(count_base)).scalar_one()
+        .join(Quiz.document)
+        .outerjoin(attempt_stats, Quiz.id == attempt_stats.c.quiz_id)
+        .where(Document.owner_id == user_id)
+    )
+    data_q = _apply_quiz_filters(data_q, attempt_stats, **_fkw)
 
     # Sorting
     sort_map = {
         "created_at": Quiz.created_at,
         "title": Quiz.title,
         "item_count": Quiz.item_count,
-        "latest_score": func.coalesce(attempt_stats_sq.c.score, -1),
+        "latest_score": func.coalesce(attempt_stats.c.score, -1),
     }
     sort_col = sort_map[sort_by]
-    base = base.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
+    data_q = data_q.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
 
     # Pagination + eager load
-    base = base.offset(offset).limit(limit)
-    base = base.options(selectinload(Quiz.document))
+    data_q = data_q.offset(offset).limit(limit)
+    data_q = data_q.options(selectinload(Quiz.document))
 
-    result = await db.execute(base)
+    result = await db.execute(data_q)
     rows = result.all()
 
     return PaginatedResponse[QuizListItemResponse](

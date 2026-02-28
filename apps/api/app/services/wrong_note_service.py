@@ -269,8 +269,10 @@ async def create_attempt_with_wrong_notes(
                 concept_tags=item.concept_tags,
                 next_review_at=_initial_review_datetime(),
             )
-            db.add(note)
             new_notes.append(note)
+
+    if new_notes:
+        db.add_all(new_notes)
 
     logger.info(
         "Quiz submitted: quiz=%s, user=%s, score=%d/%d, new_wrong=%d, updated=%d",

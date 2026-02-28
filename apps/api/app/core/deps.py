@@ -6,11 +6,19 @@ from typing import Annotated
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.database import get_db
+from app.core.database import async_session_factory, get_db
 
 DBSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Return the async session factory for parallel query execution."""
+    return async_session_factory
+
+
+SessionFactory = Annotated[async_sessionmaker[AsyncSession], Depends(get_session_factory)]
 
 # Auth
 _bearer_scheme = HTTPBearer()

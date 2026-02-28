@@ -145,52 +145,60 @@ async def list_documents(
                 raise HTTPException(status_code=422, detail="Invalid folder_id format") from e
             base = base.where(Document.folder_id == folder_uuid)
 
-    # Total count
+    # Total count (lightweight — no joins needed)
     count_stmt = select(func.count()).select_from(base.subquery())
     total = (await db.execute(count_stmt)).scalar_one()
 
-    # Sorting + pagination
+    # Single combined query: documents + quiz count + folder name via LEFT JOINs
     col = _SORT_COLUMNS[sort_by]
-    base = base.order_by(col.asc() if order == "asc" else col.desc())
-    base = base.offset(offset).limit(limit)
-
-    result = await db.execute(base)
-    docs = list(result.scalars().all())
-
-    # Quiz counts per document (single query)
-    quiz_count_map: dict[uuid.UUID, int] = {}
-    folder_name_map: dict[uuid.UUID, str] = {}
-    if docs:
-        doc_ids = [d.id for d in docs]
-        qc_stmt = (
-            select(Quiz.document_id, func.count(Quiz.id))
-            .where(Quiz.document_id.in_(doc_ids))
-            .group_by(Quiz.document_id)
+    data_stmt = (
+        select(
+            Document,
+            func.coalesce(func.count(Quiz.id), 0).label("quiz_count"),
+            Folder.name.label("folder_name"),
         )
-        qc_result = await db.execute(qc_stmt)
-        quiz_count_map = {row[0]: row[1] for row in qc_result.all()}
+        .outerjoin(Quiz, Quiz.document_id == Document.id)
+        .outerjoin(Folder, Folder.id == Document.folder_id)
+        .where(Document.owner_id == user_id)
+    )
+    if search:
+        data_stmt = data_stmt.where(Document.title.ilike(f"%{search}%"))
+    if source_type:
+        data_stmt = data_stmt.where(Document.source_type == source_type)
+    if folder_id is not None:
+        if folder_id == "none":
+            data_stmt = data_stmt.where(Document.folder_id.is_(None))
+        else:
+            try:
+                fid = uuid.UUID(folder_id)
+            except ValueError as e:
+                raise HTTPException(status_code=422, detail="Invalid folder_id format") from e
+            data_stmt = data_stmt.where(Document.folder_id == fid)
 
-        # Folder names for docs that have folder_id
-        folder_ids = {d.folder_id for d in docs if d.folder_id is not None}
-        if folder_ids:
-            fn_stmt = select(Folder.id, Folder.name).where(Folder.id.in_(folder_ids))
-            fn_result = await db.execute(fn_stmt)
-            folder_name_map = {row[0]: row[1] for row in fn_result.all()}
+    data_stmt = (
+        data_stmt.group_by(Document.id, Folder.id)
+        .order_by(col.asc() if order == "asc" else col.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+
+    result = await db.execute(data_stmt)
+    rows = result.all()
 
     return PaginatedResponse[DocumentResponse](
         items=[
             DocumentResponse(
-                id=d.id,
-                title=d.title,
-                source_type=d.source_type,
-                char_count=d.char_count,
-                chunk_count=d.chunk_count,
-                quiz_count=quiz_count_map.get(d.id, 0),
-                folder_id=d.folder_id,
-                folder_name=folder_name_map.get(d.folder_id) if d.folder_id else None,
-                created_at=d.created_at,
+                id=doc.id,
+                title=doc.title,
+                source_type=doc.source_type,
+                char_count=doc.char_count,
+                chunk_count=doc.chunk_count,
+                quiz_count=int(quiz_count),
+                folder_id=doc.folder_id,
+                folder_name=folder_name,
+                created_at=doc.created_at,
             )
-            for d in docs
+            for doc, quiz_count, folder_name in rows
         ],
         total=int(total),
         limit=limit,
