@@ -149,13 +149,54 @@ async def _call_study_unit_llm(
 
     response = await client.messages.create(
         model=settings.anthropic_model,
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[{"role": "user", "content": prompt}],
     )
     first_block = response.content[0]
     raw_text = first_block.text if isinstance(first_block, TextBlock) else ""
 
+    if response.stop_reason == "max_tokens":
+        logger.warning(
+            "Study unit LLM response truncated (max_tokens reached), response length=%d",
+            len(raw_text),
+        )
+
     return _parse_study_units(raw_text, blocks)
+
+
+def _try_repair_truncated_json(text: str) -> list[dict[str, Any]]:
+    """Try to salvage complete items from a truncated JSON array.
+
+    When the LLM response is cut off by max_tokens, we may have a partial
+    JSON array like: [{"a":1},{"b":2},{"c":3  (truncated)
+    This function tries to recover the complete items before the truncation point.
+    """
+    # Find the last complete object by looking for the last "},\n" or "}\n"
+    last_complete = text.rfind("},")
+    if last_complete == -1:
+        last_complete = text.rfind("}\n")
+    if last_complete == -1:
+        logger.warning(
+            "Cannot repair truncated JSON, no complete items found, response[:500]=%s",
+            text[:500],
+        )
+        return []
+
+    repaired = text[: last_complete + 1] + "]"
+    try:
+        parsed: Any = json.loads(repaired)
+        if isinstance(parsed, list):
+            result: list[dict[str, Any]] = parsed  # pyright: ignore[reportUnknownVariableType]
+            logger.info("Repaired truncated JSON: recovered %d items", len(result))
+            return result
+    except json.JSONDecodeError:
+        pass
+
+    logger.warning(
+        "Failed to repair truncated JSON, response[:500]=%s",
+        text[:500],
+    )
+    return []
 
 
 def _parse_study_units(
@@ -173,22 +214,21 @@ def _parse_study_units(
         data = json.loads(text)
     except json.JSONDecodeError:
         start = text.find("[")
-        end = text.rfind("]") + 1
-        if start != -1 and end > start:
-            try:
-                data = json.loads(text[start:end])
-            except json.JSONDecodeError:
-                logger.warning(
-                    "Failed to parse study units JSON (fallback also failed), response[:500]=%s",
-                    raw_text[:500],
-                )
-                return []
-        else:
+        if start == -1:
             logger.warning(
                 "Study units response is not JSON, response[:500]=%s",
                 raw_text[:500],
             )
             return []
+        end = text.rfind("]") + 1
+        if end > start:
+            try:
+                data = json.loads(text[start:end])
+            except json.JSONDecodeError:
+                data = _try_repair_truncated_json(text[start:])
+        else:
+            # No closing ] — likely truncated response
+            data = _try_repair_truncated_json(text[start:])
 
     if not isinstance(data, list):
         logger.warning("Study units response is not a list, type=%s", type(data).__name__)
